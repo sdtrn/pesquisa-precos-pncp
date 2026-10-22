@@ -77,9 +77,13 @@ def obter_mapa_ibge() -> Dict[str, Dict[str, str]]:
         except Exception:
             pass
 
-    resp = requests.get(IBGE_MUNICIPIOS_URL, timeout=REQUEST_TIMEOUT_SECONDS)
-    resp.raise_for_status()
-    dados = resp.json()
+    try:
+        resp = requests.get(IBGE_MUNICIPIOS_URL, timeout=REQUEST_TIMEOUT_SECONDS)
+        resp.raise_for_status()
+        dados = resp.json()
+    except Exception:
+        # Se a API do IBGE estiver inacessível ou lenta na nuvem, retorna dicionários vazios com segurança
+        return {"por_chave": {}, "por_codigo": {}}
 
     por_chave: Dict[str, Dict[str, str]] = {}
     por_codigo: Dict[str, Dict[str, str]] = {}
@@ -107,8 +111,11 @@ def obter_mapa_ibge() -> Dict[str, Dict[str, str]]:
         "por_chave": por_chave,
         "por_codigo": por_codigo,
     }
-    with open(IBGE_CACHE_PATH, "w", encoding="utf-8") as f:
-        json.dump(resultado, f, ensure_ascii=False, indent=2)
+    try:
+        with open(IBGE_CACHE_PATH, "w", encoding="utf-8") as f:
+            json.dump(resultado, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
 
     return resultado
 
@@ -137,25 +144,32 @@ class ValidadorMunicipios:
         if "codigo_ibge" not in df.columns:
             df["codigo_ibge"] = ""
 
-        # Verifica se há linhas sem codigo_ibge preenchido; se houver, consulta IBGE e atualiza o CSV
+        # Só consulta a API do IBGE se realmente houver algum município sem codigo_ibge no CSV
+        linhas_faltando_ibge = [
+            idx for idx, row in df.iterrows()
+            if not str(row.get("codigo_ibge", "")).strip()
+        ]
         precisa_atualizar_csv = False
-        mapa_ibge = obter_mapa_ibge()
-        por_chave_ibge = mapa_ibge.get("por_chave", {})
-        por_codigo_ibge = mapa_ibge.get("por_codigo", {})
+
+        if linhas_faltando_ibge:
+            mapa_ibge = obter_mapa_ibge()
+            por_chave_ibge = mapa_ibge.get("por_chave", {})
+            for idx in linhas_faltando_ibge:
+                row = df.loc[idx]
+                uf = normalizar_uf(row.get("uf", ""))
+                municipio = str(row.get("municipio", "")).strip()
+                nome_norm = normalizar_nome_municipio(municipio)
+                chave_ibge = f"{nome_norm}|{uf}"
+                info_ibge = por_chave_ibge.get(chave_ibge)
+                if info_ibge:
+                    df.at[idx, "codigo_ibge"] = info_ibge["codigo_ibge"]
+                    precisa_atualizar_csv = True
 
         for idx, row in df.iterrows():
             uf = normalizar_uf(row.get("uf", ""))
             municipio = str(row.get("municipio", "")).strip()
             cod_atual = str(row.get("codigo_ibge", "")).strip()
             nome_norm = normalizar_nome_municipio(municipio)
-            chave_ibge = f"{nome_norm}|{uf}"
-
-            if not cod_atual or cod_atual not in por_codigo_ibge:
-                info_ibge = por_chave_ibge.get(chave_ibge)
-                if info_ibge:
-                    cod_atual = info_ibge["codigo_ibge"]
-                    df.at[idx, "codigo_ibge"] = cod_atual
-                    precisa_atualizar_csv = True
 
             if cod_atual:
                 self.codigos_ibge_validos.add(cod_atual)
@@ -176,7 +190,10 @@ class ValidadorMunicipios:
                 }
 
         if precisa_atualizar_csv:
-            df.to_csv(CSV_MUNICIPIOS_PATH, index=False, encoding="utf-8")
+            try:
+                df.to_csv(CSV_MUNICIPIOS_PATH, index=False, encoding="utf-8")
+            except Exception:
+                pass
 
         self.df_csv = df
 

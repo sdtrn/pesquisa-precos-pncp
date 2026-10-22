@@ -13,7 +13,6 @@ from src.config import (
     DATA_PUBLICACAO,
     DATA_VIGENCIA,
     ESCOPO_PE_RECIFE,
-    ESCOPO_POR_ESTADO,
     ESCOPO_TODOS,
     ESCOPO_VALIDADE,
     STATUS_NAO_VIGENTES,
@@ -21,7 +20,6 @@ from src.config import (
     STATUS_VIGENTES,
     TOP_N_ITENS_JANELA,
     TZ_RECIFE,
-    UFS_BRASIL,
 )
 from src.exporter import (
     gerar_csv_consolidado,
@@ -168,13 +166,8 @@ def exibir_janela_20_menores() -> None:
         st.warning("Nenhum resultado de pesquisa carregado.")
         return
 
-    uf_info = (
-        f" (UF: {res['uf_selecionada']})"
-        if res.get("escopo_orgaos") == ESCOPO_POR_ESTADO and res.get("uf_selecionada")
-        else ""
-    )
     st.caption(
-        f"**Escopo ativo:** {res['escopo_orgaos']}{uf_info} | "
+        f"**Escopo ativo:** {res['escopo_orgaos']} | "
         f"**Status:** {res['status_ata']} | "
         f"**Período ({res['periodo_aplicado_str']})**"
     )
@@ -372,7 +365,6 @@ escopo_selecionado = st.radio(
     options=[
         ESCOPO_VALIDADE,
         ESCOPO_TODOS,
-        ESCOPO_POR_ESTADO,
         ESCOPO_PE_RECIFE,
     ],
     index=0,
@@ -380,24 +372,9 @@ escopo_selecionado = st.radio(
     help=(
         "1) Critério de validade: União, Estados, DF e municípios com orçamento >= R$ 1 bilhão (municipios_bilionarios_2026.csv). "
         "2) Todos os órgãos do Brasil: municipais, estaduais, distritais e federais sem restrição. "
-        "3) ARPs por Estado (UF): apenas ARPs do Estado escolhido (Governo Estadual + todos os Municípios daquela UF). "
-        "4) Governo de Pernambuco e Prefeitura do Recife: apenas ARPs do Poder Executivo Estadual de PE e/ou da Prefeitura Municipal do Recife (ideal para objetos com dedicação de mão de obra sujeitos a CCT local)."
+        "3) Governo de Pernambuco e Prefeitura do Recife: apenas ARPs do Poder Executivo Estadual de PE e/ou da Prefeitura Municipal do Recife (ideal para objetos com dedicação de mão de obra sujeitos a CCT local)."
     ),
 )
-
-uf_escolhida = "PE"
-if escopo_selecionado == ESCOPO_POR_ESTADO:
-    siglas_ufs = list(UFS_BRASIL.keys())
-    idx_padrao_pe = siglas_ufs.index("PE") if "PE" in siglas_ufs else 0
-    col_uf_sel, _ = st.columns([2.2, 5.8])
-    with col_uf_sel:
-        uf_escolhida = st.selectbox(
-            "Selecione o Estado (UF) desejado",
-            options=siglas_ufs,
-            index=idx_padrao_pe,
-            format_func=lambda uf: f"{uf} — {UFS_BRASIL.get(uf, uf)}",
-            help="Filtra a pesquisa para retornar exclusivamente ARPs do Estado selecionado, incluindo órgãos estaduais e todos os municípios daquela UF.",
-        )
 
 if escopo_selecionado == ESCOPO_VALIDADE:
     texto_legenda_escopo = (
@@ -411,13 +388,6 @@ elif escopo_selecionado == ESCOPO_TODOS:
         "📌 <b>Escopo em uso nesta sessão:</b> Todos os órgãos do Brasil — "
         "Aceita órgãos gerenciadores municipais, estaduais, distritais e federais de todo o país, "
         "sem restrição de orçamento ou lista de municípios (mantendo o registro de validade na memória de pesquisa)."
-    )
-elif escopo_selecionado == ESCOPO_POR_ESTADO:
-    nome_uf_sel = UFS_BRASIL.get(uf_escolhida, uf_escolhida)
-    texto_legenda_escopo = (
-        f"📌 <b>Escopo em uso nesta sessão:</b> ARPs por Estado (UF: <b>{uf_escolhida} — {nome_uf_sel}</b>) — "
-        f"Retorna exclusivamente Atas de Registro de Preços de órgãos estaduais/distritais e de <b>todos os municípios</b> "
-        f"pertencentes à UF <b>{uf_escolhida} ({nome_uf_sel})</b>."
     )
 else:
     texto_legenda_escopo = (
@@ -438,15 +408,9 @@ st.markdown(
 with st.container(border=True):
     st.subheader("1. Parâmetros da Pesquisa de Preços")
 
-    descricao_padrao = (
-        "Rolo de lona em plástico medindo no mínimo 8MX100M. "
-        "Rolo de lona - em plástico resistente, novo de primeiro uso, acondicionado em bobina, "
-        "cor preto fosco medindo no mínimo 8mX100m com no mínimo 200 micras (0,200mm). "
-        "Pesando no mínimo 110 kg."
-    )
     objeto_pesquisa = st.text_area(
         "Objeto da pesquisa (descrição detalhada do item pretendido)",
-        value=descricao_padrao,
+        value="",
         height=110,
         placeholder="Digite ou cole aqui a especificação técnica completa do item...",
     )
@@ -581,7 +545,6 @@ if st.session_state.get("etapa_revisao_ativa") and not periodo_invalido:
                 data_final=data_final,
                 progresso_cb=atualizar_progresso,
                 usar_cache=True,
-                uf_selecionada=uf_escolhida,
             )
 
             barra.empty()
