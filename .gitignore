@@ -20,6 +20,10 @@ PesquisaPrecosPNCP_venv/
 evidencia_rodada_*.xlsx
 *.tmp
 
+# Scripts locais de sincronização
+subir_para_github.bat
+subir_para_github.ps1
+
 # Arquivos de sistema e IDE
 .DS_Store
 Thumbs.db
