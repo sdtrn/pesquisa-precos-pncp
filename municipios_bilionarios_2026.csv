@@ -1,0 +1,178 @@
+uf,estado,municipio,perfil_localizacao,porte_orcamentario,fonte,codigo_ibge
+AC,Acre,Rio Branco,Capital,Acima de R$ 1 bilhão,SICONFI / STN,1200401
+AL,Alagoas,Maceió,Capital,Acima de R$ 4 bilhões,SICONFI / STN,2704302
+AP,Amapá,Macapá,Capital,"Acima de R$ 1,5 bilhão",SICONFI / STN,1600303
+AM,Amazonas,Manaus,Capital,"R$ 11,10 bilhões",SICONFI / STN,1302603
+BA,Bahia,Camaçari,Polo Industrial / Região Metropolitana,"R$ 2,50 bilhões",Brasil 61 / SICONFI,2905701
+BA,Bahia,Feira de Santana,Interior,Acima de R$ 2 bilhões,SICONFI / STN,2910800
+BA,Bahia,Lauro de Freitas,Região Metropolitana,Acima de R$ 1 bilhão,SICONFI / STN,2919207
+BA,Bahia,Salvador,Capital,"R$ 13,98 bilhões",Brasil 61 / SICONFI,2927408
+BA,Bahia,Vitória da Conquista,Interior,"Acima de R$ 1,5 bilhão",SICONFI / STN,2933307
+CE,Ceará,Caucaia,Região Metropolitana,"Acima de R$ 1,8 bilhão",SICONFI / STN,2303709
+CE,Ceará,Fortaleza,Capital,"R$ 13,27 bilhões",Brasil 61 / SICONFI,2304400
+CE,Ceará,Juazeiro do Norte,Interior,"Acima de R$ 1,2 bilhão",SICONFI / STN,2307304
+CE,Ceará,Maracanaú,Região Metropolitana,"Acima de R$ 1,3 bilhão",SICONFI / STN,2307650
+CE,Ceará,Sobral,Interior,Acima de R$ 1 bilhão,SICONFI / STN,2312908
+ES,Espírito Santo,Cariacica,Região Metropolitana,"Acima de R$ 1,5 bilhão",SICONFI / STN,3201308
+ES,Espírito Santo,Linhares,Interior,"Acima de R$ 1,3 bilhão",SICONFI / STN,3203205
+ES,Espírito Santo,Serra,Região Metropolitana,"Acima de R$ 2,5 bilhões",SICONFI / STN,3205002
+ES,Espírito Santo,Vila Velha,Região Metropolitana,"Acima de R$ 1,8 bilhão",SICONFI / STN,3205200
+ES,Espírito Santo,Vitória,Capital,"Acima de R$ 2,5 bilhões",SICONFI / STN,3205309
+GO,Goiás,Anápolis,Interior,"Acima de R$ 1,8 bilhão",SICONFI / STN,5201108
+GO,Goiás,Aparecida de Goiânia,Região Metropolitana,"Acima de R$ 2,2 bilhões",SICONFI / STN,5201405
+GO,Goiás,Goiânia,Capital,Acima de R$ 8 bilhões,SICONFI / STN,5208707
+GO,Goiás,Rio Verde,Interior,"Acima de R$ 1,5 bilhão",SICONFI / STN,5218805
+MA,Maranhão,Imperatriz,Interior,"Acima de R$ 1,2 bilhão",SICONFI / STN,2105302
+MA,Maranhão,São Luís,Capital,"Acima de R$ 4,5 bilhões",SICONFI / STN,2111300
+MT,Mato Grosso,Cuiabá,Capital,"Acima de R$ 4,5 bilhões",SICONFI / STN,5103403
+MT,Mato Grosso,Rondonópolis,Interior,"Acima de R$ 1,8 bilhão",SICONFI / STN,5107602
+MT,Mato Grosso,Sinop,Interior,"Acima de R$ 1,3 bilhão",SICONFI / STN,5107909
+MT,Mato Grosso,Sorriso,Interior,Acima de R$ 1 bilhão,SICONFI / STN,5107925
+MT,Mato Grosso,Várzea Grande,Região Metropolitana,"Acima de R$ 1,5 bilhão",SICONFI / STN,5108402
+MS,Mato Grosso do Sul,Campo Grande,Capital,Acima de R$ 6 bilhões,SICONFI / STN,5002704
+MS,Mato Grosso do Sul,Dourados,Interior,"Acima de R$ 1,6 bilhão",SICONFI / STN,5003702
+MS,Mato Grosso do Sul,Três Lagoas,Interior,"Acima de R$ 1,2 bilhão",SICONFI / STN,5008305
+MG,Minas Gerais,Belo Horizonte,Capital,"R$ 19,29 bilhões",Brasil 61 / SICONFI,3106200
+MG,Minas Gerais,Betim,Região Metropolitana,"R$ 3,30 bilhões",Brasil 61 / SICONFI,3106705
+MG,Minas Gerais,Contagem,Região Metropolitana,"Acima de R$ 2,8 bilhões",SICONFI / STN,3118601
+MG,Minas Gerais,Governador Valadares,Interior,"Acima de R$ 1,3 bilhão",SICONFI / STN,3127701
+MG,Minas Gerais,Ipatinga,Interior,"Acima de R$ 1,2 bilhão",SICONFI / STN,3131307
+MG,Minas Gerais,Juiz de Fora,Interior,Acima de R$ 3 bilhões,SICONFI / STN,3136702
+MG,Minas Gerais,Montes Claros,Interior,Acima de R$ 2 bilhões,SICONFI / STN,3143302
+MG,Minas Gerais,Nova Lima,Região Metropolitana,"Acima de R$ 1,5 bilhão",SICONFI / STN,3144805
+MG,Minas Gerais,Poços de Caldas,Interior,"Acima de R$ 1,2 bilhão",SICONFI / STN,3151800
+MG,Minas Gerais,Ribeirão das Neves,Região Metropolitana,"Acima de R$ 1,1 bilhão",SICONFI / STN,3154606
+MG,Minas Gerais,Sete Lagoas,Interior,"Acima de R$ 1,1 bilhão",SICONFI / STN,3167202
+MG,Minas Gerais,Uberaba,Interior,"Acima de R$ 2,5 bilhões",SICONFI / STN,3170107
+MG,Minas Gerais,Uberlândia,Interior,Acima de R$ 4 bilhões,SICONFI / STN,3170206
+PR,Paraná,Araucária,Região Metropolitana,"Acima de R$ 1,5 bilhão",SICONFI / STN,4101804
+PR,Paraná,Cascavel,Interior,Acima de R$ 2 bilhões,SICONFI / STN,4104808
+PR,Paraná,Colombo,Região Metropolitana,Acima de R$ 1 bilhão,SICONFI / STN,4105805
+PR,Paraná,Curitiba,Capital,"R$ 13,43 bilhões",Brasil 61 / SICONFI,4106902
+PR,Paraná,Foz do Iguaçu,Interior,"Acima de R$ 1,9 bilhão",SICONFI / STN,4108304
+PR,Paraná,Guarapuava,Interior,Acima de R$ 1 bilhão,SICONFI / STN,4109401
+PR,Paraná,Londrina,Interior,Acima de R$ 3 bilhões,SICONFI / STN,4113700
+PR,Paraná,Maringá,Interior,"Acima de R$ 2,7 bilhões",SICONFI / STN,4115200
+PR,Paraná,Paranaguá,Litoral / Porto,Acima de R$ 1 bilhão,SICONFI / STN,4118204
+PR,Paraná,Ponta Grossa,Interior,"Acima de R$ 1,8 bilhão",SICONFI / STN,4119905
+PR,Paraná,São José dos Pinhais,Região Metropolitana,"Acima de R$ 1,7 bilhão",SICONFI / STN,4125506
+PR,Paraná,Toledo,Interior,Acima de R$ 1 bilhão,SICONFI / STN,4127700
+PB,Paraíba,Campina Grande,Interior,"Acima de R$ 1,7 bilhão",SICONFI / STN,2504009
+PB,Paraíba,João Pessoa,Capital,Acima de R$ 4 bilhões,SICONFI / STN,2507507
+PA,Pará,Ananindeua,Região Metropolitana,"Acima de R$ 1,6 bilhão",SICONFI / STN,1500800
+PA,Pará,Barcarena,Interior / Polo Portuário,Acima de R$ 1 bilhão,SICONFI / STN,1501303
+PA,Pará,Belém,Capital,Acima de R$ 5 bilhões,SICONFI / STN,1501402
+PA,Pará,Canaã dos Carajás,Interior / Polo Mineral,"Acima de R$ 1,5 bilhão",SICONFI / STN,1502152
+PA,Pará,Marabá,Interior,"Acima de R$ 1,5 bilhão",SICONFI / STN,1504208
+PA,Pará,Parauapebas,Interior / Polo Mineral,"Acima de R$ 2,5 bilhões",SICONFI / STN,1505536
+PA,Pará,Santarém,Interior,"Acima de R$ 1,4 bilhão",SICONFI / STN,1506807
+PE,Pernambuco,Caruaru,Interior / Agreste,"Acima de R$ 1,7 bilhão",SICONFI / STN,2604106
+PE,Pernambuco,Jaboatão dos Guararapes,Região Metropolitana,"Acima de R$ 2,2 bilhões",SICONFI / STN,2607901
+PE,Pernambuco,Olinda,Região Metropolitana,"Acima de R$ 1,4 bilhão",SICONFI / STN,2609600
+PE,Pernambuco,Paulista,Região Metropolitana,Acima de R$ 1 bilhão,SICONFI / STN,2610707
+PE,Pernambuco,Petrolina,Interior / Sertão,"Acima de R$ 1,6 bilhão",SICONFI / STN,2611101
+PE,Pernambuco,Recife,Capital,"R$ 9,51 bilhões",Brasil 61 / SICONFI,2611606
+PI,Piauí,Teresina,Capital,Acima de R$ 5 bilhões,SICONFI / STN,2211001
+RN,Rio Grande do Norte,Mossoró,Interior,"Acima de R$ 1,3 bilhão",SICONFI / STN,2408003
+RN,Rio Grande do Norte,Natal,Capital,"Acima de R$ 4,5 bilhões",SICONFI / STN,2408102
+RS,Rio Grande do Sul,Canoas,Região Metropolitana,"Acima de R$ 2,8 bilhões",SICONFI / STN,4304606
+RS,Rio Grande do Sul,Caxias do Sul,Serra Gaúcha,"Acima de R$ 3,2 bilhões",SICONFI / STN,4305108
+RS,Rio Grande do Sul,Gravataí,Região Metropolitana,"Acima de R$ 1,4 bilhão",SICONFI / STN,4309209
+RS,Rio Grande do Sul,Novo Hamburgo,Região Metropolitana,"Acima de R$ 1,8 bilhão",SICONFI / STN,4313409
+RS,Rio Grande do Sul,Passo Fundo,Interior,"Acima de R$ 1,2 bilhão",SICONFI / STN,4314100
+RS,Rio Grande do Sul,Pelotas,Sul do Estado,"Acima de R$ 1,7 bilhão",SICONFI / STN,4314407
+RS,Rio Grande do Sul,Porto Alegre,Capital,"R$ 10,39 bilhões",Brasil 61 / SICONFI,4314902
+RS,Rio Grande do Sul,Rio Grande,Litoral / Porto,"Acima de R$ 1,2 bilhão",SICONFI / STN,4315602
+RS,Rio Grande do Sul,Santa Maria,Centro,"Acima de R$ 1,4 bilhão",SICONFI / STN,4316907
+RS,Rio Grande do Sul,São Leopoldo,Região Metropolitana,"Acima de R$ 1,4 bilhão",SICONFI / STN,4318705
+RS,Rio Grande do Sul,Viamão,Região Metropolitana,"Acima de R$ 1,1 bilhão",SICONFI / STN,4323002
+RJ,Rio de Janeiro,Angra dos Reis,Costa Verde,Acima de R$ 2 bilhões,SICONFI / STN,3300100
+RJ,Rio de Janeiro,Belford Roxo,Baixada Fluminense,"Acima de R$ 1,8 bilhão",SICONFI / STN,3300456
+RJ,Rio de Janeiro,Cabo Frio,Região dos Lagos,"Acima de R$ 1,4 bilhão",SICONFI / STN,3300704
+RJ,Rio de Janeiro,Campos dos Goytacazes,Norte Fluminense,"Acima de R$ 2,7 bilhões",SICONFI / STN,3301009
+RJ,Rio de Janeiro,Duque de Caxias,Baixada Fluminense,"R$ 5,60 bilhões",Brasil 61 / SICONFI,3301702
+RJ,Rio de Janeiro,Itaboraí,Região Metropolitana,"Acima de R$ 1,3 bilhão",SICONFI / STN,3301900
+RJ,Rio de Janeiro,Macaé,Norte Fluminense / Petróleo,"Acima de R$ 3,5 bilhões",SICONFI / STN,3302403
+RJ,Rio de Janeiro,Magé,Baixada Fluminense,"Acima de R$ 1,4 bilhão",SICONFI / STN,3302502
+RJ,Rio de Janeiro,Maricá,Região Metropolitana / Petróleo,"R$ 6,90 bilhões",Brasil 61 / SICONFI,3302700
+RJ,Rio de Janeiro,Mesquita,Baixada Fluminense,Acima de R$ 1 bilhão,SICONFI / STN,3302858
+RJ,Rio de Janeiro,Niterói,Região Metropolitana,"R$ 6,30 bilhões",Brasil 61 / SICONFI,3303302
+RJ,Rio de Janeiro,Nova Iguaçu,Baixada Fluminense,"Acima de R$ 2,5 bilhões",SICONFI / STN,3303500
+RJ,Rio de Janeiro,Petrópolis,Região Serrana,"Acima de R$ 1,6 bilhão",SICONFI / STN,3303906
+RJ,Rio de Janeiro,Resende,Sul Fluminense,"Acima de R$ 1,1 bilhão",SICONFI / STN,3304201
+RJ,Rio de Janeiro,Rio de Janeiro,Capital,"R$ 39,97 bilhões",Brasil 61 / SICONFI,3304557
+RJ,Rio de Janeiro,Saquarema,Região dos Lagos / Petróleo,Acima de R$ 2 bilhões,SICONFI / STN,3305505
+RJ,Rio de Janeiro,São Gonçalo,Região Metropolitana,"Acima de R$ 2,1 bilhões",SICONFI / STN,3304904
+RJ,Rio de Janeiro,São João de Meriti,Baixada Fluminense,"Acima de R$ 1,4 bilhão",SICONFI / STN,3305109
+RJ,Rio de Janeiro,Teresópolis,Região Serrana,Acima de R$ 1 bilhão,SICONFI / STN,3305802
+RJ,Rio de Janeiro,Volta Redonda,Sul Fluminense,"Acima de R$ 1,8 bilhão",SICONFI / STN,3306305
+RO,Rondônia,Porto Velho,Capital,"Acima de R$ 2,5 bilhões",SICONFI / STN,1100205
+RR,Roraima,Boa Vista,Capital,Acima de R$ 2 bilhões,SICONFI / STN,1400100
+SC,Santa Catarina,Balneário Camboriú,Litoral,"Acima de R$ 1,6 bilhão",SICONFI / STN,4202008
+SC,Santa Catarina,Blumenau,Vale do Itajaí,Acima de R$ 3 bilhões,SICONFI / STN,4202404
+SC,Santa Catarina,Brusque,Vale do Itajaí,Acima de R$ 1 bilhão,SICONFI / STN,4202909
+SC,Santa Catarina,Chapecó,Oeste,"Acima de R$ 1,7 bilhão",SICONFI / STN,4204202
+SC,Santa Catarina,Criciúma,Sul do Estado,"Acima de R$ 1,4 bilhão",SICONFI / STN,4204608
+SC,Santa Catarina,Florianópolis,Capital,"Acima de R$ 3,5 bilhões",SICONFI / STN,4205407
+SC,Santa Catarina,Itajaí,Litoral Norte / Porto,"Acima de R$ 2,8 bilhões",SICONFI / STN,4208203
+SC,Santa Catarina,Jaraguá do Sul,Norte,"Acima de R$ 1,2 bilhão",SICONFI / STN,4208906
+SC,Santa Catarina,Joinville,Norte / Polo Industrial,"Acima de R$ 4,5 bilhões",SICONFI / STN,4209102
+SC,Santa Catarina,Palhoça,Região Metropolitana,"Acima de R$ 1,1 bilhão",SICONFI / STN,4211900
+SC,Santa Catarina,São José,Região Metropolitana,"Acima de R$ 1,5 bilhão",SICONFI / STN,4216602
+SE,Sergipe,Aracaju,Capital,"Acima de R$ 3,5 bilhões",SICONFI / STN,2800308
+SE,Sergipe,Nossa Senhora do Socorro,Região Metropolitana,Acima de R$ 1 bilhão,SICONFI / STN,2804805
+SP,São Paulo,Americana,Interior,"Acima de R$ 1,5 bilhão",SICONFI / STN,3501608
+SP,São Paulo,Araraquara,Interior,"Acima de R$ 1,4 bilhão",SICONFI / STN,3503208
+SP,São Paulo,Araçatuba,Interior,"Acima de R$ 1,2 bilhão",SICONFI / STN,3502804
+SP,São Paulo,Barretos,Interior,Acima de R$ 1 bilhão,SICONFI / STN,3505500
+SP,São Paulo,Barueri,Região Metropolitana,"R$ 5,60 bilhões",Brasil 61 / SICONFI,3505708
+SP,São Paulo,Bauru,Interior,"Acima de R$ 1,9 bilhão",SICONFI / STN,3506003
+SP,São Paulo,Botucatu,Interior,Acima de R$ 1 bilhão,SICONFI / STN,3507506
+SP,São Paulo,Bragança Paulista,Interior,"Acima de R$ 1,1 bilhão",SICONFI / STN,3507605
+SP,São Paulo,Campinas,Interior / Região Metropolitana,"R$ 9,18 bilhões",Brasil 61 / SICONFI,3509502
+SP,São Paulo,Caraguatatuba,Litoral Norte,"Acima de R$ 1,3 bilhão",SICONFI / STN,3510500
+SP,São Paulo,Carapicuíba,Região Metropolitana,"Acima de R$ 1,2 bilhão",SICONFI / STN,3510609
+SP,São Paulo,Cotia,Região Metropolitana,"Acima de R$ 1,5 bilhão",SICONFI / STN,3513009
+SP,São Paulo,Diadema,ABC Paulista,"Acima de R$ 2,1 bilhões",SICONFI / STN,3513801
+SP,São Paulo,Embu das Artes,Região Metropolitana,"Acima de R$ 1,1 bilhão",SICONFI / STN,3515004
+SP,São Paulo,Franca,Interior,"Acima de R$ 1,6 bilhão",SICONFI / STN,3516200
+SP,São Paulo,Guarujá,Baixada Santista,"Acima de R$ 2,4 bilhões",SICONFI / STN,3518701
+SP,São Paulo,Guarulhos,Região Metropolitana,"R$ 7,41 bilhões",Brasil 61 / SICONFI,3518800
+SP,São Paulo,Hortolândia,Interior,"Acima de R$ 1,5 bilhão",SICONFI / STN,3519071
+SP,São Paulo,Ilhabela,Litoral Norte / Petróleo,"Acima de R$ 1,2 bilhão",SICONFI / STN,3520400
+SP,São Paulo,Indaiatuba,Interior,"Acima de R$ 1,8 bilhão",SICONFI / STN,3520509
+SP,São Paulo,Itapevi,Região Metropolitana,"Acima de R$ 1,2 bilhão",SICONFI / STN,3522505
+SP,São Paulo,Itaquaquecetuba,Região Metropolitana,"Acima de R$ 1,5 bilhão",SICONFI / STN,3523107
+SP,São Paulo,Jacareí,Vale do Paraíba,"Acima de R$ 1,5 bilhão",SICONFI / STN,3524402
+SP,São Paulo,Jundiaí,Interior,"Acima de R$ 3,6 bilhões",SICONFI / STN,3525904
+SP,São Paulo,Limeira,Interior,"Acima de R$ 2,1 bilhões",SICONFI / STN,3526902
+SP,São Paulo,Marília,Interior,"Acima de R$ 1,6 bilhão",SICONFI / STN,3529005
+SP,São Paulo,Mauá,ABC Paulista,"Acima de R$ 1,9 bilhão",SICONFI / STN,3529401
+SP,São Paulo,Mogi das Cruzes,Região Metropolitana,"Acima de R$ 2,7 bilhões",SICONFI / STN,3530607
+SP,São Paulo,Osasco,Região Metropolitana,"R$ 5,40 bilhões",Brasil 61 / SICONFI,3534401
+SP,São Paulo,Paulínia,Polo Petroquímico,"Acima de R$ 2,3 bilhões",SICONFI / STN,3536505
+SP,São Paulo,Pindamonhangaba,Vale do Paraíba,"Acima de R$ 1,1 bilhão",SICONFI / STN,3538006
+SP,São Paulo,Piracicaba,Interior,"Acima de R$ 2,7 bilhões",SICONFI / STN,3538709
+SP,São Paulo,Praia Grande,Baixada Santista,"Acima de R$ 2,6 bilhões",SICONFI / STN,3541000
+SP,São Paulo,Presidente Prudente,Interior,"Acima de R$ 1,2 bilhão",SICONFI / STN,3541406
+SP,São Paulo,Ribeirão Pires,Região Metropolitana,Acima de R$ 1 bilhão,SICONFI / STN,3543303
+SP,São Paulo,Ribeirão Preto,Interior,"Acima de R$ 4,6 bilhões",SICONFI / STN,3543402
+SP,São Paulo,Rio Claro,Interior,"Acima de R$ 1,3 bilhão",SICONFI / STN,3543907
+SP,São Paulo,Santana de Parnaíba,Região Metropolitana,"Acima de R$ 1,8 bilhão",SICONFI / STN,3547304
+SP,São Paulo,Santo André,ABC Paulista,"Acima de R$ 4,5 bilhões",SICONFI / STN,3547809
+SP,São Paulo,Santos,Baixada Santista / Porto,"R$ 5,10 bilhões",Brasil 61 / SICONFI,3548500
+SP,São Paulo,Sorocaba,Interior,"R$ 5,10 bilhões",Brasil 61 / SICONFI,3552205
+SP,São Paulo,Sumaré,Interior,"Acima de R$ 1,4 bilhão",SICONFI / STN,3552403
+SP,São Paulo,Suzano,Região Metropolitana,"Acima de R$ 1,6 bilhão",SICONFI / STN,3552502
+SP,São Paulo,São Bernardo do Campo,ABC Paulista,"R$ 6,70 bilhões",Brasil 61 / SICONFI,3548708
+SP,São Paulo,São Caetano do Sul,ABC Paulista,"Acima de R$ 2,4 bilhões",SICONFI / STN,3548807
+SP,São Paulo,São Carlos,Interior,"Acima de R$ 1,5 bilhão",SICONFI / STN,3548906
+SP,São Paulo,São José do Rio Preto,Interior,"Acima de R$ 3,2 bilhões",SICONFI / STN,3549805
+SP,São Paulo,São José dos Campos,Vale do Paraíba,"Acima de R$ 4,2 bilhões",SICONFI / STN,3549904
+SP,São Paulo,São Paulo,Capital,"R$ 109,71 bilhões",Brasil 61 / SICONFI,3550308
+SP,São Paulo,São Vicente,Baixada Santista,"Acima de R$ 1,7 bilhão",SICONFI / STN,3551009
+SP,São Paulo,Taboão da Serra,Região Metropolitana,"Acima de R$ 1,4 bilhão",SICONFI / STN,3552809
+SP,São Paulo,Taubaté,Vale do Paraíba,"Acima de R$ 1,8 bilhão",SICONFI / STN,3554102
+SP,São Paulo,Valinhos,Interior,Acima de R$ 1 bilhão,SICONFI / STN,3556206
+TO,Tocantins,Araguaína,Interior,Acima de R$ 1 bilhão,SICONFI / STN,1702109
+TO,Tocantins,Palmas,Capital,"Acima de R$ 2,2 bilhões",SICONFI / STN,1721000

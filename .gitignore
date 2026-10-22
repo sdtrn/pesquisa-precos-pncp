@@ -1,0 +1,29 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches e logs locais
+.cache_pncp/
+logs/
+*.sqlite
+*.sqlite3
+*.log
+
+# Ambientes virtuais
+env/
+venv/
+.venv/
+PesquisaPrecosPNCP_venv/
+
+# Planilhas de teste e evidências locais
+evidencia_rodada_*.xlsx
+*.tmp
+
+# Arquivos de sistema e IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.gemini/
+.system_generated/

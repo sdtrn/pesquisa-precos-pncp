@@ -1,0 +1,1 @@
+& "$env:LOCALAPPDATA\PesquisaPrecosPNCP_venv\Scripts\python.exe" -m streamlit run app.py
