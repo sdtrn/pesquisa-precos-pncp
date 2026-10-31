@@ -1,0 +1,559 @@
+"use client";
+
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { HeaderInstitucional } from "@/components/HeaderInstitucional";
+import { ScopeSelectorBanner } from "@/components/ScopeSelectorBanner";
+import { SearchParametersForm } from "@/components/SearchParametersForm";
+import { RequirementsReviewPanel } from "@/components/RequirementsReviewPanel";
+import {
+  LiveProgressBanner,
+  type ProgressoStream,
+} from "@/components/LiveProgressBanner";
+import { Top20SelectionModal } from "@/components/Top20SelectionModal";
+import { AuditAnalyticsDashboard } from "@/components/AuditAnalyticsDashboard";
+import { ConsolidatedReportPanel } from "@/components/ConsolidatedReportPanel";
+import { HistoryDrawer } from "@/components/HistoryDrawer";
+import {
+  ESCOPO_VALIDADE,
+  ESCOPO_POR_ESTADO,
+  STATUS_VIGENTES,
+  DATA_VIGENCIA,
+} from "@/data/constants";
+import type {
+  RequisitoMinimo,
+  ParametrosPipeline,
+  ResultadoPesquisa,
+  RegistroHistoricoPesquisa,
+} from "@/lib/domain/types";
+import { selecionarTop20Menores } from "@/lib/domain/pipeline";
+import {
+  calcularEstatisticasPrecos,
+  chaveItemUnica,
+} from "@/lib/domain/statistics";
+import {
+  listarHistoricoPesquisas,
+  criarRegistroHistorico,
+  salvarPesquisaHistorico,
+  removerPesquisaHistorico,
+  limparTodoHistorico,
+  exportarHistoricoJson,
+  importarHistoricoJson,
+} from "@/lib/storage/history-db";
+import { AlertTriangle, Award, ShieldCheck } from "lucide-react";
+
+function getDefaultDateRange(): { inicio: string; fim: string } {
+  const hoje = new Date();
+  const fim = hoje.toISOString().slice(0, 10);
+  const umAnoAtras = new Date(hoje);
+  umAnoAtras.setFullYear(hoje.getFullYear() - 1);
+  const inicio = umAnoAtras.toISOString().slice(0, 10);
+  return { inicio, fim };
+}
+
+export default function HomePage() {
+  const [darkMode, setDarkMode] = useState(false);
+
+  // Scope & Parameters State
+  const [escopo, setEscopo] = useState<string>(ESCOPO_VALIDADE);
+  const [ufFiltro, setUfFiltro] = useState<string>("PE");
+  const [descricaoObjeto, setDescricaoObjeto] = useState<string>("");
+  const [statusArp, setStatusArp] = useState<string>(STATUS_VIGENTES);
+  const [tipoData, setTipoData] = useState<string>(DATA_VIGENCIA);
+  const [dataInicial, setDataInicial] = useState<string>("");
+  const [dataFinal, setDataFinal] = useState<string>("");
+  const [salvarNoHistorico, setSalvarNoHistorico] = useState<boolean>(true);
+
+  // Extracted Requirements Studio State
+  const [showRequirementsPanel, setShowRequirementsPanel] =
+    useState<boolean>(false);
+  const [termosBusca, setTermosBusca] = useState<string[]>([]);
+  const [requisitos, setRequisitos] = useState<RequisitoMinimo[]>([]);
+
+  // Search Execution & Results State
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [progresso, setProgresso] = useState<ProgressoStream | null>(null);
+  const [erroPesquisa, setErroPesquisa] = useState<string | null>(null);
+  const [resultado, setResultado] = useState<ResultadoPesquisa | null>(null);
+  const [incluirClasseB, setIncluirClasseB] = useState<boolean>(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [currentHistoryId, setCurrentHistoryId] = useState<string | undefined>(
+    undefined
+  );
+  const [savedNotice, setSavedNotice] = useState<string | null>(null);
+
+  // Modals & Drawers
+  const [showTop20Modal, setShowTop20Modal] = useState<boolean>(false);
+  const [showMunicipiosModal, setShowMunicipiosModal] =
+    useState<boolean>(false);
+  const [showHistoryDrawer, setShowHistoryDrawer] = useState<boolean>(false);
+  const [historico, setHistorico] = useState<RegistroHistoricoPesquisa[]>([]);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Initialize dates & load history on mount
+  useEffect(() => {
+    const { inicio, fim } = getDefaultDateRange();
+    setDataInicial(inicio);
+    setDataFinal(fim);
+
+    listarHistoricoPesquisas()
+      .then((list) => setHistorico(list))
+      .catch(() => {});
+  }, []);
+
+  // Sync dark mode class on <html>
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+  }, [darkMode]);
+
+  // Extract terms & requirements from object description via API
+  const handleAnalyzeRequirements = async () => {
+    if (!descricaoObjeto.trim()) return;
+    try {
+      const res = await fetch("/api/parse-requisitos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ descricao: descricaoObjeto }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTermosBusca(data.termos ?? []);
+        setRequisitos(data.requisitos ?? []);
+        setShowRequirementsPanel(true);
+      }
+    } catch {
+      setShowRequirementsPanel(true);
+    }
+  };
+
+  // Recompute Top 20 when `incluirClasseB` toggles
+  const candidatosTop20Ativos = useMemo(() => {
+    if (!resultado) return [];
+    return selecionarTop20Menores(resultado.itens_candidatos, incluirClasseB);
+  }, [resultado, incluirClasseB]);
+
+  const totalClasseBDisponiveis = useMemo(() => {
+    if (!resultado) return 0;
+    return resultado.itens_candidatos.filter((i) => i.aderencia === "B").length;
+  }, [resultado]);
+
+  const handleToggleIncluirClasseB = (val: boolean) => {
+    setIncluirClasseB(val);
+    if (resultado) {
+      const novosTop20 = selecionarTop20Menores(
+        resultado.itens_candidatos,
+        val
+      );
+      setSelectedKeys(new Set(novosTop20.map((i) => chaveItemUnica(i))));
+    }
+  };
+
+  const itensSelecionados = useMemo(() => {
+    return candidatosTop20Ativos.filter((item) =>
+      selectedKeys.has(chaveItemUnica(item))
+    );
+  }, [candidatosTop20Ativos, selectedKeys]);
+
+  const indicesSelecionados = useMemo(() => {
+    const indices: number[] = [];
+    candidatosTop20Ativos.forEach((item, idx) => {
+      if (selectedKeys.has(chaveItemUnica(item))) {
+        indices.push(idx);
+      }
+    });
+    return indices;
+  }, [candidatosTop20Ativos, selectedKeys]);
+
+  const estatisticasSelecionados = useMemo(() => {
+    return calcularEstatisticasPrecos(
+      itensSelecionados.map((i) => i.valor_unitario)
+    );
+  }, [itensSelecionados]);
+
+  // Execute streaming search against /api/pesquisar
+  const handleExecuteSearch = async () => {
+    if (!descricaoObjeto.trim()) return;
+    setErroPesquisa(null);
+    setSavedNotice(null);
+    setIsSearching(true);
+    setProgresso({
+      msg: "Analisando objeto e iniciando consulta no PNCP...",
+      frac: 0.02,
+    });
+
+    let termosParaUsar = termosBusca;
+    let reqsParaUsar = requisitos;
+
+    if (termosParaUsar.length === 0) {
+      try {
+        const resParse = await fetch("/api/parse-requisitos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ descricao: descricaoObjeto }),
+        });
+        if (resParse.ok) {
+          const parsed = await resParse.json();
+          termosParaUsar = parsed.termos ?? [];
+          reqsParaUsar = parsed.requisitos ?? [];
+          setTermosBusca(termosParaUsar);
+          setRequisitos(reqsParaUsar);
+        }
+      } catch {
+        // continue with fallback
+      }
+    }
+
+    if (termosParaUsar.length === 0) {
+      termosParaUsar = [descricaoObjeto.trim().slice(0, 50)];
+    }
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    const payload: ParametrosPipeline = {
+      descricaoObjeto,
+      termosBusca: termosParaUsar,
+      requisitos: reqsParaUsar,
+      escopoOrgaos: escopo,
+      ufSelecionada: escopo === ESCOPO_POR_ESTADO ? ufFiltro : null,
+      statusAta: statusArp,
+      tipoDataPeriodo: tipoData,
+      dataInicial,
+      dataFinal,
+      usarCache: true,
+    };
+
+    try {
+      const res = await fetch("/api/pesquisar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+
+      if (!res.ok || !res.body) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(
+          errBody.error || `Falha HTTP ${res.status} ao consultar o PNCP.`
+        );
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
+
+        for (const chunk of chunks) {
+          const line = chunk.trim();
+          if (!line.startsWith("data:")) continue;
+          const jsonStr = line.replace(/^data:\s*/, "");
+          if (!jsonStr) continue;
+          const msg = JSON.parse(jsonStr);
+
+          if (msg.type === "progress") {
+            setProgresso({
+              msg: msg.msg,
+              frac: msg.frac,
+              parcial: msg.parcial,
+            });
+          } else if (msg.type === "error") {
+            throw new Error(msg.error || "Erro durante o processamento PNCP.");
+          } else if (msg.type === "result") {
+            const finalResult = msg.data as ResultadoPesquisa;
+            setResultado(finalResult);
+            const initialTop20 = selecionarTop20Menores(
+              finalResult.itens_candidatos,
+              incluirClasseB
+            );
+            const initialKeys = initialTop20.map((i) => chaveItemUnica(i));
+            setSelectedKeys(new Set(initialKeys));
+
+            if (initialTop20.length > 0) {
+              setShowTop20Modal(true);
+            }
+
+            // Auto-save to history if toggle is enabled
+            if (salvarNoHistorico) {
+              const allIndices = initialTop20.map((_, idx) => idx);
+              const reg = criarRegistroHistorico(
+                finalResult,
+                descricaoObjeto,
+                initialTop20,
+                allIndices,
+                incluirClasseB
+              );
+              setCurrentHistoryId(reg.id);
+              await salvarPesquisaHistorico(reg);
+              const updated = await listarHistoricoPesquisas();
+              setHistorico(updated);
+              setSavedNotice(
+                `Pesquisa salva automaticamente no Histórico com data ${finalResult.momento_consulta}.`
+              );
+            }
+          }
+        }
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") {
+        setErroPesquisa("Pesquisa interrompida pelo usuário.");
+      } else {
+        setErroPesquisa(
+          err instanceof Error
+            ? err.message
+            : "Erro inesperado ao realizar pesquisa."
+        );
+      }
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleCancelSearch = () => {
+    abortControllerRef.current?.abort();
+    setIsSearching(false);
+  };
+
+  const handleSaveToHistoryManual = async () => {
+    if (!resultado) return;
+    const reg = criarRegistroHistorico(
+      resultado,
+      descricaoObjeto,
+      itensSelecionados,
+      indicesSelecionados,
+      incluirClasseB,
+      currentHistoryId
+    );
+    setCurrentHistoryId(reg.id);
+    await salvarPesquisaHistorico(reg);
+    const updated = await listarHistoricoPesquisas();
+    setHistorico(updated);
+    setSavedNotice(
+      `Pesquisa salva/atualizada no Histórico (${resultado.momento_consulta}) com ${itensSelecionados.length} ARP(s) selecionada(s).`
+    );
+  };
+
+  const handleRestoreHistoryEntry = (entry: RegistroHistoricoPesquisa) => {
+    setDescricaoObjeto(entry.descricaoObjeto);
+    setTermosBusca(entry.termosBusca);
+    setRequisitos(entry.resultado.requisitos || []);
+    setEscopo(entry.escopoOrgaos);
+    if (entry.ufSelecionada) {
+      setUfFiltro(entry.ufSelecionada);
+    }
+    setStatusArp(entry.statusAta);
+    setTipoData(entry.resultado.tipo_data_periodo || DATA_VIGENCIA);
+    if (entry.resultado.data_inicial) {
+      setDataInicial(entry.resultado.data_inicial);
+    }
+    if (entry.resultado.data_final) {
+      setDataFinal(entry.resultado.data_final);
+    }
+    setIncluirClasseB(entry.incluirRevisaoB);
+    setResultado(entry.resultado);
+
+    const top20 = selecionarTop20Menores(
+      entry.resultado.itens_candidatos,
+      entry.incluirRevisaoB
+    );
+    const idxSet = new Set(entry.indicesSelecionados);
+    const keys = top20
+      .filter((_, idx) => idxSet.has(idx))
+      .map((i) => chaveItemUnica(i));
+    setSelectedKeys(new Set(keys));
+    setCurrentHistoryId(entry.id);
+    setErroPesquisa(null);
+    setSavedNotice(
+      `Pesquisa de ${entry.dataHoraPesquisa} restaurada do Histórico.`
+    );
+  };
+
+  const handleDeleteHistoryEntry = async (id: string) => {
+    await removerPesquisaHistorico(id);
+    const updated = await listarHistoricoPesquisas();
+    setHistorico(updated);
+  };
+
+  const handleClearAllHistory = async () => {
+    await limparTodoHistorico();
+    setHistorico([]);
+  };
+
+  const handleExportHistoryJson = () => {
+    const json = exportarHistoricoJson(historico);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `backup_historico_pncp_${new Date()
+      .toISOString()
+      .slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportHistoryJson = async (jsonText: string) => {
+    try {
+      const importados = importarHistoricoJson(jsonText);
+      for (const reg of importados) {
+        await salvarPesquisaHistorico(reg);
+      }
+      const updated = await listarHistoricoPesquisas();
+      setHistorico(updated);
+    } catch {
+      alert("Arquivo JSON inválido para importação de histórico.");
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <HeaderInstitucional
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode(!darkMode)}
+        historicoCount={historico.length}
+        onOpenHistory={() => setShowHistoryDrawer(true)}
+        onOpenMunicipiosModal={() => setShowMunicipiosModal(true)}
+      />
+
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* 1. Scope Selector Banner */}
+        <ScopeSelectorBanner
+          escopo={escopo}
+          onChangeEscopo={setEscopo}
+          ufFiltro={ufFiltro}
+          onChangeUfFiltro={setUfFiltro}
+          showMunicipiosModal={showMunicipiosModal}
+          onCloseMunicipiosModal={() => setShowMunicipiosModal(false)}
+          onOpenMunicipiosModal={() => setShowMunicipiosModal(true)}
+        />
+
+        {/* 2. Search Parameters Form */}
+        <SearchParametersForm
+          descricaoObjeto={descricaoObjeto}
+          onChangeDescricao={setDescricaoObjeto}
+          statusArp={statusArp}
+          onChangeStatusArp={setStatusArp}
+          tipoData={tipoData}
+          onChangeTipoData={setTipoData}
+          dataInicial={dataInicial}
+          onChangeDataInicial={setDataInicial}
+          dataFinal={dataFinal}
+          onChangeDataFinal={setDataFinal}
+          salvarNoHistorico={salvarNoHistorico}
+          onChangeSalvarNoHistorico={setSalvarNoHistorico}
+          onAnalyzeRequirements={handleAnalyzeRequirements}
+          onExecuteSearch={handleExecuteSearch}
+          isSearching={isSearching}
+        />
+
+        {/* 3. Requirements & Search Terms Studio (when opened or populated) */}
+        {(showRequirementsPanel || termosBusca.length > 0) && (
+          <RequirementsReviewPanel
+            termosBusca={termosBusca}
+            onChangeTermosBusca={setTermosBusca}
+            requisitos={requisitos}
+            onChangeRequisitos={setRequisitos}
+            onReextractFromText={handleAnalyzeRequirements}
+          />
+        )}
+
+        {/* 4. Real-Time Streaming Progress */}
+        <LiveProgressBanner
+          progresso={progresso}
+          isSearching={isSearching}
+          onCancel={handleCancelSearch}
+        />
+
+        {/* Error Alert */}
+        {erroPesquisa && (
+          <div className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 text-xs flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 shrink-0 text-red-600" />
+            <div>
+              <div className="font-bold">Aviso na Execução da Pesquisa</div>
+              <div>{erroPesquisa}</div>
+            </div>
+          </div>
+        )}
+
+        {/* 5. Results Section: Consolidated Report + Analytics & Audit Dashboard */}
+        {resultado && (
+          <>
+            <ConsolidatedReportPanel
+              descricaoObjeto={descricaoObjeto}
+              resultado={resultado}
+              candidatosTop20={candidatosTop20Ativos}
+              itensSelecionados={itensSelecionados}
+              indicesSelecionados={indicesSelecionados}
+              estatisticas={estatisticasSelecionados}
+              onOpenTop20Modal={() => setShowTop20Modal(true)}
+              onSaveToHistoryManual={handleSaveToHistoryManual}
+              savedNotice={savedNotice}
+            />
+
+            <AuditAnalyticsDashboard
+              resultado={resultado}
+              selectedKeys={selectedKeys}
+              estatisticasSelecionados={estatisticasSelecionados}
+            />
+          </>
+        )}
+      </main>
+
+      {/* Top 20 Selection Modal */}
+      {resultado && (
+        <Top20SelectionModal
+          isOpen={showTop20Modal}
+          onClose={() => setShowTop20Modal(false)}
+          candidatosTop20={candidatosTop20Ativos}
+          selectedKeys={selectedKeys}
+          onChangeSelectedKeys={setSelectedKeys}
+          incluirClasseB={incluirClasseB}
+          onChangeIncluirClasseB={handleToggleIncluirClasseB}
+          totalClasseBDisponiveis={totalClasseBDisponiveis}
+        />
+      )}
+
+      {/* Saved Search History Slide-over Drawer */}
+      <HistoryDrawer
+        isOpen={showHistoryDrawer}
+        onClose={() => setShowHistoryDrawer(false)}
+        historico={historico}
+        onRestoreEntry={handleRestoreHistoryEntry}
+        onDeleteEntry={handleDeleteHistoryEntry}
+        onClearAll={handleClearAllHistory}
+        onExportJson={handleExportHistoryJson}
+        onImportJson={handleImportHistoryJson}
+      />
+
+      {/* Institutional Footer */}
+      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-5 px-4 mt-12">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#1B365D] dark:text-[#D4AF37]" />
+            <span>
+              <strong>Pesquisa de Preços PNCP</strong> • Auditoria R1–R7 • Fuso
+              Horário Oficial <code className="font-mono">America/Recife</code>
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
+            <Award className="w-4 h-4 text-[#B59410]" />
+            <span>Desenvolvido por Sérgio Dantas Torres</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}

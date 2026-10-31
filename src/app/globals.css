@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-heading: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    --font-sans: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+    --bg-primary: #F8FAFC;
+    --bg-secondary: #FFFFFF;
+    --text-primary: #0F172A;
+    --text-secondary: #475569;
+    --border-color: #E2E8F0;
+    --navy-primary: #1B365D;
+    --brass-accent: #B59410;
+  }
+
+  .dark {
+    --bg-primary: #0B1120;
+    --bg-secondary: #111827;
+    --text-primary: #F8FAFC;
+    --text-secondary: #94A3B8;
+    --border-color: #1E293B;
+    --navy-primary: #2B4C7E;
+    --brass-accent: #D4AF37;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.bg-gov-mesh {
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(27, 54, 93, 0.08) 0px, transparent 50%),
+    radial-gradient(at 85% 10%, rgba(181, 148, 16, 0.08) 0px, transparent 45%),
+    radial-gradient(at 50% 90%, rgba(27, 54, 93, 0.05) 0px, transparent 50%);
+}
+
+.dark .bg-gov-mesh {
+  background-image: 
+    radial-gradient(at 15% 15%, rgba(43, 76, 126, 0.18) 0px, transparent 50%),
+    radial-gradient(at 85% 10%, rgba(212, 175, 55, 0.10) 0px, transparent 45%),
+    radial-gradient(at 50% 90%, rgba(15, 23, 42, 0.4) 0px, transparent 50%);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.dark .glass-panel {
+  background: rgba(17, 24, 39, 0.86);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 41, 59, 0.9);
+}
+
+/* Custom sleek scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}

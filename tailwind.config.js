@@ -37,6 +37,7 @@ module.exports = {
         },
       },
       fontFamily: {
+        heading: ["var(--font-heading)", "Plus Jakarta Sans", "system-ui", "sans-serif"],
         sans: ["var(--font-sans)", "IBM Plex Sans", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "JetBrains Mono", "Fira Code", "monospace"],
       },
