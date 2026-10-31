@@ -30,6 +30,7 @@ import {
   calcularEstatisticasPrecos,
   chaveItemUnica,
 } from "@/lib/domain/statistics";
+import { hojeRecifeIso } from "@/lib/domain/tz-recife";
 import {
   listarHistoricoPesquisas,
   criarRegistroHistorico,
@@ -42,11 +43,9 @@ import {
 import { AlertTriangle, Award, ShieldCheck } from "lucide-react";
 
 function getDefaultDateRange(): { inicio: string; fim: string } {
-  const hoje = new Date();
-  const fim = hoje.toISOString().slice(0, 10);
-  const umAnoAtras = new Date(hoje);
-  umAnoAtras.setFullYear(hoje.getFullYear() - 1);
-  const inicio = umAnoAtras.toISOString().slice(0, 10);
+  const fim = hojeRecifeIso();
+  const [anoStr, mesStr, diaStr] = fim.split("-");
+  const inicio = `${Number(anoStr) - 1}-${mesStr}-${diaStr}`;
   return { inicio, fim };
 }
 

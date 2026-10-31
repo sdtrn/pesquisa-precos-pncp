@@ -52,7 +52,7 @@ const SCOPE_META: Record<
     shortBadge: "Escopo Nacional Amplo",
     subtitle: "Todas as esferas e municípios brasileiros",
     explanation:
-      "Atas de Registro de Preços de todos os órgãos e entidades públicas do Brasil (União, Estados, Distrito Federal e todos os Municípios), mantendo o descarte de segurança apenas para registros sem esfera administrativa identificada (Regra R7).",
+      "Atas de Registro de Preços de todos os órgãos e entidades públicas do Brasil (União, Estados, Distrito Federal e todos os Municípios), registrando na Memória de Pesquisa se cada órgão atende ou não ao critério de validade (Sim/Não).",
   },
   [ESCOPO_POR_ESTADO]: {
     icon: MapPin,
