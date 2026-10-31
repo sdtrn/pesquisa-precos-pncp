@@ -1,0 +1,1595 @@
+[
+  {
+    "uf": "AC",
+    "estado": "Acre",
+    "municipio": "Rio Branco",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1200401"
+  },
+  {
+    "uf": "AL",
+    "estado": "Alagoas",
+    "municipio": "Maceió",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 4 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2704302"
+  },
+  {
+    "uf": "AP",
+    "estado": "Amapá",
+    "municipio": "Macapá",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1600303"
+  },
+  {
+    "uf": "AM",
+    "estado": "Amazonas",
+    "municipio": "Manaus",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "R$ 11,10 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1302603"
+  },
+  {
+    "uf": "BA",
+    "estado": "Bahia",
+    "municipio": "Camaçari",
+    "perfil_localizacao": "Polo Industrial / Região Metropolitana",
+    "porte_orcamentario": "R$ 2,50 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "2905701"
+  },
+  {
+    "uf": "BA",
+    "estado": "Bahia",
+    "municipio": "Feira de Santana",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2910800"
+  },
+  {
+    "uf": "BA",
+    "estado": "Bahia",
+    "municipio": "Lauro de Freitas",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2919207"
+  },
+  {
+    "uf": "BA",
+    "estado": "Bahia",
+    "municipio": "Salvador",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "R$ 13,98 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "2927408"
+  },
+  {
+    "uf": "BA",
+    "estado": "Bahia",
+    "municipio": "Vitória da Conquista",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2933307"
+  },
+  {
+    "uf": "CE",
+    "estado": "Ceará",
+    "municipio": "Caucaia",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2303709"
+  },
+  {
+    "uf": "CE",
+    "estado": "Ceará",
+    "municipio": "Fortaleza",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "R$ 13,27 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "2304400"
+  },
+  {
+    "uf": "CE",
+    "estado": "Ceará",
+    "municipio": "Juazeiro do Norte",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2307304"
+  },
+  {
+    "uf": "CE",
+    "estado": "Ceará",
+    "municipio": "Maracanaú",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,3 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2307650"
+  },
+  {
+    "uf": "CE",
+    "estado": "Ceará",
+    "municipio": "Sobral",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2312908"
+  },
+  {
+    "uf": "ES",
+    "estado": "Espírito Santo",
+    "municipio": "Cariacica",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3201308"
+  },
+  {
+    "uf": "ES",
+    "estado": "Espírito Santo",
+    "municipio": "Linhares",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,3 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3203205"
+  },
+  {
+    "uf": "ES",
+    "estado": "Espírito Santo",
+    "municipio": "Serra",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 2,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3205002"
+  },
+  {
+    "uf": "ES",
+    "estado": "Espírito Santo",
+    "municipio": "Vila Velha",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3205200"
+  },
+  {
+    "uf": "ES",
+    "estado": "Espírito Santo",
+    "municipio": "Vitória",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 2,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3205309"
+  },
+  {
+    "uf": "GO",
+    "estado": "Goiás",
+    "municipio": "Anápolis",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5201108"
+  },
+  {
+    "uf": "GO",
+    "estado": "Goiás",
+    "municipio": "Aparecida de Goiânia",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 2,2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5201405"
+  },
+  {
+    "uf": "GO",
+    "estado": "Goiás",
+    "municipio": "Goiânia",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 8 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5208707"
+  },
+  {
+    "uf": "GO",
+    "estado": "Goiás",
+    "municipio": "Rio Verde",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5218805"
+  },
+  {
+    "uf": "MA",
+    "estado": "Maranhão",
+    "municipio": "Imperatriz",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2105302"
+  },
+  {
+    "uf": "MA",
+    "estado": "Maranhão",
+    "municipio": "São Luís",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 4,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2111300"
+  },
+  {
+    "uf": "MT",
+    "estado": "Mato Grosso",
+    "municipio": "Cuiabá",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 4,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5103403"
+  },
+  {
+    "uf": "MT",
+    "estado": "Mato Grosso",
+    "municipio": "Rondonópolis",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5107602"
+  },
+  {
+    "uf": "MT",
+    "estado": "Mato Grosso",
+    "municipio": "Sinop",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,3 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5107909"
+  },
+  {
+    "uf": "MT",
+    "estado": "Mato Grosso",
+    "municipio": "Sorriso",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5107925"
+  },
+  {
+    "uf": "MT",
+    "estado": "Mato Grosso",
+    "municipio": "Várzea Grande",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5108402"
+  },
+  {
+    "uf": "MS",
+    "estado": "Mato Grosso do Sul",
+    "municipio": "Campo Grande",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 6 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5002704"
+  },
+  {
+    "uf": "MS",
+    "estado": "Mato Grosso do Sul",
+    "municipio": "Dourados",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,6 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5003702"
+  },
+  {
+    "uf": "MS",
+    "estado": "Mato Grosso do Sul",
+    "municipio": "Três Lagoas",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "5008305"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Belo Horizonte",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "R$ 19,29 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3106200"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Betim",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "R$ 3,30 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3106705"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Contagem",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 2,8 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3118601"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Governador Valadares",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,3 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3127701"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Ipatinga",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3131307"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Juiz de Fora",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 3 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3136702"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Montes Claros",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3143302"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Nova Lima",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3144805"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Poços de Caldas",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3151800"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Ribeirão das Neves",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3154606"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Sete Lagoas",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3167202"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Uberaba",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 2,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3170107"
+  },
+  {
+    "uf": "MG",
+    "estado": "Minas Gerais",
+    "municipio": "Uberlândia",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 4 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3170206"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Araucária",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4101804"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Cascavel",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4104808"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Colombo",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4105805"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Curitiba",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "R$ 13,43 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "4106902"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Foz do Iguaçu",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,9 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4108304"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Guarapuava",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4109401"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Londrina",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 3 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4113700"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Maringá",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 2,7 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4115200"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Paranaguá",
+    "perfil_localizacao": "Litoral / Porto",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4118204"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Ponta Grossa",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4119905"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "São José dos Pinhais",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,7 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4125506"
+  },
+  {
+    "uf": "PR",
+    "estado": "Paraná",
+    "municipio": "Toledo",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4127700"
+  },
+  {
+    "uf": "PB",
+    "estado": "Paraíba",
+    "municipio": "Campina Grande",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,7 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2504009"
+  },
+  {
+    "uf": "PB",
+    "estado": "Paraíba",
+    "municipio": "João Pessoa",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 4 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2507507"
+  },
+  {
+    "uf": "PA",
+    "estado": "Pará",
+    "municipio": "Ananindeua",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,6 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1500800"
+  },
+  {
+    "uf": "PA",
+    "estado": "Pará",
+    "municipio": "Barcarena",
+    "perfil_localizacao": "Interior / Polo Portuário",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1501303"
+  },
+  {
+    "uf": "PA",
+    "estado": "Pará",
+    "municipio": "Belém",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1501402"
+  },
+  {
+    "uf": "PA",
+    "estado": "Pará",
+    "municipio": "Canaã dos Carajás",
+    "perfil_localizacao": "Interior / Polo Mineral",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1502152"
+  },
+  {
+    "uf": "PA",
+    "estado": "Pará",
+    "municipio": "Marabá",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1504208"
+  },
+  {
+    "uf": "PA",
+    "estado": "Pará",
+    "municipio": "Parauapebas",
+    "perfil_localizacao": "Interior / Polo Mineral",
+    "porte_orcamentario": "Acima de R$ 2,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1505536"
+  },
+  {
+    "uf": "PA",
+    "estado": "Pará",
+    "municipio": "Santarém",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1506807"
+  },
+  {
+    "uf": "PE",
+    "estado": "Pernambuco",
+    "municipio": "Caruaru",
+    "perfil_localizacao": "Interior / Agreste",
+    "porte_orcamentario": "Acima de R$ 1,7 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2604106"
+  },
+  {
+    "uf": "PE",
+    "estado": "Pernambuco",
+    "municipio": "Jaboatão dos Guararapes",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 2,2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2607901"
+  },
+  {
+    "uf": "PE",
+    "estado": "Pernambuco",
+    "municipio": "Olinda",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2609600"
+  },
+  {
+    "uf": "PE",
+    "estado": "Pernambuco",
+    "municipio": "Paulista",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2610707"
+  },
+  {
+    "uf": "PE",
+    "estado": "Pernambuco",
+    "municipio": "Petrolina",
+    "perfil_localizacao": "Interior / Sertão",
+    "porte_orcamentario": "Acima de R$ 1,6 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2611101"
+  },
+  {
+    "uf": "PE",
+    "estado": "Pernambuco",
+    "municipio": "Recife",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "R$ 9,51 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "2611606"
+  },
+  {
+    "uf": "PI",
+    "estado": "Piauí",
+    "municipio": "Teresina",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2211001"
+  },
+  {
+    "uf": "RN",
+    "estado": "Rio Grande do Norte",
+    "municipio": "Mossoró",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,3 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2408003"
+  },
+  {
+    "uf": "RN",
+    "estado": "Rio Grande do Norte",
+    "municipio": "Natal",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 4,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2408102"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Canoas",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 2,8 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4304606"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Caxias do Sul",
+    "perfil_localizacao": "Serra Gaúcha",
+    "porte_orcamentario": "Acima de R$ 3,2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4305108"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Gravataí",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4309209"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Novo Hamburgo",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4313409"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Passo Fundo",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4314100"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Pelotas",
+    "perfil_localizacao": "Sul do Estado",
+    "porte_orcamentario": "Acima de R$ 1,7 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4314407"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Porto Alegre",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "R$ 10,39 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "4314902"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Rio Grande",
+    "perfil_localizacao": "Litoral / Porto",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4315602"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Santa Maria",
+    "perfil_localizacao": "Centro",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4316907"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "São Leopoldo",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4318705"
+  },
+  {
+    "uf": "RS",
+    "estado": "Rio Grande do Sul",
+    "municipio": "Viamão",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4323002"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Angra dos Reis",
+    "perfil_localizacao": "Costa Verde",
+    "porte_orcamentario": "Acima de R$ 2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3300100"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Belford Roxo",
+    "perfil_localizacao": "Baixada Fluminense",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3300456"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Cabo Frio",
+    "perfil_localizacao": "Região dos Lagos",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3300704"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Campos dos Goytacazes",
+    "perfil_localizacao": "Norte Fluminense",
+    "porte_orcamentario": "Acima de R$ 2,7 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3301009"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Duque de Caxias",
+    "perfil_localizacao": "Baixada Fluminense",
+    "porte_orcamentario": "R$ 5,60 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3301702"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Itaboraí",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,3 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3301900"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Macaé",
+    "perfil_localizacao": "Norte Fluminense / Petróleo",
+    "porte_orcamentario": "Acima de R$ 3,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3302403"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Magé",
+    "perfil_localizacao": "Baixada Fluminense",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3302502"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Maricá",
+    "perfil_localizacao": "Região Metropolitana / Petróleo",
+    "porte_orcamentario": "R$ 6,90 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3302700"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Mesquita",
+    "perfil_localizacao": "Baixada Fluminense",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3302858"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Niterói",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "R$ 6,30 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3303302"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Nova Iguaçu",
+    "perfil_localizacao": "Baixada Fluminense",
+    "porte_orcamentario": "Acima de R$ 2,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3303500"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Petrópolis",
+    "perfil_localizacao": "Região Serrana",
+    "porte_orcamentario": "Acima de R$ 1,6 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3303906"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Resende",
+    "perfil_localizacao": "Sul Fluminense",
+    "porte_orcamentario": "Acima de R$ 1,1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3304201"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Rio de Janeiro",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "R$ 39,97 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3304557"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Saquarema",
+    "perfil_localizacao": "Região dos Lagos / Petróleo",
+    "porte_orcamentario": "Acima de R$ 2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3305505"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "São Gonçalo",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 2,1 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3304904"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "São João de Meriti",
+    "perfil_localizacao": "Baixada Fluminense",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3305109"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Teresópolis",
+    "perfil_localizacao": "Região Serrana",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3305802"
+  },
+  {
+    "uf": "RJ",
+    "estado": "Rio de Janeiro",
+    "municipio": "Volta Redonda",
+    "perfil_localizacao": "Sul Fluminense",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3306305"
+  },
+  {
+    "uf": "RO",
+    "estado": "Rondônia",
+    "municipio": "Porto Velho",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 2,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1100205"
+  },
+  {
+    "uf": "RR",
+    "estado": "Roraima",
+    "municipio": "Boa Vista",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1400100"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Balneário Camboriú",
+    "perfil_localizacao": "Litoral",
+    "porte_orcamentario": "Acima de R$ 1,6 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4202008"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Blumenau",
+    "perfil_localizacao": "Vale do Itajaí",
+    "porte_orcamentario": "Acima de R$ 3 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4202404"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Brusque",
+    "perfil_localizacao": "Vale do Itajaí",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4202909"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Chapecó",
+    "perfil_localizacao": "Oeste",
+    "porte_orcamentario": "Acima de R$ 1,7 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4204202"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Criciúma",
+    "perfil_localizacao": "Sul do Estado",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4204608"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Florianópolis",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 3,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4205407"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Itajaí",
+    "perfil_localizacao": "Litoral Norte / Porto",
+    "porte_orcamentario": "Acima de R$ 2,8 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4208203"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Jaraguá do Sul",
+    "perfil_localizacao": "Norte",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4208906"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Joinville",
+    "perfil_localizacao": "Norte / Polo Industrial",
+    "porte_orcamentario": "Acima de R$ 4,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4209102"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "Palhoça",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4211900"
+  },
+  {
+    "uf": "SC",
+    "estado": "Santa Catarina",
+    "municipio": "São José",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "4216602"
+  },
+  {
+    "uf": "SE",
+    "estado": "Sergipe",
+    "municipio": "Aracaju",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 3,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2800308"
+  },
+  {
+    "uf": "SE",
+    "estado": "Sergipe",
+    "municipio": "Nossa Senhora do Socorro",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "2804805"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Americana",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3501608"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Araraquara",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3503208"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Araçatuba",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3502804"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Barretos",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3505500"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Barueri",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "R$ 5,60 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3505708"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Bauru",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,9 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3506003"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Botucatu",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3507506"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Bragança Paulista",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3507605"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Campinas",
+    "perfil_localizacao": "Interior / Região Metropolitana",
+    "porte_orcamentario": "R$ 9,18 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3509502"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Caraguatatuba",
+    "perfil_localizacao": "Litoral Norte",
+    "porte_orcamentario": "Acima de R$ 1,3 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3510500"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Carapicuíba",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3510609"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Cotia",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3513009"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Diadema",
+    "perfil_localizacao": "ABC Paulista",
+    "porte_orcamentario": "Acima de R$ 2,1 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3513801"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Embu das Artes",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3515004"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Franca",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,6 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3516200"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Guarujá",
+    "perfil_localizacao": "Baixada Santista",
+    "porte_orcamentario": "Acima de R$ 2,4 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3518701"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Guarulhos",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "R$ 7,41 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3518800"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Hortolândia",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3519071"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Ilhabela",
+    "perfil_localizacao": "Litoral Norte / Petróleo",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3520400"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Indaiatuba",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3520509"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Itapevi",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3522505"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Itaquaquecetuba",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3523107"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Jacareí",
+    "perfil_localizacao": "Vale do Paraíba",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3524402"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Jundiaí",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 3,6 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3525904"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Limeira",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 2,1 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3526902"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Marília",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,6 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3529005"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Mauá",
+    "perfil_localizacao": "ABC Paulista",
+    "porte_orcamentario": "Acima de R$ 1,9 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3529401"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Mogi das Cruzes",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 2,7 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3530607"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Osasco",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "R$ 5,40 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3534401"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Paulínia",
+    "perfil_localizacao": "Polo Petroquímico",
+    "porte_orcamentario": "Acima de R$ 2,3 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3536505"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Pindamonhangaba",
+    "perfil_localizacao": "Vale do Paraíba",
+    "porte_orcamentario": "Acima de R$ 1,1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3538006"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Piracicaba",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 2,7 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3538709"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Praia Grande",
+    "perfil_localizacao": "Baixada Santista",
+    "porte_orcamentario": "Acima de R$ 2,6 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3541000"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Presidente Prudente",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,2 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3541406"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Ribeirão Pires",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3543303"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Ribeirão Preto",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 4,6 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3543402"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Rio Claro",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,3 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3543907"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Santana de Parnaíba",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3547304"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Santo André",
+    "perfil_localizacao": "ABC Paulista",
+    "porte_orcamentario": "Acima de R$ 4,5 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3547809"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Santos",
+    "perfil_localizacao": "Baixada Santista / Porto",
+    "porte_orcamentario": "R$ 5,10 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3548500"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Sorocaba",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "R$ 5,10 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3552205"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Sumaré",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3552403"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Suzano",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,6 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3552502"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "São Bernardo do Campo",
+    "perfil_localizacao": "ABC Paulista",
+    "porte_orcamentario": "R$ 6,70 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3548708"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "São Caetano do Sul",
+    "perfil_localizacao": "ABC Paulista",
+    "porte_orcamentario": "Acima de R$ 2,4 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3548807"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "São Carlos",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1,5 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3548906"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "São José do Rio Preto",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 3,2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3549805"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "São José dos Campos",
+    "perfil_localizacao": "Vale do Paraíba",
+    "porte_orcamentario": "Acima de R$ 4,2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3549904"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "São Paulo",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "R$ 109,71 bilhões",
+    "fonte": "Brasil 61 / SICONFI",
+    "codigo_ibge": "3550308"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "São Vicente",
+    "perfil_localizacao": "Baixada Santista",
+    "porte_orcamentario": "Acima de R$ 1,7 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3551009"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Taboão da Serra",
+    "perfil_localizacao": "Região Metropolitana",
+    "porte_orcamentario": "Acima de R$ 1,4 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3552809"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Taubaté",
+    "perfil_localizacao": "Vale do Paraíba",
+    "porte_orcamentario": "Acima de R$ 1,8 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3554102"
+  },
+  {
+    "uf": "SP",
+    "estado": "São Paulo",
+    "municipio": "Valinhos",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "3556206"
+  },
+  {
+    "uf": "TO",
+    "estado": "Tocantins",
+    "municipio": "Araguaína",
+    "perfil_localizacao": "Interior",
+    "porte_orcamentario": "Acima de R$ 1 bilhão",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1702109"
+  },
+  {
+    "uf": "TO",
+    "estado": "Tocantins",
+    "municipio": "Palmas",
+    "perfil_localizacao": "Capital",
+    "porte_orcamentario": "Acima de R$ 2,2 bilhões",
+    "fonte": "SICONFI / STN",
+    "codigo_ibge": "1721000"
+  }
+]
