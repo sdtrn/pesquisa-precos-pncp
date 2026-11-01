@@ -8,4 +8,4 @@ Pre-flight: no shared interface conflicts detected.
 - Task 3: complete (commit 66317b6, tests: node --experimental-strip-types --import ./register.js --test tests/domain/desconto-pipeline.test.ts -> pass 1)
 - Task 4: complete (commit e684c6a, UI selector, state integration and formatValorOuTaxa in Top20SelectionModal & AuditAnalyticsDashboard)
 - Task 5: complete (commit d67e273, ConsolidatedReportPanel, exporter-xlsx, exporter-pdf, exporter-csv with maior_desconto support, tests/export/exporters-desconto.test.ts passing)
-- Task 6: in_progress
+- Task 6: complete (all 31 tests passed in 7 suites across domain, export, and storage)
