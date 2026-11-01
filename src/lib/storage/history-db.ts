@@ -40,6 +40,11 @@ export function criarRegistroHistorico(
     descricaoObjeto: descricaoObjeto.trim() || res.termos_busca.join(", "),
     escopoOrgaos: res.escopo_orgaos,
     ufSelecionada: res.uf_selecionada || null,
+    regiaoSelecionada: res.regiao_selecionada || null,
+    apenasMunicipiosBilionarios:
+      res.apenas_municipios_bilionarios !== undefined
+        ? res.apenas_municipios_bilionarios
+        : true,
     statusAta: res.status_ata,
     periodoAplicado: res.periodo_aplicado_str,
     termosBusca: res.termos_busca,

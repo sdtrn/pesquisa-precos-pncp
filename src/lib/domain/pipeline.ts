@@ -1,6 +1,7 @@
 import {
   ESCOPO_PE_RECIFE,
   ESCOPO_POR_ESTADO,
+  ESCOPO_POR_REGIAO,
   ESCOPO_VALIDADE,
   TOP_N_ITENS_JANELA,
 } from "@/data/constants";
@@ -395,43 +396,60 @@ export async function executarPipelinePesquisa(
       continue;
     }
 
-    if (params.escopoOrgaos === ESCOPO_VALIDADE && !atendeValidadeBool) {
-      const motivoOrgao =
-        avalOrgao.motivoDescarteEscopoA || "município fora da lista";
-      descartados.push({
-        Nível: "Ata",
-        "Motivo do Descarte": motivoOrgao,
-        "Nº da ARP / Controle PNCP": numControleAta,
-        "Órgão Gerenciador/UF": orgaoUfStr,
-        Esfera: esferaNorm,
-        Município: munS || "-",
-        "Nº do Item/Lote": "-",
-        "Descrição do Objeto / Item": String(ataS.description || ""),
-        "Valor Unitário (R$)": null,
-        Unidade: "-",
-        "Data de Assinatura": formatarDataBr(dtAssS),
-        "Vigência da Ata": vigenciaStrS,
-        "Situação da Ata": situacaoAtaS,
-        "Link no PNCP": linkPncp,
-      });
-      continue;
+    const apenasBilionarios =
+      params.apenasMunicipiosBilionarios !== undefined
+        ? Boolean(params.apenasMunicipiosBilionarios)
+        : true;
+
+    if (params.escopoOrgaos === ESCOPO_VALIDADE) {
+      const aprovadoValidade = apenasBilionarios
+        ? atendeValidadeBool
+        : ["F", "E", "D", "M"].includes(esferaIdS);
+
+      if (!aprovadoValidade) {
+        const motivoOrgao =
+          avalOrgao.motivoDescarteEscopoA || "município fora da lista";
+        descartados.push({
+          Nível: "Ata",
+          "Motivo do Descarte": motivoOrgao,
+          "Nº da ARP / Controle PNCP": numControleAta,
+          "Órgão Gerenciador/UF": orgaoUfStr,
+          Esfera: esferaNorm,
+          Município: munS || "-",
+          "Nº do Item/Lote": "-",
+          "Descrição do Objeto / Item": String(ataS.description || ""),
+          "Valor Unitário (R$)": null,
+          Unidade: "-",
+          "Data de Assinatura": formatarDataBr(dtAssS),
+          "Vigência da Ata": vigenciaStrS,
+          "Situação da Ata": situacaoAtaS,
+          "Link no PNCP": linkPncp,
+        });
+        continue;
+      }
     }
 
     if (
+      params.escopoOrgaos === ESCOPO_POR_REGIAO ||
       params.escopoOrgaos === ESCOPO_POR_ESTADO ||
       params.escopoOrgaos === ESCOPO_PE_RECIFE
     ) {
       const poderIdS = String(ataS.poder_id || "").trim().toUpperCase();
+      const paramFiltroGeografico =
+        params.escopoOrgaos === ESCOPO_POR_REGIAO
+          ? params.regiaoSelecionada || params.ufSelecionada || "Nordeste"
+          : params.ufSelecionada;
       const { aprovado, motivo: motivoEsp } = verificarEscopoEspecialOrgao(
         params.escopoOrgaos,
-        params.ufSelecionada,
+        paramFiltroGeografico,
         esferaIdS,
         poderIdS,
         ufS,
         munS,
         codIbgeS,
         orgaoNome,
-        unidadeNome
+        unidadeNome,
+        apenasBilionarios
       );
       if (!aprovado) {
         descartados.push({
@@ -1178,6 +1196,11 @@ export async function executarPipelinePesquisa(
     momento_consulta: dataHoraConsultaStr,
     escopo_orgaos: params.escopoOrgaos,
     uf_selecionada: params.ufSelecionada || null,
+    regiao_selecionada: params.regiaoSelecionada || null,
+    apenas_municipios_bilionarios:
+      params.apenasMunicipiosBilionarios !== undefined
+        ? Boolean(params.apenasMunicipiosBilionarios)
+        : true,
     status_ata: params.statusAta,
     tipo_data_periodo: params.tipoDataPeriodo,
     data_inicial: dtIni,

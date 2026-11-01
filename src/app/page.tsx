@@ -15,9 +15,9 @@ import { ConsolidatedReportPanel } from "@/components/ConsolidatedReportPanel";
 import { HistoryDrawer } from "@/components/HistoryDrawer";
 import {
   ESCOPO_VALIDADE,
-  ESCOPO_POR_ESTADO,
+  ESCOPO_POR_REGIAO,
   STATUS_VIGENTES,
-  DATA_VIGENCIA,
+  DATA_ASSINATURA,
 } from "@/data/constants";
 import type {
   RequisitoMinimo,
@@ -54,10 +54,13 @@ export default function HomePage() {
 
   // Scope & Parameters State
   const [escopo, setEscopo] = useState<string>(ESCOPO_VALIDADE);
-  const [ufFiltro, setUfFiltro] = useState<string>("PE");
+  const [regiaoFiltro, setRegiaoFiltro] = useState<string>("Nordeste");
+  const [apenasMunicipiosBilionarios, setApenasMunicipiosBilionarios] =
+    useState<boolean>(true);
   const [descricaoObjeto, setDescricaoObjeto] = useState<string>("");
   const [statusArp, setStatusArp] = useState<string>(STATUS_VIGENTES);
-  const [tipoData, setTipoData] = useState<string>(DATA_VIGENCIA);
+  // Pré-selecionado "Data de assinatura da ata" conforme solicitação do usuário
+  const [tipoData, setTipoData] = useState<string>(DATA_ASSINATURA);
   const [dataInicial, setDataInicial] = useState<string>("");
   const [dataFinal, setDataFinal] = useState<string>("");
   const [salvarNoHistorico, setSalvarNoHistorico] = useState<boolean>(true);
@@ -219,7 +222,8 @@ export default function HomePage() {
       termosBusca: termosParaUsar,
       requisitos: reqsParaUsar,
       escopoOrgaos: escopo,
-      ufSelecionada: escopo === ESCOPO_POR_ESTADO ? ufFiltro : null,
+      regiaoSelecionada: escopo === ESCOPO_POR_REGIAO ? regiaoFiltro : null,
+      apenasMunicipiosBilionarios,
       statusAta: statusArp,
       tipoDataPeriodo: tipoData,
       dataInicial,
@@ -348,11 +352,14 @@ export default function HomePage() {
     setTermosBusca(entry.termosBusca);
     setRequisitos(entry.resultado.requisitos || []);
     setEscopo(entry.escopoOrgaos);
-    if (entry.ufSelecionada) {
-      setUfFiltro(entry.ufSelecionada);
+    if (entry.regiaoSelecionada) {
+      setRegiaoFiltro(entry.regiaoSelecionada);
+    }
+    if (entry.apenasMunicipiosBilionarios !== undefined) {
+      setApenasMunicipiosBilionarios(entry.apenasMunicipiosBilionarios);
     }
     setStatusArp(entry.statusAta);
-    setTipoData(entry.resultado.tipo_data_periodo || DATA_VIGENCIA);
+    setTipoData(entry.resultado.tipo_data_periodo || DATA_ASSINATURA);
     if (entry.resultado.data_inicial) {
       setDataInicial(entry.resultado.data_inicial);
     }
@@ -432,8 +439,10 @@ export default function HomePage() {
         <ScopeSelectorBanner
           escopo={escopo}
           onChangeEscopo={setEscopo}
-          ufFiltro={ufFiltro}
-          onChangeUfFiltro={setUfFiltro}
+          regiaoFiltro={regiaoFiltro}
+          onChangeRegiaoFiltro={setRegiaoFiltro}
+          apenasMunicipiosBilionarios={apenasMunicipiosBilionarios}
+          onChangeApenasMunicipiosBilionarios={setApenasMunicipiosBilionarios}
           showMunicipiosModal={showMunicipiosModal}
           onCloseMunicipiosModal={() => setShowMunicipiosModal(false)}
           onOpenMunicipiosModal={() => setShowMunicipiosModal(true)}

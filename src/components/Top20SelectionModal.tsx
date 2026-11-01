@@ -17,6 +17,7 @@ import {
   identificarOutliersIqr,
   chaveItemUnica,
 } from "@/lib/domain/statistics";
+import { HelpTooltip } from "@/components/HelpTooltip";
 
 interface Top20SelectionModalProps {
   isOpen: boolean;
@@ -162,22 +163,40 @@ export function Top20SelectionModal({
         <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 space-y-3">
           {/* Top Row: Class B Toggle + Action Buttons */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <label className="inline-flex items-center gap-2.5 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={incluirClasseB}
-                onChange={(e) => onChangeIncluirClasseB(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-[#1B365D] focus:ring-[#1B365D]"
+            <div className="flex items-center gap-1.5">
+              <label className="inline-flex items-center gap-2.5 text-xs font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={incluirClasseB}
+                  onChange={(e) => onChangeIncluirClasseB(e.target.checked)}
+                  className="w-4 h-4 rounded border-slate-300 text-[#1B365D] focus:ring-[#1B365D]"
+                />
+                <span>
+                  Incluir itens de revisão manual (<strong>Aderência B</strong>) nos candidatos
+                  {totalClasseBDisponiveis > 0 && (
+                    <span className="ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-mono text-[11px]">
+                      +{totalClasseBDisponiveis} disponível(is)
+                    </span>
+                  )}
+                </span>
+              </label>
+              <HelpTooltip
+                title="Filtro: Incluir Itens de Aderência B"
+                summary="Define se os itens classificados como 'B' entram na lista dos 20 menores preços:"
+                options={[
+                  {
+                    label: "Desmarcado (Apenas Classe A — Padrão)",
+                    description:
+                      "Exibe apenas itens que comprovaram explicitamente 100% dos requisitos técnicos no texto do PNCP.",
+                  },
+                  {
+                    label: "Marcado (Classes A + B)",
+                    description:
+                      "Inclui também itens compatíveis onde alguma especificação secundária não foi detalhada no resumo da API (exigindo conferência visual no PDF da ata).",
+                  },
+                ]}
               />
-              <span>
-                Incluir itens de revisão manual (<strong>Aderência B</strong>) nos candidatos
-                {totalClasseBDisponiveis > 0 && (
-                  <span className="ml-1.5 px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 font-mono text-[11px]">
-                    +{totalClasseBDisponiveis} disponível(is)
-                  </span>
-                )}
-              </span>
-            </label>
+            </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <button

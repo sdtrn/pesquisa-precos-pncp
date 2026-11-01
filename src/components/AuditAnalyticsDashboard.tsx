@@ -28,6 +28,7 @@ import {
 } from "recharts";
 import type { ResultadoPesquisa, EstatisticasPrecos } from "@/lib/domain/types";
 import { chaveItemUnica } from "@/lib/domain/statistics";
+import { HelpTooltip } from "@/components/HelpTooltip";
 
 interface AuditAnalyticsDashboardProps {
   resultado: ResultadoPesquisa;
@@ -502,17 +503,39 @@ export function AuditAnalyticsDashboard({
                     className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                   />
                 </div>
-                <select
-                  value={filtroClasseMemoria}
-                  onChange={(e) => setFiltroClasseMemoria(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
-                >
-                  <option value="TODAS">
-                    Classes A e B ({resultado.itens_candidatos.length})
-                  </option>
-                  <option value="A">Somente Classe A ({countClasseA})</option>
-                  <option value="B">Somente Classe B ({countClasseB})</option>
-                </select>
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={filtroClasseMemoria}
+                    onChange={(e) => setFiltroClasseMemoria(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono"
+                  >
+                    <option value="TODAS">
+                      Classes A e B ({resultado.itens_candidatos.length})
+                    </option>
+                    <option value="A">Somente Classe A ({countClasseA})</option>
+                    <option value="B">Somente Classe B ({countClasseB})</option>
+                  </select>
+                  <HelpTooltip
+                    title="Filtro de Classe na Memória de Pesquisa"
+                    options={[
+                      {
+                        label: "Classes A e B",
+                        description: "Exibe todos os itens qualificados na pesquisa.",
+                      },
+                      {
+                        label: "Somente Classe A",
+                        description:
+                          "Exibe apenas itens com 100% dos requisitos comprovados no texto da API.",
+                      },
+                      {
+                        label: "Somente Classe B",
+                        description:
+                          "Exibe itens aprovados com ressalva para revisão manual.",
+                      },
+                    ]}
+                    align="right"
+                  />
+                </div>
               </div>
 
               <div className="overflow-x-auto max-h-96 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -597,20 +620,27 @@ export function AuditAnalyticsDashboard({
                     className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
                   />
                 </div>
-                <select
-                  value={filtroMotivoDescarte}
-                  onChange={(e) => setFiltroMotivoDescarte(e.target.value)}
-                  className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
-                >
-                  <option value="TODOS">
-                    Todos os motivos ({resultado.descartados.length})
-                  </option>
-                  {motivosUnicosDescarte.map((m) => (
-                    <option key={m} value={m}>
-                      {m}
+                <div className="flex items-center gap-1.5">
+                  <select
+                    value={filtroMotivoDescarte}
+                    onChange={(e) => setFiltroMotivoDescarte(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs"
+                  >
+                    <option value="TODOS">
+                      Todos os motivos ({resultado.descartados.length})
                     </option>
-                  ))}
-                </select>
+                    {motivosUnicosDescarte.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <HelpTooltip
+                    title="Filtro por Motivo de Descarte"
+                    summary="Permite isolar os itens ou atas descartados por cada regra de auditoria (ex.: fora do período, município fora da lista, Aderência C, Regra R6)."
+                    align="right"
+                  />
+                </div>
               </div>
 
               <div className="overflow-x-auto max-h-96 rounded-xl border border-slate-200 dark:border-slate-800">

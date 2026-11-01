@@ -98,6 +98,8 @@ export interface ParametrosPipeline {
   dataInicial?: string | null;
   dataFinal?: string | null;
   ufSelecionada?: string | null;
+  regiaoSelecionada?: string | null;
+  apenasMunicipiosBilionarios?: boolean;
   usarCache?: boolean;
 }
 
@@ -105,6 +107,8 @@ export interface ResultadoPesquisa {
   momento_consulta: string;
   escopo_orgaos: string;
   uf_selecionada?: string | null;
+  regiao_selecionada?: string | null;
+  apenas_municipios_bilionarios?: boolean;
   status_ata: string;
   tipo_data_periodo: string;
   data_inicial: string | null;
@@ -144,6 +148,8 @@ export interface RegistroHistoricoPesquisa {
   descricaoObjeto: string;
   escopoOrgaos: string;
   ufSelecionada?: string | null;
+  regiaoSelecionada?: string | null;
+  apenasMunicipiosBilionarios?: boolean;
   statusAta: string;
   periodoAplicado: string;
   termosBusca: string[];

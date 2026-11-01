@@ -12,6 +12,7 @@ import {
 import {
   ESCOPO_PE_RECIFE,
   ESCOPO_POR_ESTADO,
+  ESCOPO_POR_REGIAO,
   DATA_ASSINATURA,
   DATA_PUBLICACAO,
   DATA_VIGENCIA,
@@ -107,6 +108,72 @@ describe("Validação de Municípios e Esferas (Regras R1, R2, R7)", () => {
     ).toBe(true);
     expect(
       verificarEscopoEspecialOrgao(ESCOPO_PE_RECIFE, null, "E", "J", "PE", "Recife", "2611606", "Tribunal de Justiça de PE", "").aprovado
+    ).toBe(false);
+  });
+
+  it("valida escopo ARPs por Região com e sem regra de municípios bilionários", () => {
+    // Recife/PE no Nordeste com regra de bilionários = aprovado
+    expect(
+      verificarEscopoEspecialOrgao(
+        ESCOPO_POR_REGIAO,
+        "Nordeste",
+        "M",
+        "E",
+        "PE",
+        "Recife",
+        "2611606",
+        "Prefeitura do Recife",
+        "",
+        true
+      ).aprovado
+    ).toBe(true);
+
+    // Vitória de Santo Antão/PE no Nordeste com regra de bilionários = reprovado
+    expect(
+      verificarEscopoEspecialOrgao(
+        ESCOPO_POR_REGIAO,
+        "Nordeste",
+        "M",
+        "E",
+        "PE",
+        "Vitória de Santo Antão",
+        "",
+        "Prefeitura",
+        "",
+        true
+      ).aprovado
+    ).toBe(false);
+
+    // Vitória de Santo Antão/PE no Nordeste SEM regra de bilionários (todos os municípios) = aprovado
+    expect(
+      verificarEscopoEspecialOrgao(
+        ESCOPO_POR_REGIAO,
+        "Nordeste",
+        "M",
+        "E",
+        "PE",
+        "Vitória de Santo Antão",
+        "",
+        "Prefeitura",
+        "",
+        false
+      ).aprovado
+    ).toBe(true);
+
+    // Município de SP quando Região = Nordeste = reprovado
+    expect(
+      verificarEscopoEspecialOrgao(
+        ESCOPO_POR_REGIAO,
+        "Nordeste",
+        "M",
+        "E",
+        "SP",
+        "São Paulo",
+        "3550308",
+        "Prefeitura",
+        "",
+        false
+      ).aprovado
     ).toBe(false);
   });
 });

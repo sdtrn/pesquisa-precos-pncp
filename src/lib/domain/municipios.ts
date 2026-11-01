@@ -1,5 +1,10 @@
 import municipiosBilionariosRaw from "@/data/municipios-bilionarios.json";
-import { ESCOPO_PE_RECIFE, ESCOPO_POR_ESTADO } from "@/data/constants";
+import {
+  ESCOPO_PE_RECIFE,
+  ESCOPO_POR_ESTADO,
+  ESCOPO_POR_REGIAO,
+  MAPA_REGIAO_UFS,
+} from "@/data/constants";
 
 export interface MunicipioBilionarioRow {
   uf: string;
@@ -163,14 +168,15 @@ export function avaliarOrgaoGerenciador(
  */
 export function verificarEscopoEspecialOrgao(
   escopoOrgaos: string,
-  ufSelecionada: string | null | undefined,
+  ufOuRegiaoSelecionada: string | null | undefined,
   esferaId: string,
   poderId: string,
   ufOrgao: string,
   municipioNome: string,
   codigoIbge: string,
   orgaoNome: string,
-  unidadeNome: string
+  unidadeNome: string,
+  apenasMunicipiosBilionarios = true
 ): { aprovado: boolean; motivo: string } {
   const esf = (esferaId || "").trim().toUpperCase();
   const pod = (poderId || "").trim().toUpperCase();
@@ -179,8 +185,59 @@ export function verificarEscopoEspecialOrgao(
   const ibge = (codigoIbge || "").trim();
   const orgNorm = normalizarNomeMunicipio(`${orgaoNome || ""} ${unidadeNome || ""}`);
 
+  if (escopoOrgaos === ESCOPO_POR_REGIAO) {
+    const regiaoAlvo = (ufOuRegiaoSelecionada || "Nordeste").trim();
+    const ufsRegiao =
+      MAPA_REGIAO_UFS[regiaoAlvo.toUpperCase()] ||
+      MAPA_REGIAO_UFS["NORDESTE"];
+
+    if (!uf || !ufsRegiao.includes(uf)) {
+      return {
+        aprovado: false,
+        motivo: `órgão fora da Região ${regiaoAlvo} (UF=${uf || "não informada"})`,
+      };
+    }
+    if (!esf || !["F", "E", "D", "M"].includes(esf)) {
+      return { aprovado: false, motivo: "esfera não identificada" };
+    }
+    if (esf === "F") {
+      return {
+        aprovado: false,
+        motivo: `órgão federal (escopo restrito aos Estados e Municípios da Região ${regiaoAlvo})`,
+      };
+    }
+    if (esf === "E" || esf === "D") {
+      return {
+        aprovado: true,
+        motivo: `Órgão estadual/distrital da Região ${regiaoAlvo} (${uf})`,
+      };
+    }
+    if (esf === "M") {
+      if (apenasMunicipiosBilionarios) {
+        const avalMun = avaliarOrgaoGerenciador("M", uf, municipioNome, codigoIbge);
+        if (!avalMun.atendeCriterioValidade) {
+          return {
+            aprovado: false,
+            motivo:
+              avalMun.motivoDescarteEscopoA ||
+              "município fora da lista de bilionários",
+          };
+        }
+        return {
+          aprovado: true,
+          motivo: `Município com orçamento ≥ R$ 1 bi da Região ${regiaoAlvo} (${municipioNome}/${uf})`,
+        };
+      }
+      return {
+        aprovado: true,
+        motivo: `Órgão municipal da Região ${regiaoAlvo} (${municipioNome || uf})`,
+      };
+    }
+    return { aprovado: false, motivo: "esfera não identificada" };
+  }
+
   if (escopoOrgaos === ESCOPO_POR_ESTADO) {
-    const ufAlvo = (ufSelecionada || "PE").trim().toUpperCase();
+    const ufAlvo = (ufOuRegiaoSelecionada || "PE").trim().toUpperCase();
     if (!uf || uf !== ufAlvo) {
       return {
         aprovado: false,
@@ -197,6 +254,17 @@ export function verificarEscopoEspecialOrgao(
       };
     }
     if (["E", "M", "D"].includes(esf)) {
+      if (esf === "M" && apenasMunicipiosBilionarios) {
+        const avalMun = avaliarOrgaoGerenciador("M", uf, municipioNome, codigoIbge);
+        if (!avalMun.atendeCriterioValidade) {
+          return {
+            aprovado: false,
+            motivo:
+              avalMun.motivoDescarteEscopoA ||
+              "município fora da lista de bilionários",
+          };
+        }
+      }
       return {
         aprovado: true,
         motivo: `Órgão estadual/municipal da UF ${ufAlvo}`,

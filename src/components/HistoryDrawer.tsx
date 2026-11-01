@@ -237,8 +237,22 @@ export function HistoryDrawer({
                 <div className="flex flex-wrap gap-1.5 text-[11px]">
                   <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                     Escopo: <strong>{entry.escopoOrgaos}</strong>
-                    {entry.ufSelecionada ? ` (${entry.ufSelecionada})` : ""}
+                    {entry.regiaoSelecionada
+                      ? ` (Região ${entry.regiaoSelecionada})`
+                      : entry.ufSelecionada
+                      ? ` (${entry.ufSelecionada})`
+                      : ""}
                   </span>
+                  {entry.apenasMunicipiosBilionarios !== undefined && (
+                    <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                      Municípios:{" "}
+                      <strong>
+                        {entry.apenasMunicipiosBilionarios
+                          ? "≥ R$ 1 bi"
+                          : "Todos"}
+                      </strong>
+                    </span>
+                  )}
                   <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                     Status: <strong>{entry.statusAta}</strong>
                   </span>

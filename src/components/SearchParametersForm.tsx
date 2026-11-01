@@ -19,9 +19,19 @@ import {
   DATA_VIGENCIA,
   PRESETS_EXEMPLOS,
 } from "@/data/constants";
+import { HelpTooltip } from "@/components/HelpTooltip";
 
 const OPCOES_STATUS = [STATUS_VIGENTES, STATUS_NAO_VIGENTES, STATUS_TODOS];
 const OPCOES_DATA = [DATA_ASSINATURA, DATA_PUBLICACAO, DATA_VIGENCIA];
+
+const RESUMO_TIPO_DATA: Record<string, string> = {
+  [DATA_ASSINATURA]:
+    "Filtra pela data em que a Ata foi assinada dentro do intervalo Inicial e Final.",
+  [DATA_PUBLICACAO]:
+    "Filtra pela data em que a Ata foi divulgada oficialmente no portal PNCP.",
+  [DATA_VIGENCIA]:
+    "Filtra atas cujo prazo de validade tenha pelo menos 1 dia dentro do intervalo Inicial e Final.",
+};
 
 interface SearchParametersFormProps {
   descricaoObjeto: string;
@@ -68,10 +78,33 @@ export function SearchParametersForm({
       className="glass-panel rounded-2xl p-5 sm:p-6 shadow-sm mb-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <h2 className="font-heading text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-[#1B365D] dark:bg-[#D4AF37]" />
-          2. Especificação do Objeto e Filtros Temporais
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="font-heading text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-[#1B365D] dark:bg-[#D4AF37]" />
+            <span>2. Especificação do Objeto e Filtros Temporais</span>
+          </h2>
+          <HelpTooltip
+            title="Como configurar a Especificação e os Filtros Temporais?"
+            summary="Informe o texto do objeto que deseja cotar e defina o recorte de vigência e datas das Atas:"
+            options={[
+              {
+                label: "Objeto da compra",
+                description:
+                  "Cole a descrição do item do seu Termo de Referência. O sistema extrai automaticamente os termos-chave e requisitos mínimos (capacidade, dimensões, potência, etc.).",
+              },
+              {
+                label: "Status da ARP",
+                description:
+                  "Escolha se deseja consultar apenas atas Vigentes hoje, apenas Não vigentes (vencidas) ou Todas.",
+              },
+              {
+                label: "Filtrar período por (Padrão: Data de assinatura da ata)",
+                description:
+                  "Define qual data da Ata será comparada com a Data inicial e a Data final escolhidas ao lado.",
+              },
+            ]}
+          />
+        </div>
 
         {/* Quick Preset Pills */}
         <div className="flex flex-wrap items-center gap-1.5">
@@ -97,9 +130,27 @@ export function SearchParametersForm({
       <div className="mb-5">
         <label
           htmlFor="objeto-textarea"
-          className="block text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5"
+          className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-1.5 flex items-center gap-1.5"
         >
-          Objeto da compra (com especificações técnicas mínimas e unidade desejada)
+          <span>
+            Objeto da compra (com especificações técnicas mínimas e unidade desejada)
+          </span>
+          <HelpTooltip
+            title="Campo: Objeto da Compra"
+            summary="Descreva o bem ou serviço que deseja pesquisar no PNCP."
+            options={[
+              {
+                label: "Termos de busca automáticos",
+                description:
+                  "O sistema identifica o núcleo do objeto (ex.: 'ar condicionado split 12000', 'locação veículo hatch') para consultar na API do PNCP.",
+              },
+              {
+                label: "Requisitos mínimos (Classificação A, B e C)",
+                description:
+                  "Medidas como '12000 BTUs', '8m x 100m', '200 micras' ou 'motor 1.0' viram regras automáticas: itens que atendem tudo recebem Classe A; itens com dados omissos recebem Classe B; itens inferiores são descartados (Classe C).",
+              },
+            ]}
+          />
         </label>
         <textarea
           id="objeto-textarea"
@@ -114,13 +165,35 @@ export function SearchParametersForm({
 
       {/* Filters Grid: Status, Date Mode, Start Date, End Date */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+        {/* Filter 1: Status da ARP */}
         <div>
           <label
             htmlFor="status-arp-select"
-            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5"
+            className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5"
           >
             <Filter className="w-3.5 h-3.5 text-[#1B365D] dark:text-[#D4AF37]" />
-            Status da ARP
+            <span>Status da ARP</span>
+            <HelpTooltip
+              title="Filtro: Status da ARP"
+              summary="Filtra as Atas de Registro de Preços conforme sua validade atual no calendário de Recife (UTC-3):"
+              options={[
+                {
+                  label: "Vigentes (Recomendado)",
+                  description:
+                    "Retorna apenas atas cujo prazo de vigência ainda está ativo hoje e que não foram canceladas (em conformidade com a Lei 14.133/2021).",
+                },
+                {
+                  label: "Não vigentes",
+                  description:
+                    "Retorna apenas atas cujo prazo de validade já encerrou (útil para séries históricas ou auditoria retroativa).",
+                },
+                {
+                  label: "Todos",
+                  description:
+                    "Consulta simultaneamente atas vigentes e não vigentes, conferindo se Todos = Vigentes + Não vigentes na API do PNCP.",
+                },
+              ]}
+            />
           </label>
           <select
             id="status-arp-select"
@@ -137,13 +210,35 @@ export function SearchParametersForm({
           </select>
         </div>
 
+        {/* Filter 2: Filtrar período por */}
         <div>
           <label
             htmlFor="tipo-data-select"
-            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5"
+            className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5"
           >
             <Calendar className="w-3.5 h-3.5 text-[#1B365D] dark:text-[#D4AF37]" />
-            Filtrar período por
+            <span>Filtrar período por</span>
+            <HelpTooltip
+              title="Filtro: Filtrar período por"
+              summary="Escolhe qual data da Ata será verificada dentro do intervalo [Data inicial até Data final]:"
+              options={[
+                {
+                  label: "Data de assinatura da ata (Pré-selecionado)",
+                  description:
+                    "Aceita apenas atas que foram ASSINADAS entre a Data inicial e a Data final. É a opção mais direta para garantir preços pactuados recentemente (ex.: últimos 12 meses).",
+                },
+                {
+                  label: "Data de publicação no PNCP",
+                  description:
+                    "Aceita apenas atas que foram PUBLICADAS/DIVULGADAS no Portal Nacional de Contratações Públicas entre a Data inicial e a Data final.",
+                },
+                {
+                  label: "Vigência (Interseção de validade)",
+                  description:
+                    "Aceita qualquer ata cujo período de validade (início ao fim da vigência) tenha pelo menos 1 dia em comum com o intervalo entre a Data inicial e a Data final.",
+                },
+              ]}
+            />
           </label>
           <select
             id="tipo-data-select"
@@ -158,14 +253,40 @@ export function SearchParametersForm({
               </option>
             ))}
           </select>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
+            {RESUMO_TIPO_DATA[tipoData] || RESUMO_TIPO_DATA[DATA_ASSINATURA]}
+          </p>
         </div>
 
+        {/* Filter 3: Data inicial */}
         <div>
           <label
             htmlFor="data-inicial-input"
-            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
+            className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5"
           >
-            Data inicial (inclusiva)
+            <span>Data inicial (inclusiva)</span>
+            <HelpTooltip
+              title="Filtro: Data Inicial (Inclusiva)"
+              summary="Define o primeiro dia aceito para o período da pesquisa (no calendário oficial America/Recife)."
+              options={[
+                {
+                  label: "Com Data de assinatura da ata",
+                  description:
+                    "Descarta atas assinadas antes desta data inicial.",
+                },
+                {
+                  label: "Com Data de publicação no PNCP",
+                  description:
+                    "Descarta atas publicadas no PNCP antes desta data inicial.",
+                },
+                {
+                  label: "Com Vigência",
+                  description:
+                    "Descarta atas cuja vigência tenha terminado antes desta data inicial.",
+                },
+              ]}
+              align="center"
+            />
           </label>
           <input
             id="data-inicial-input"
@@ -177,12 +298,35 @@ export function SearchParametersForm({
           />
         </div>
 
+        {/* Filter 4: Data final */}
         <div>
           <label
             htmlFor="data-final-input"
-            className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5"
+            className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5"
           >
-            Data final (inclusiva)
+            <span>Data final (inclusiva)</span>
+            <HelpTooltip
+              title="Filtro: Data Final (Inclusiva)"
+              summary="Define o último dia aceito para o período da pesquisa (no calendário oficial America/Recife)."
+              options={[
+                {
+                  label: "Com Data de assinatura da ata",
+                  description:
+                    "Descarta atas assinadas após esta data final.",
+                },
+                {
+                  label: "Com Data de publicação no PNCP",
+                  description:
+                    "Descarta atas publicadas no PNCP após esta data final.",
+                },
+                {
+                  label: "Com Vigência",
+                  description:
+                    "Descarta atas cuja vigência só comece depois desta data final.",
+                },
+              ]}
+              align="right"
+            />
           </label>
           <input
             id="data-final-input"
@@ -207,29 +351,49 @@ export function SearchParametersForm({
 
       {/* Bottom Bar: History Toggle + Action Buttons */}
       <div className="pt-4 border-t border-slate-200/80 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <label className="inline-flex items-center gap-3 cursor-pointer select-none">
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={salvarNoHistorico}
-              onChange={(e) => onChangeSalvarNoHistorico(e.target.checked)}
-              disabled={isSearching}
-              className="sr-only peer"
-            />
-            <div className="w-10 h-5 bg-slate-300 dark:bg-slate-700 rounded-full peer peer-checked:bg-[#1B365D] dark:peer-checked:bg-[#B59410] transition-colors" />
-            <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
-          </div>
-          <div className="text-xs">
-            <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-              <BookmarkCheck className="w-3.5 h-3.5 text-[#B59410]" />
-              Salvar automaticamente no Histórico de Pesquisas (com data/hora da consulta)
+        <div className="flex items-center gap-2">
+          <label className="inline-flex items-center gap-3 cursor-pointer select-none">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={salvarNoHistorico}
+                onChange={(e) => onChangeSalvarNoHistorico(e.target.checked)}
+                disabled={isSearching}
+                className="sr-only peer"
+              />
+              <div className="w-10 h-5 bg-slate-300 dark:bg-slate-700 rounded-full peer peer-checked:bg-[#1B365D] dark:peer-checked:bg-[#B59410] transition-colors" />
+              <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
             </div>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Armazena localmente a pesquisa com carimbo{" "}
-              <code className="font-mono">DD/MM/AAAA HH:MM:SS</code> para restauração instantânea
-            </p>
-          </div>
-        </label>
+            <div className="text-xs">
+              <div className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <BookmarkCheck className="w-3.5 h-3.5 text-[#B59410]" />
+                <span>
+                  Salvar automaticamente no Histórico de Pesquisas (com data/hora da consulta)
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Armazena localmente a pesquisa com carimbo{" "}
+                <code className="font-mono">DD/MM/AAAA HH:MM:SS</code> para restauração instantânea
+              </p>
+            </div>
+          </label>
+          <HelpTooltip
+            title="Opção: Salvar no Histórico de Pesquisas"
+            summary="Controla se esta pesquisa será gravada automaticamente no banco de dados do seu navegador (IndexedDB):"
+            options={[
+              {
+                label: "Ativado (Recomendado)",
+                description:
+                  "Assim que a busca terminar, salva todos os resultados, gráficos e a data/hora exata da consulta no menu 'Histórico de Pesquisas'.",
+              },
+              {
+                label: "Desativado",
+                description:
+                  "Não salva automaticamente ao concluir a busca (mas você ainda poderá clicar no botão 'Salvar no Histórico' manualmente depois, se desejar).",
+              },
+            ]}
+          />
+        </div>
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">

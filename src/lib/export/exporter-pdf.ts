@@ -66,7 +66,13 @@ export async function gerarRelatorioPdfA4(
   yPos += 2;
 
   const escopoStr =
-    res.uf_selecionada && res.escopo_orgaos.includes("Estado")
+    res.regiao_selecionada && res.escopo_orgaos.includes("Região")
+      ? `${res.escopo_orgaos} — Região: ${res.regiao_selecionada} (${
+          res.apenas_municipios_bilionarios === false
+            ? "Todos os municípios"
+            : "Municípios ≥ R$ 1 bi"
+        })`
+      : res.uf_selecionada && res.escopo_orgaos.includes("Estado")
       ? `${res.escopo_orgaos} — UF: ${res.uf_selecionada}`
       : res.escopo_orgaos;
 

@@ -16,15 +16,55 @@ export const ITEMS_PAGE_SIZE = 500;
 // Opções de escopo dos órgãos
 export const ESCOPO_VALIDADE = "Critério de validade";
 export const ESCOPO_TODOS = "Todos os órgãos do Brasil";
-export const ESCOPO_POR_ESTADO = "ARPs por Estado (UF)";
+export const ESCOPO_POR_REGIAO = "ARPs por Região";
+export const ESCOPO_POR_ESTADO = "ARPs por Estado (UF)"; // Mantido para retrocompatibilidade
 export const ESCOPO_PE_RECIFE = "Governo de Pernambuco e Prefeitura do Recife";
 
 export const OPCOES_ESCOPO = [
   ESCOPO_VALIDADE,
   ESCOPO_TODOS,
-  ESCOPO_POR_ESTADO,
+  ESCOPO_POR_REGIAO,
   ESCOPO_PE_RECIFE,
 ] as const;
+
+// Regiões Geográficas Oficiais do Brasil (IBGE)
+export interface RegiaoBrasil {
+  nome: string;
+  siglasUf: string[];
+  descricaoUfs: string;
+}
+
+export const REGIOES_BRASIL: RegiaoBrasil[] = [
+  {
+    nome: "Nordeste",
+    siglasUf: ["AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"],
+    descricaoUfs: "AL, BA, CE, MA, PB, PE, PI, RN e SE (9 estados)",
+  },
+  {
+    nome: "Norte",
+    siglasUf: ["AC", "AP", "AM", "PA", "RO", "RR", "TO"],
+    descricaoUfs: "AC, AP, AM, PA, RO, RR e TO (7 estados)",
+  },
+  {
+    nome: "Centro-Oeste",
+    siglasUf: ["DF", "GO", "MT", "MS"],
+    descricaoUfs: "DF, GO, MT e MS (3 estados + DF)",
+  },
+  {
+    nome: "Sudeste",
+    siglasUf: ["ES", "MG", "RJ", "SP"],
+    descricaoUfs: "ES, MG, RJ e SP (4 estados)",
+  },
+  {
+    nome: "Sul",
+    siglasUf: ["PR", "RS", "SC"],
+    descricaoUfs: "PR, RS e SC (3 estados)",
+  },
+];
+
+export const MAPA_REGIAO_UFS: Record<string, string[]> = Object.fromEntries(
+  REGIOES_BRASIL.map((r) => [r.nome.toUpperCase(), r.siglasUf])
+);
 
 // Opções de Status da ata
 export const STATUS_VIGENTES = "Vigentes";
@@ -37,7 +77,7 @@ export const STATUS_TO_API_PARAM: Record<string, string> = {
   [STATUS_TODOS]: "todos",
 };
 
-// Opções de Data usada no período
+// Opções de Data usada no período (Data de assinatura em 1º lugar como padrão)
 export const DATA_ASSINATURA = "Data de assinatura da ata";
 export const DATA_PUBLICACAO = "Data de publicação no PNCP";
 export const DATA_VIGENCIA = "Vigência";

@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import type { RequisitoMinimo } from "@/lib/domain/types";
+import { HelpTooltip } from "@/components/HelpTooltip";
 
 interface RequirementsReviewPanelProps {
   termosBusca: string[];
@@ -115,9 +116,25 @@ export function RequirementsReviewPanel({
           {/* Left column: Search Terms */}
           <div className="lg:col-span-5 space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
                 <Tag className="w-3.5 h-3.5 text-[#B59410]" />
-                Termos de Busca Consultados no PNCP
+                <span>Termos de Busca Consultados no PNCP</span>
+                <HelpTooltip
+                  title="Filtro: Termos de Busca no PNCP"
+                  summary="Palavras-chave enviadas à API de busca do PNCP para localizar Atas relacionadas ao seu objeto."
+                  options={[
+                    {
+                      label: "Múltiplos termos",
+                      description:
+                        "O sistema consulta cada termo e unifica as atas sem duplicidade.",
+                    },
+                    {
+                      label: "Edição livre",
+                      description:
+                        "Você pode remover termos genéricos clicando no '×' ou adicionar sinônimos específicos.",
+                    },
+                  ]}
+                />
               </label>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {termosBusca.map((termo, idx) => (
@@ -167,8 +184,32 @@ export function RequirementsReviewPanel({
           {/* Right column: Minimum Requirements Table */}
           <div className="lg:col-span-7">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                Requisitos Técnicos Mínimos (Itens abaixo do mínimo são descartados como C)
+              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>
+                  Requisitos Técnicos Mínimos (Itens abaixo do mínimo são descartados como C)
+                </span>
+                <HelpTooltip
+                  title="Filtro: Requisitos Técnicos Mínimos (A, B, C)"
+                  summary="Regras usadas para julgar cada item homologado dentro das Atas encontradas:"
+                  options={[
+                    {
+                      label: "Operador >=",
+                      description:
+                        "Aceita valores iguais ou superiores ao mínimo exigido (ex.: 12000 BTUs, 8m x 100m, 200 micras).",
+                    },
+                    {
+                      label: "Operador contém / =",
+                      description:
+                        "Exige que o termo ou tipo especificado conste na descrição do item (ex.: inverter, diesel, 4x4).",
+                    },
+                    {
+                      label: "Operador compatível (Unidade — Regra R5)",
+                      description:
+                        "Verifica se a unidade de fornecimento do item na ARP é compatível com a unidade do objeto (sem fazer conversões artificiais).",
+                    },
+                  ]}
+                  align="right"
+                />
               </span>
               <button
                 type="button"
