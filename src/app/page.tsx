@@ -622,19 +622,46 @@ export default function HomePage() {
         onImportJson={handleImportHistoryJson}
       />
 
-      {/* Institutional Footer */}
-      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm py-5 px-4 mt-12">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-[#1B365D] dark:text-[#D4AF37]" />
-            <span>
-              <strong>Pesquisa de Preços PNCP</strong> • Auditoria R1–R7 • Fuso
-              Horário Oficial <code className="font-mono">America/Recife</code>
-            </span>
+      {/* Institutional Footer & Legal Disclaimers */}
+      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm pt-8 pb-10 px-4 mt-16 transition-colors">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Independence Declaration & Disclaimer Box */}
+          <div className="rounded-2xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/70 dark:bg-amber-950/25 p-5 text-xs text-slate-700 dark:text-slate-300 leading-relaxed shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start gap-3.5">
+              <div className="p-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="space-y-2.5">
+                <div>
+                  <h4 className="font-heading font-bold text-slate-900 dark:text-amber-200 text-sm">
+                    Declaração de Independência Institucional e Termo de Uso (Disclaimer)
+                  </h4>
+                  <p className="mt-1 font-semibold text-amber-950 dark:text-amber-300">
+                    Ferramenta independente desenvolvida pela iniciativa privada, sem vínculo institucional com o Ministério da Gestão e da Inovação em Serviços Públicos (MGI) ou com o Governo Federal.
+                  </p>
+                </div>
+                <p className="text-slate-600 dark:text-slate-400">
+                  Este sistema realiza consultas automatizadas e extração de dados públicos disponibilizados pela API oficial do Portal Nacional de Contratações Públicas (PNCP) estritamente <em>“as is”</em> (no estado em que se encontram). O desenvolvedor não se responsabiliza por eventuais instabilidades técnicas, indisponibilidades da infraestrutura governamental, omissões, dados incompletos ou erros de lançamento contidos nos dados originais fornecidos pelos órgãos licitantes.
+                </p>
+                <p className="text-slate-600 dark:text-slate-400">
+                  <strong className="text-slate-900 dark:text-slate-200">Atenção ao Usuário e Agente Público:</strong> É dever e responsabilidade do usuário final conferir e validar o inteiro teor da Ata de Registro de Preços, seus Termos Aditivos e a vigência diretamente na fonte oficial do PNCP antes da instrução processual ou emissão de parecer técnico (Lei nº 14.133/2021).
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-200">
-            <Award className="w-4 h-4 text-[#B59410]" />
-            <span>Desenvolvido por Sérgio Dantas Torres</span>
+
+          {/* Bottom Bar: System & Author Identification */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200/70 dark:border-slate-800/70 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#1B365D] dark:text-[#D4AF37]" />
+              <span>
+                <strong>Pesquisa de Preços PNCP</strong> • Auditoria R1–R7 • Fuso Horário Oficial <code className="font-mono font-semibold">America/Recife</code>
+              </span>
+            </div>
+            <div className="flex items-center gap-2 font-semibold text-slate-800 dark:text-slate-200">
+              <Award className="w-4 h-4 text-[#B59410]" />
+              <span>Desenvolvido por Sérgio Dantas Torres</span>
+            </div>
           </div>
         </div>
       </footer>
