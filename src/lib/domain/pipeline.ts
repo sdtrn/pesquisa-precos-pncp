@@ -322,10 +322,23 @@ export async function executarPipelinePesquisa(
       [cnpj, anoC, seqCompra, seqAta] = chavesUrl;
       linkPncp = PNCPClient.montarLinkAtaPncp(cnpj, anoC, seqCompra, seqAta);
     } else {
-      cnpj = String(ataS.orgao_cnpj || "").trim();
-      anoC = String(ataS.ano || "").trim();
-      seqCompra = String(ataS.numero_sequencial_compra_ata || "").trim();
-      seqAta = String(ataS.numero_sequencial || "").trim();
+      cnpj = String(ataS.orgao_cnpj || ataS.orgaoCnpj || "").trim();
+      anoC = String(ataS.ano || ataS.anoCompra || "").trim();
+      seqCompra = String(
+        ataS.numero_sequencial_compra_ata ||
+          ataS.numeroSequencialCompraAta ||
+          ataS.sequencialCompra ||
+          ""
+      ).trim().replace(/^0+/, "") || "0";
+      seqAta = String(
+        ataS.numero_sequencial ||
+          ataS.numeroSequencial ||
+          ataS.sequencialAta ||
+          ""
+      ).trim().replace(/^0+/, "") || "0";
+      if (cnpj && anoC && seqCompra && seqAta) {
+        linkPncp = PNCPClient.montarLinkAtaPncp(cnpj, anoC, seqCompra, seqAta);
+      }
     }
 
     const orgaoNome = String(ataS.orgao_nome || "").trim();

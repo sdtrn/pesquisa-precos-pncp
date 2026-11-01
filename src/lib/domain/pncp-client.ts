@@ -550,22 +550,58 @@ export class PNCPClient {
   static extrairChavesItemUrl(
     ataSearchItem: Record<string, unknown>
   ): [string, string, string, string] | null {
-    const itemUrl = String(ataSearchItem.item_url || "").trim();
+    // 1. Tenta extrair a partir do número de controle oficial do PNCP: CNPJ-1-seqCompra/ano-seqAta
+    const numControle = String(
+      ataSearchItem.numero_controle_pncp || ataSearchItem.numeroControlePNCP || ""
+    ).trim();
+    const matchControle = numControle.match(
+      /^(\d{14})-\d+-(\d+)\/(\d{4})-(\d+)$/
+    );
+    if (matchControle) {
+      const cnpj = matchControle[1];
+      const seqCompra = matchControle[2].replace(/^0+/, "") || "0";
+      const ano = matchControle[3];
+      const seqAta = matchControle[4].replace(/^0+/, "") || "0";
+      return [cnpj, ano, seqCompra, seqAta];
+    }
+
+    // 2. Tenta extrair a partir do item_url oficial do endpoint de busca: /atas/CNPJ/ANO/seqCompra/seqAta
+    const itemUrl = String(ataSearchItem.item_url || ataSearchItem.itemUrl || "").trim();
     if (itemUrl.startsWith("/atas/")) {
       const partes = itemUrl.split("/").filter(Boolean);
       if (partes.length >= 5) {
-        return [partes[1], partes[2], partes[3], partes[4]];
+        return [
+          partes[1],
+          partes[2],
+          partes[3].replace(/^0+/, "") || "0",
+          partes[4].replace(/^0+/, "") || "0",
+        ];
       }
     }
 
-    const cnpj = String(ataSearchItem.orgao_cnpj || "").trim();
-    const ano = String(ataSearchItem.ano || "").trim();
-    const seqCompra = String(
-      ataSearchItem.numero_sequencial_compra_ata || ""
+    // 3. Fallback: campos individuais do registro da API
+    const cnpj = String(ataSearchItem.orgao_cnpj || ataSearchItem.orgaoCnpj || "").trim();
+    const ano = String(ataSearchItem.ano || ataSearchItem.anoCompra || "").trim();
+    const seqCompraBruto = String(
+      ataSearchItem.numero_sequencial_compra_ata ||
+        ataSearchItem.numeroSequencialCompraAta ||
+        ataSearchItem.sequencialCompra ||
+        ""
     ).trim();
-    const seqAta = String(ataSearchItem.numero_sequencial || "").trim();
-    if (cnpj && ano && seqCompra && seqAta) {
-      return [cnpj, ano, seqCompra, seqAta];
+    const seqAtaBruto = String(
+      ataSearchItem.numero_sequencial ||
+        ataSearchItem.numeroSequencial ||
+        ataSearchItem.sequencialAta ||
+        ""
+    ).trim();
+
+    if (cnpj && ano && seqCompraBruto && seqAtaBruto) {
+      return [
+        cnpj,
+        ano,
+        seqCompraBruto.replace(/^0+/, "") || "0",
+        seqAtaBruto.replace(/^0+/, "") || "0",
+      ];
     }
 
     return null;
@@ -800,7 +836,9 @@ export class PNCPClient {
       const seqDoc = Number(a.sequencialDocumento || idx + 1);
       let urlArq = String(a.url || a.uri || "").trim();
       if (!urlArq && a.sequencialDocumento) {
-        urlArq = `https://pncp.gov.br/pncp-api/v1/orgaos/${cnpj}/compras/${ano}/${seqCompra}/atas/${seqAta}/arquivos/${a.sequencialDocumento}`;
+        urlArq = `https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seqCompra}/atas/${seqAta}/arquivos/${a.sequencialDocumento}`;
+      } else if (urlArq.startsWith("/")) {
+        urlArq = `https://pncp.gov.br${urlArq}`;
       }
       if (urlArq) {
         const tipoStr = String(
