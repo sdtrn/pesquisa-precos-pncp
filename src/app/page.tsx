@@ -18,8 +18,11 @@ import {
   ESCOPO_POR_REGIAO,
   STATUS_VIGENTES,
   DATA_ASSINATURA,
+  CRITERIO_MENOR_PRECO,
+  TOP_N_ITENS_JANELA,
 } from "@/data/constants";
 import type {
+  CriterioClassificacao,
   RequisitoMinimo,
   ParametrosPipeline,
   ResultadoPesquisa,
@@ -62,6 +65,8 @@ export default function HomePage() {
   const [apenasMunicipiosBilionarios, setApenasMunicipiosBilionarios] =
     useState<boolean>(true);
   const [descricaoObjeto, setDescricaoObjeto] = useState<string>("");
+  const [criterioClassificacao, setCriterioClassificacao] =
+    useState<CriterioClassificacao>(CRITERIO_MENOR_PRECO);
   const [statusArp, setStatusArp] = useState<string>(STATUS_VIGENTES);
   // Pré-selecionado "Data de assinatura da ata" conforme solicitação do usuário
   const [tipoData, setTipoData] = useState<string>(DATA_ASSINATURA);
@@ -152,6 +157,7 @@ export default function HomePage() {
     setShowTop20Modal(false);
 
     setDescricaoObjeto("");
+    setCriterioClassificacao(CRITERIO_MENOR_PRECO);
     setTermosBusca([]);
     setRequisitos([]);
     setShowRequirementsPanel(false);
@@ -166,11 +172,16 @@ export default function HomePage() {
     setDataFinal(fim);
   };
 
-  // Recompute Top 20 when `incluirClasseB` toggles
+  // Recompute Top 20 when `incluirClasseB` or `criterioClassificacao` toggles
   const candidatosTop20Ativos = useMemo(() => {
     if (!resultado) return [];
-    return selecionarTop20Menores(resultado.itens_candidatos, incluirClasseB);
-  }, [resultado, incluirClasseB]);
+    return selecionarTop20Menores(
+      resultado.itens_candidatos,
+      incluirClasseB,
+      TOP_N_ITENS_JANELA,
+      criterioClassificacao
+    );
+  }, [resultado, incluirClasseB, criterioClassificacao]);
 
   const totalClasseBDisponiveis = useMemo(() => {
     if (!resultado) return 0;
@@ -182,7 +193,9 @@ export default function HomePage() {
     if (resultado) {
       const novosTop20 = selecionarTop20Menores(
         resultado.itens_candidatos,
-        val
+        val,
+        TOP_N_ITENS_JANELA,
+        criterioClassificacao
       );
       setSelectedKeys(new Set(novosTop20.map((i) => chaveItemUnica(i))));
     }
@@ -206,9 +219,10 @@ export default function HomePage() {
 
   const estatisticasSelecionados = useMemo(() => {
     return calcularEstatisticasPrecos(
-      itensSelecionados.map((i) => i.valor_unitario)
+      itensSelecionados.map((i) => i.valor_unitario),
+      criterioClassificacao
     );
-  }, [itensSelecionados]);
+  }, [itensSelecionados, criterioClassificacao]);
 
   // Execute streaming search against /api/pesquisar
   const handleExecuteSearch = async () => {
@@ -243,6 +257,7 @@ export default function HomePage() {
       termosBusca: termosParaUsar,
       requisitos: reqsParaUsar,
       escopoOrgaos: escopo,
+      criterioClassificacao,
       regiaoSelecionada: escopo === ESCOPO_POR_REGIAO ? regiaoFiltro : null,
       apenasMunicipiosBilionarios,
       statusAta: statusArp,
@@ -299,9 +314,16 @@ export default function HomePage() {
             recebeuResultado = true;
             const finalResult = msg.data as ResultadoPesquisa;
             setResultado(finalResult);
+            const critFinal =
+              finalResult.criterio_classificacao || criterioClassificacao;
+            if (finalResult.criterio_classificacao) {
+              setCriterioClassificacao(finalResult.criterio_classificacao);
+            }
             const initialTop20 = selecionarTop20Menores(
               finalResult.itens_candidatos,
-              incluirClasseB
+              incluirClasseB,
+              TOP_N_ITENS_JANELA,
+              critFinal
             );
             const initialKeys = initialTop20.map((i) => chaveItemUnica(i));
             setSelectedKeys(new Set(initialKeys));
@@ -401,12 +423,19 @@ export default function HomePage() {
     if (entry.resultado.data_final) {
       setDataFinal(entry.resultado.data_final);
     }
+    const critHist =
+      entry.criterioClassificacao ||
+      entry.resultado.criterio_classificacao ||
+      CRITERIO_MENOR_PRECO;
+    setCriterioClassificacao(critHist);
     setIncluirClasseB(entry.incluirRevisaoB);
     setResultado(entry.resultado);
 
     const top20 = selecionarTop20Menores(
       entry.resultado.itens_candidatos,
-      entry.incluirRevisaoB
+      entry.incluirRevisaoB,
+      TOP_N_ITENS_JANELA,
+      critHist
     );
     const idxSet = new Set(entry.indicesSelecionados);
     const keys = top20
@@ -487,6 +516,8 @@ export default function HomePage() {
         <SearchParametersForm
           descricaoObjeto={descricaoObjeto}
           onChangeDescricao={handleChangeDescricao}
+          criterioClassificacao={criterioClassificacao}
+          onChangeCriterioClassificacao={setCriterioClassificacao}
           statusArp={statusArp}
           onChangeStatusArp={setStatusArp}
           tipoData={tipoData}
@@ -548,6 +579,7 @@ export default function HomePage() {
               itensSelecionados={itensSelecionados}
               indicesSelecionados={indicesSelecionados}
               estatisticas={estatisticasSelecionados}
+              criterioClassificacao={criterioClassificacao}
               onOpenTop20Modal={() => setShowTop20Modal(true)}
               onSaveToHistoryManual={handleSaveToHistoryManual}
               savedNotice={savedNotice}
@@ -557,6 +589,7 @@ export default function HomePage() {
               resultado={resultado}
               selectedKeys={selectedKeys}
               estatisticasSelecionados={estatisticasSelecionados}
+              criterioClassificacao={criterioClassificacao}
             />
           </>
         )}
@@ -573,6 +606,7 @@ export default function HomePage() {
           incluirClasseB={incluirClasseB}
           onChangeIncluirClasseB={handleToggleIncluirClasseB}
           totalClasseBDisponiveis={totalClasseBDisponiveis}
+          criterioClassificacao={criterioClassificacao}
         />
       )}
 

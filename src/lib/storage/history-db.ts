@@ -39,6 +39,7 @@ export function criarRegistroHistorico(
     timestampIso: new Date().toISOString(),
     descricaoObjeto: descricaoObjeto.trim() || res.termos_busca.join(", "),
     escopoOrgaos: res.escopo_orgaos,
+    criterioClassificacao: res.criterio_classificacao || "menor_preco",
     ufSelecionada: res.uf_selecionada || null,
     regiaoSelecionada: res.regiao_selecionada || null,
     apenasMunicipiosBilionarios:

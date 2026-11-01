@@ -10,6 +10,8 @@ import {
   AlertCircle,
   SlidersHorizontal,
   RotateCcw,
+  Percent,
+  DollarSign,
 } from "lucide-react";
 import {
   STATUS_VIGENTES,
@@ -19,7 +21,11 @@ import {
   DATA_PUBLICACAO,
   DATA_VIGENCIA,
   PRESETS_EXEMPLOS,
+  CRITERIO_MENOR_PRECO,
+  CRITERIO_MAIOR_DESCONTO,
+  OPCOES_CRITERIO,
 } from "@/data/constants";
+import type { CriterioClassificacao } from "@/lib/domain/types";
 import { HelpTooltip } from "@/components/HelpTooltip";
 
 const OPCOES_STATUS = [STATUS_VIGENTES, STATUS_NAO_VIGENTES, STATUS_TODOS];
@@ -37,6 +43,8 @@ const RESUMO_TIPO_DATA: Record<string, string> = {
 interface SearchParametersFormProps {
   descricaoObjeto: string;
   onChangeDescricao: (val: string) => void;
+  criterioClassificacao?: CriterioClassificacao;
+  onChangeCriterioClassificacao?: (val: CriterioClassificacao) => void;
   statusArp: string;
   onChangeStatusArp: (val: string) => void;
   tipoData: string;
@@ -57,6 +65,8 @@ interface SearchParametersFormProps {
 export function SearchParametersForm({
   descricaoObjeto,
   onChangeDescricao,
+  criterioClassificacao = CRITERIO_MENOR_PRECO,
+  onChangeCriterioClassificacao,
   statusArp,
   onChangeStatusArp,
   tipoData,
@@ -121,7 +131,14 @@ export function SearchParametersForm({
             <button
               key={preset.id}
               type="button"
-              onClick={() => onChangeDescricao(preset.descricao)}
+              onClick={() => {
+                onChangeDescricao(preset.descricao);
+                if (preset.criterioSugerido && onChangeCriterioClassificacao) {
+                  onChangeCriterioClassificacao(preset.criterioSugerido);
+                } else if (!preset.criterioSugerido && onChangeCriterioClassificacao) {
+                  onChangeCriterioClassificacao(CRITERIO_MENOR_PRECO);
+                }
+              }}
               disabled={isSearching}
               className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 hover:bg-[#1B365D] hover:text-white dark:bg-slate-800 dark:hover:bg-[#B59410] dark:hover:text-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors"
             >
@@ -166,6 +183,84 @@ export function SearchParametersForm({
           placeholder="Ex.: Aparelho de ar condicionado tipo split inverter, capacidade de 12000 BTUs, ciclo frio, cor branca."
           className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900/90 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1B365D] dark:focus:ring-[#D4AF37] transition-shadow"
         />
+      </div>
+
+      {/* Critério de Julgamento / Classificação */}
+      <div className="mb-5 p-3 sm:p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <SlidersHorizontal className="w-3.5 h-3.5 text-[#1B365D] dark:text-[#D4AF37]" />
+            <span>Critério de Julgamento / Classificação da Melhor ARP</span>
+            <HelpTooltip
+              title="Critério de Julgamento da ARP (Lei 14.133/2021)"
+              summary="Define a métrica de vantajosidade e classificação das Atas no Top 20:"
+              options={[
+                {
+                  label: "Menor Preço Unitário (R$) - Padrão",
+                  description:
+                    "Para aquisições comuns de materiais, locações e equipamentos, onde a ata mais vantajosa é a de menor valor monetário.",
+                },
+                {
+                  label: "Maior Taxa de Desconto (%)",
+                  description:
+                    "Para gerenciamento de frota com fornecimento de combustível em rede credenciada de postos, cartões ou passagens aéreas, onde a melhor ata é a que oferece o maior percentual de desconto sobre a tabela de referência.",
+                },
+              ]}
+            />
+          </div>
+          <span className="text-[11px] text-slate-500 font-medium">
+            {criterioClassificacao === CRITERIO_MAIOR_DESCONTO
+              ? "Classificando por maior % de desconto (ordem decrescente)"
+              : "Classificando por menor valor em R$ (ordem crescente)"}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          {OPCOES_CRITERIO.map((opt) => {
+            const isSelected = criterioClassificacao === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onChangeCriterioClassificacao?.(opt.id)}
+                disabled={isSearching}
+                className={`flex items-start gap-2.5 p-2.5 rounded-lg border text-left transition-all ${
+                  isSelected
+                    ? "bg-white dark:bg-slate-800 border-[#1B365D] dark:border-[#D4AF37] ring-1 ring-[#1B365D] dark:ring-[#D4AF37] shadow-xs"
+                    : "bg-white/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
+                }`}
+              >
+                <div
+                  className={`mt-0.5 p-1 rounded-md ${
+                    isSelected
+                      ? "bg-[#1B365D]/10 text-[#1B365D] dark:bg-[#D4AF37]/20 dark:text-[#F3E5AB]"
+                      : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                  }`}
+                >
+                  {opt.id === CRITERIO_MAIOR_DESCONTO ? (
+                    <Percent className="w-3.5 h-3.5" />
+                  ) : (
+                    <DollarSign className="w-3.5 h-3.5" />
+                  )}
+                </div>
+                <div>
+                  <div
+                    className={`text-xs font-semibold ${
+                      isSelected
+                        ? "text-slate-900 dark:text-white"
+                        : "text-slate-700 dark:text-slate-300"
+                    }`}
+                  >
+                    {opt.nome}
+                  </div>
+                  <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
+                    {opt.descricaoCurta}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Filters Grid: Status, Date Mode, Start Date, End Date */}

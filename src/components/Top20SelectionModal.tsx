@@ -11,11 +11,16 @@ import {
   AlertTriangle,
   CheckCircle2,
 } from "lucide-react";
-import type { ItemCandidato, EstatisticasPrecos } from "@/lib/domain/types";
+import type {
+  ItemCandidato,
+  EstatisticasPrecos,
+  CriterioClassificacao,
+} from "@/lib/domain/types";
 import {
   calcularEstatisticasPrecos,
   identificarOutliersIqr,
   chaveItemUnica,
+  formatValorOuTaxa,
 } from "@/lib/domain/statistics";
 import { HelpTooltip } from "@/components/HelpTooltip";
 
@@ -28,6 +33,7 @@ interface Top20SelectionModalProps {
   incluirClasseB: boolean;
   onChangeIncluirClasseB: (val: boolean) => void;
   totalClasseBDisponiveis: number;
+  criterioClassificacao?: CriterioClassificacao;
 }
 
 function formatBRL(val: number): string {
@@ -48,6 +54,7 @@ export function Top20SelectionModal({
   incluirClasseB,
   onChangeIncluirClasseB,
   totalClasseBDisponiveis,
+  criterioClassificacao = "menor_preco",
 }: Top20SelectionModalProps) {
   const [buscaTexto, setBuscaTexto] = useState("");
   const [filtroUf, setFiltroUf] = useState("TODAS");
@@ -57,8 +64,8 @@ export function Top20SelectionModal({
 
   // Compute outlier flags across the Top 20 candidates
   const outlierKeys = useMemo(() => {
-    return identificarOutliersIqr(candidatosTop20);
-  }, [candidatosTop20]);
+    return identificarOutliersIqr(candidatosTop20, criterioClassificacao);
+  }, [candidatosTop20, criterioClassificacao]);
 
   const ufsDisponiveis = useMemo(() => {
     const set = new Set<string>();
@@ -139,7 +146,9 @@ export function Top20SelectionModal({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="font-heading text-base sm:text-lg font-bold">
-                Seleção Auditável dos 20 Menores Preços Unitários (Regra R6)
+                {criterioClassificacao === "maior_desconto"
+                  ? "Seleção Auditável das 20 Maiores Taxas de Desconto (Regra R6)"
+                  : "Seleção Auditável dos 20 Menores Preços Unitários (Regra R6)"}
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#B59410] text-white">
                 Máx. 1 item por ARP
@@ -275,7 +284,7 @@ export function Top20SelectionModal({
                 step="0.01"
                 value={precoMin}
                 onChange={(e) => setPrecoMin(e.target.value)}
-                placeholder="R$ Mín"
+                placeholder={criterioClassificacao === "maior_desconto" ? "% Mín" : "R$ Mín"}
                 className="w-1/2 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono text-slate-900 dark:text-white"
               />
               <input
@@ -283,7 +292,7 @@ export function Top20SelectionModal({
                 step="0.01"
                 value={precoMax}
                 onChange={(e) => setPrecoMax(e.target.value)}
-                placeholder="R$ Máx"
+                placeholder={criterioClassificacao === "maior_desconto" ? "% Máx" : "R$ Máx"}
                 className="w-1/2 px-2 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-mono text-slate-900 dark:text-white"
               />
             </div>
@@ -304,7 +313,9 @@ export function Top20SelectionModal({
                     <th className="py-2.5 px-3 text-center">Sel.</th>
                     <th className="py-2.5 px-2 text-center">#</th>
                     <th className="py-2.5 px-2 text-center">Ader.</th>
-                    <th className="py-2.5 px-3 text-right">Valor Unitário</th>
+                    <th className="py-2.5 px-3 text-right">
+                      {criterioClassificacao === "maior_desconto" ? "Taxa de Desconto" : "Valor Unitário"}
+                    </th>
                     <th className="py-2.5 px-2 text-center">Unid.</th>
                     <th className="py-2.5 px-2 text-right">Qtd. ARP</th>
                     <th className="py-2.5 px-3">Descrição do Objeto</th>
@@ -360,13 +371,19 @@ export function Top20SelectionModal({
                           <div className="flex items-center justify-end gap-1.5">
                             {isOutlier && (
                               <span
-                                title="Preço apontado como potencialmente discrepante (Outlier IQR / Mediana)"
+                                title={
+                                  criterioClassificacao === "maior_desconto"
+                                    ? "Taxa apontada como potencialmente discrepante (Outlier IQR)"
+                                    : "Preço apontado como potencialmente discrepante (Outlier IQR / Mediana)"
+                                }
                                 className="text-amber-500"
                               >
                                 <AlertTriangle className="w-3.5 h-3.5" />
                               </span>
                             )}
-                            <span>{formatBRL(item.valor_unitario)}</span>
+                            <span>
+                              {formatValorOuTaxa(item.valor_unitario, criterioClassificacao)}
+                            </span>
                           </div>
                         </td>
                         <td className="py-2.5 px-2 text-center font-mono">
@@ -446,10 +463,10 @@ export function Top20SelectionModal({
 
             <div>
               <span className="text-slate-500 dark:text-slate-400 block text-[10px] uppercase">
-                Média Unitária
+                {criterioClassificacao === "maior_desconto" ? "Média dos Descontos" : "Média Unitária"}
               </span>
               <span className="font-mono font-bold text-sm text-[#1B365D] dark:text-[#D4AF37] tabular-nums">
-                {formatBRL(estatisticasSelecionados.media)}
+                {formatValorOuTaxa(estatisticasSelecionados.media, criterioClassificacao)}
               </span>
             </div>
 
@@ -458,7 +475,7 @@ export function Top20SelectionModal({
                 Mediana
               </span>
               <span className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400 tabular-nums">
-                {formatBRL(estatisticasSelecionados.mediana)}
+                {formatValorOuTaxa(estatisticasSelecionados.mediana, criterioClassificacao)}
               </span>
             </div>
 
@@ -467,8 +484,8 @@ export function Top20SelectionModal({
                 Amplitude (Mín – Máx)
               </span>
               <span className="font-mono font-semibold text-xs text-slate-800 dark:text-slate-200 tabular-nums">
-                {formatBRL(estatisticasSelecionados.menor)} –{" "}
-                {formatBRL(estatisticasSelecionados.maior)}
+                {formatValorOuTaxa(estatisticasSelecionados.menor, criterioClassificacao)} –{" "}
+                {formatValorOuTaxa(estatisticasSelecionados.maior, criterioClassificacao)}
               </span>
             </div>
 

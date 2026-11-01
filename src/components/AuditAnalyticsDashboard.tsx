@@ -26,14 +26,19 @@ import {
   Bar,
   Cell,
 } from "recharts";
-import type { ResultadoPesquisa, EstatisticasPrecos } from "@/lib/domain/types";
-import { chaveItemUnica } from "@/lib/domain/statistics";
+import type {
+  ResultadoPesquisa,
+  EstatisticasPrecos,
+  CriterioClassificacao,
+} from "@/lib/domain/types";
+import { chaveItemUnica, formatValorOuTaxa } from "@/lib/domain/statistics";
 import { HelpTooltip } from "@/components/HelpTooltip";
 
 interface AuditAnalyticsDashboardProps {
   resultado: ResultadoPesquisa;
   selectedKeys: Set<string>;
   estatisticasSelecionados: EstatisticasPrecos;
+  criterioClassificacao?: CriterioClassificacao;
 }
 
 function formatBRL(val: number): string {
@@ -49,6 +54,7 @@ export function AuditAnalyticsDashboard({
   resultado,
   selectedKeys,
   estatisticasSelecionados,
+  criterioClassificacao = "menor_preco",
 }: AuditAnalyticsDashboardProps) {
   const [activeAuditTab, setActiveAuditTab] = useState<
     "graficos" | "memoria" | "descartados"
@@ -297,10 +303,12 @@ export function AuditAnalyticsDashboard({
                   <div>
                     <h3 className="font-heading text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                       <ScatterIcon className="w-4 h-4 text-[#B59410]" />
-                      Gráfico de Dispersão dos Preços Unitários Homologados (R$)
+                      {criterioClassificacao === "maior_desconto"
+                        ? "Gráfico de Dispersão das Taxas de Desconto (%)"
+                        : "Gráfico de Dispersão dos Preços Unitários Homologados (R$)"}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Pontos dourados indicam itens selecionados para o parecer; linhas tracejadas indicam a Média ({formatBRL(estatisticasSelecionados.media)}) e a Mediana ({formatBRL(estatisticasSelecionados.mediana)}) da seleção.
+                      Pontos dourados indicam itens selecionados para o parecer; linhas tracejadas indicam a Média ({formatValorOuTaxa(estatisticasSelecionados.media, criterioClassificacao)}) e a Mediana ({formatValorOuTaxa(estatisticasSelecionados.mediana, criterioClassificacao)}) da seleção.
                     </p>
                   </div>
                   <div className="flex items-center gap-4 text-xs">
@@ -336,7 +344,11 @@ export function AuditAnalyticsDashboard({
                         />
                         <YAxis
                           tick={{ fontSize: 11 }}
-                          tickFormatter={(v) => `R$ ${v}`}
+                          tickFormatter={(v) =>
+                            criterioClassificacao === "maior_desconto"
+                              ? `${v}%`
+                              : `R$ ${v}`
+                          }
                         />
                         <Tooltip
                           content={({ active, payload }) => {
@@ -346,7 +358,7 @@ export function AuditAnalyticsDashboard({
                             return (
                               <div className="p-3 rounded-xl bg-slate-900 text-white text-xs shadow-xl border border-slate-700 max-w-xs">
                                 <div className="font-bold text-[#F3E5AB] mb-1">
-                                  {formatBRL(d.valorUnitario)} (Aderência{" "}
+                                  {formatValorOuTaxa(d.valorUnitario, criterioClassificacao)} (Aderência{" "}
                                   {d.classificacao})
                                 </div>
                                 <div className="font-medium line-clamp-2 mb-1">
@@ -370,8 +382,9 @@ export function AuditAnalyticsDashboard({
                               strokeDasharray="5 5"
                               strokeWidth={2}
                               label={{
-                                value: `Média: ${formatBRL(
-                                  estatisticasSelecionados.media
+                                value: `Média: ${formatValorOuTaxa(
+                                  estatisticasSelecionados.media,
+                                  criterioClassificacao
                                 )}`,
                                 position: "insideTopRight",
                                 fill: "#1B365D",
@@ -384,8 +397,9 @@ export function AuditAnalyticsDashboard({
                               strokeDasharray="3 3"
                               strokeWidth={2}
                               label={{
-                                value: `Mediana: ${formatBRL(
-                                  estatisticasSelecionados.mediana
+                                value: `Mediana: ${formatValorOuTaxa(
+                                  estatisticasSelecionados.mediana,
+                                  criterioClassificacao
                                 )}`,
                                 position: "insideBottomRight",
                                 fill: "#10B981",
@@ -543,7 +557,9 @@ export function AuditAnalyticsDashboard({
                   <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                     <tr>
                       <th className="py-2 px-3">Aderência</th>
-                      <th className="py-2 px-3 text-right">Valor Unit.</th>
+                      <th className="py-2 px-3 text-right">
+                        {criterioClassificacao === "maior_desconto" ? "Desconto (%)" : "Valor Unit."}
+                      </th>
                       <th className="py-2 px-2">Unid.</th>
                       <th className="py-2 px-3">Descrição do Objeto</th>
                       <th className="py-2 px-3">Órgão/UF</th>
@@ -570,7 +586,7 @@ export function AuditAnalyticsDashboard({
                           </span>
                         </td>
                         <td className="py-2 px-3 text-right font-mono font-bold whitespace-nowrap">
-                          {formatBRL(item.valor_unitario)}
+                          {formatValorOuTaxa(item.valor_unitario, criterioClassificacao)}
                         </td>
                         <td className="py-2 px-2 font-mono">
                           {item.unidade_fornecimento}
