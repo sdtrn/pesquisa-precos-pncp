@@ -270,6 +270,7 @@ export default function HomePage() {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
+      let recebeuResultado = false;
 
       while (true) {
         const { value, done } = await reader.read();
@@ -295,6 +296,7 @@ export default function HomePage() {
           } else if (msg.type === "error") {
             throw new Error(msg.error || "Erro durante o processamento PNCP.");
           } else if (msg.type === "result") {
+            recebeuResultado = true;
             const finalResult = msg.data as ResultadoPesquisa;
             setResultado(finalResult);
             const initialTop20 = selecionarTop20Menores(
@@ -328,6 +330,12 @@ export default function HomePage() {
             }
           }
         }
+      }
+
+      if (!recebeuResultado) {
+        throw new Error(
+          "A conexão com o servidor foi encerrada antes da conclusão da pesquisa. Por favor, tente novamente."
+        );
       }
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") {

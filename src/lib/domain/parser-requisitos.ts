@@ -219,6 +219,20 @@ export function gerarTermosBusca(descricao: string): string[] {
     !ehVeiculoContexto &&
     /\b(ar[\s-]*condicionado|condicionador(?:es)?\s+de\s+ar)\b/.test(textoNorm)
   ) {
+    if (textoNorm.includes("split") && textoNorm.includes("inverter")) {
+      return [
+        "ar condicionado split",
+        "split inverter",
+        "condicionador de ar split",
+        "ar condicionado inverter",
+      ];
+    }
+    if (textoNorm.includes("split")) {
+      return ["ar condicionado split", "condicionador de ar split"];
+    }
+    if (textoNorm.includes("inverter")) {
+      return ["ar condicionado inverter", "condicionador de ar inverter"];
+    }
     return ["ar condicionado", "condicionador de ar"];
   }
 
@@ -936,6 +950,16 @@ function extrairBtusItem(textoNorm: string): number | null {
       return n;
     }
   }
+  const mCapac = textoNorm.match(
+    /(?:capacidade(?:\s+de)?\s+refrigeracao|capacidade|potencia)\s*(?::\s*|\s+)(\d{1,3}(?:[.,]\d{3})+|\d{4,6})\b/
+  );
+  if (mCapac) {
+    const limpo = mCapac[1].replace(/[.,]/g, "");
+    const n = Number(limpo);
+    if (Number.isFinite(n) && n >= 5000) {
+      return n;
+    }
+  }
   return null;
 }
 
@@ -1181,6 +1205,16 @@ export function avaliarAderenciaItem(
           "controle remoto",
           "suporte para condensadora",
           "suporte para ar",
+          "suporte aparelho ar condicionado",
+          "suporte de ar condicionado",
+          "suporte para evaporadora",
+          "suporte de fixacao",
+          "base para condensadora",
+          "mao francesa para ar",
+          "coxim para",
+          "pecas para ar",
+          "pecas de ar",
+          "acessorios para ar",
           "cortina de ar",
           "defletor de ar",
           "tubo de cobre",
@@ -1216,14 +1250,33 @@ export function avaliarAderenciaItem(
           "litro",
           "par",
         ]);
+
+        const ehSuporteOuPecaAvulsa =
+          /^(?:suporte|base|coxim|mao\s+francesa|parafuso|duto|mangueira|helice|termostato|sensor)\b/.test(
+            textoNorm
+          ) ||
+          /\bsuporte\s+(?:de\s+|para\s+|de\s+fixacao\s+|de\s+parede\s+)?(?:aparelho\s+)?(?:de\s+)?ar[\s-]*condicionado\b/.test(
+            textoNorm
+          );
+
+        const ehServicoArCond =
+          /\b(?:manutencao\s+(?:de|em)\s+(?:aparelhos?|equipamentos?|ar)|manutencao\s+(?:preventiva|corretiva|predial)|servicos?\s+de\s+(?:instalacao|manutencao|limpeza|remanejamento|desmontagem|montagem)|instalacao\s*[\/e]\s*(?:desinstalacao|montagem|desmontagem|remocao)|remanejamento\s+com\s+transporte|desmontagem\s*[\/e]\s*(?:montagem|remocao)|manutencao\s+de\s+aparelhos|ar[\s-]*condicionado\s*[-–—:]\s*(?:instalacao|desinstalacao|montagem|desmontagem|remocao|remanejamento|manutencao|higienizacao|limpeza|assistencia|conserto|reparo))\b/.test(
+            textoNorm
+          ) ||
+          /^(?:instalacao|desinstalacao|remanejamento|desmontagem|montagem|manutencao|limpeza|higienizacao)\b/.test(
+            textoNorm
+          );
+
         if (
+          ehSuporteOuPecaAvulsa ||
+          ehServicoArCond ||
           termosExclusaoArCond.some((s) => textoNorm.includes(s)) ||
           unidadesServicoOuPeca.has(unApiLow)
         ) {
           return {
             aderencia: "C",
             motivo:
-              "Item refere-se a serviço (manutenção, instalação, limpeza, locação) ou peça/acessório avulso",
+              "Item refere-se a serviço (manutenção, instalação, limpeza, locação) ou peça/acessório/suporte avulso",
             atendidos,
             ausentes,
             reprovados: ["Serviço ou peça distinta do aparelho de ar-condicionado"],
@@ -1735,6 +1788,41 @@ export function verificarCompatibilidadePreliminarAta(
         motivo:
           "ata exclusiva de prestação de serviços (manutenção/instalação/limpeza/locação) — objeto pesquisado é aquisição do equipamento",
       };
+    }
+
+    const ehPecaOuAcessorioExclusivo =
+      /\b(?:suportes?|pecas? de reposicao|partes e pecas|gas refrigerante|cortinas? de ar|filtros? de ar|controles? remotos?|tubulac\w*|dutos?)\b/.test(
+        textoAta
+      ) &&
+      !/\b(?:aparelhos?|condicionadores?|equipamentos?|climatizadores?|split)\b/.test(
+        textoAta
+      );
+
+    if (ehPecaOuAcessorioExclusivo) {
+      return {
+        compativel: false,
+        motivo:
+          "ata exclusiva de peças/acessórios/suportes — objeto pesquisado é o aparelho de ar-condicionado completo",
+      };
+    }
+
+    const reqSplit = requisitos.some(
+      (r) =>
+        r.Obrigatorio !== false &&
+        semAcentosMinusculo(r.Valor).includes("split")
+    );
+    if (reqSplit) {
+      const ehOutroTipoExclusivo =
+        /\b(?:ar[\s-]*condicionado\s+(?:tipo\s+)?janela|aparelho\s+de\s+janela|cortinas?\s+de\s+ar)\b/.test(
+          textoAta
+        ) && !textoAta.includes("split");
+      if (ehOutroTipoExclusivo) {
+        return {
+          compativel: false,
+          motivo:
+            "ata restrita a modelos de janela/cortina de ar — objeto pesquisado requer modelo split",
+        };
+      }
     }
   }
 

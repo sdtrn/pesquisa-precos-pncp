@@ -5,10 +5,11 @@ export const PNCP_SEARCH_URL = "https://pncp.gov.br/api/search/";
 export const PNCP_API_V1_BASE = "https://pncp.gov.br/api/pncp/v1";
 export const PNCP_CONSULTA_V1_BASE = "https://pncp.gov.br/api/consulta/v1";
 export const PNCP_APP_ATAS_BASE = "https://pncp.gov.br/app/atas";
+export const DADOS_ABERTOS_BASE = "https://dadosabertos.compras.gov.br";
 
-// Parâmetros de rede seguros e otimizados (Fluid Compute Node.js)
-export const REQUEST_TIMEOUT_MS = 6500;
-export const MAX_RETRIES = 2;
+// Parâmetros de rede ultrarrápidos e seguros (Fluid Compute Node.js)
+export const REQUEST_TIMEOUT_MS = 3000;
+export const MAX_RETRIES = 1;
 export const MAX_PARALLEL_WORKERS = 25;
 export const SEARCH_PAGE_SIZE = 100;
 export const ITEMS_PAGE_SIZE = 500;

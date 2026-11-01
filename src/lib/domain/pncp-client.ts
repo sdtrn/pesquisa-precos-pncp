@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import {
+  DADOS_ABERTOS_BASE,
   DATA_ASSINATURA,
   DATA_PUBLICACAO,
   DATA_VIGENCIA,
@@ -23,6 +24,29 @@ import type { ArquivoArp, ConferenciaStatusApi, ItemCandidato } from "@/lib/doma
 const GLOBAL_MEM_CACHE = new Map<string, { data: unknown; ts: number }>();
 const MAX_CACHE_ENTRIES = 6000;
 const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6 horas
+
+// Cache em memória de resultados homologados (preços e fornecedores)
+const GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE = new Map<string, Record<string, unknown>[]>();
+
+// Circuit Breaker para evitar travamento da pipeline quando a API v1 do PNCP estiver em 503
+let circuitBreakerApiV1Failures = 0;
+let circuitBreakerApiV1TrippedUntil = 0;
+
+function isCircuitBreakerApiV1Open(): boolean {
+  return Date.now() < circuitBreakerApiV1TrippedUntil;
+}
+
+function recordApiV1Success(): void {
+  circuitBreakerApiV1Failures = 0;
+}
+
+function recordApiV1Failure(): void {
+  circuitBreakerApiV1Failures++;
+  if (circuitBreakerApiV1Failures >= 3) {
+    // 30 segundos de circuito aberto para não bloquear requisições
+    circuitBreakerApiV1TrippedUntil = Date.now() + 30000;
+  }
+}
 
 function getFromCache(key: string): unknown | undefined {
   const entry = GLOBAL_MEM_CACHE.get(key);
@@ -96,6 +120,11 @@ export class PNCPClient {
       }
     }
 
+    // Se o circuit breaker da API v1 estiver aberto e for uma chamada tolerante a falha, encerra em 0ms
+    if (ignorar404 && url.includes(PNCP_API_V1_BASE) && isCircuitBreakerApiV1Open()) {
+      return null;
+    }
+
     const urlObj = new URL(url);
     if (params) {
       for (const [k, v] of Object.entries(params)) {
@@ -124,7 +153,10 @@ export class PNCPClient {
         });
         clearTimeout(timeoutId);
 
-        if ([400, 404, 500].includes(resp.status) && ignorar404) {
+        if ([400, 404, 500, 502, 503, 504].includes(resp.status) && ignorar404) {
+          if (fullUrl.includes(PNCP_API_V1_BASE) && resp.status >= 500) {
+            recordApiV1Failure();
+          }
           if (this.usarCache && usarCacheNestaChamada) {
             setInCache(cacheKey, []);
           }
@@ -144,7 +176,14 @@ export class PNCPClient {
         }
 
         if (!resp.ok) {
+          if (fullUrl.includes(PNCP_API_V1_BASE) && resp.status >= 500) {
+            recordApiV1Failure();
+          }
           throw new Error(`HTTP ${resp.status} em ${fullUrl}`);
+        }
+
+        if (fullUrl.includes(PNCP_API_V1_BASE)) {
+          recordApiV1Success();
         }
 
         const text = await resp.text();
@@ -163,6 +202,16 @@ export class PNCPClient {
       } catch (err) {
         clearTimeout(timeoutId);
         ultimoErro = err;
+        if (fullUrl.includes(PNCP_API_V1_BASE)) {
+          recordApiV1Failure();
+        }
+        // Se for requisição secundária (ignorar404) e deu timeout ou falha de rede, não insiste para não travar
+        if (ignorar404) {
+          if (this.usarCache && usarCacheNestaChamada) {
+            setInCache(cacheKey, []);
+          }
+          return null;
+        }
         if (tentativa <= MAX_RETRIES) {
           await sleep(200 * tentativa);
         }
@@ -215,13 +264,30 @@ export class PNCPClient {
       .trim();
     if (!limpo) return termo.trim();
 
-    if (/\bcondicionado\b/.test(limpo)) {
+    if (/\b(?:ar[\s-]*condicionado|condicionador(?:es)?\s+de\s+ar)\b/.test(limpo)) {
+      if (limpo.includes("split") && limpo.includes("inverter")) {
+        return "split inverter";
+      }
+      if (limpo.includes("split")) {
+        return "ar condicionado split";
+      }
+      if (limpo.includes("inverter")) {
+        return "ar condicionado inverter";
+      }
+      return "ar condicionado";
+    }
+
+    if (/\bsplit\s+inverter\b/.test(limpo)) {
+      return "split inverter";
+    }
+
+    if (/\bcondicionado\b/.test(limpo) && !limpo.includes("ar")) {
       return "condicionado";
     }
     if (/\bcondicionador(?:es)?\b/.test(limpo)) {
       return "condicionador";
     }
-    if (/^lona\s+(?:plastica|preta|polietileno)$/.test(limpo)) {
+    if (/^lona(?:\s+(?:plastica|preta|polietileno))+$/.test(limpo)) {
       return "lona";
     }
 
@@ -544,6 +610,98 @@ export class PNCPClient {
     ano: string,
     seqCompra: string
   ): Promise<Record<string, unknown>[]> {
+    const chaveCompra = `${cnpj}|${ano}|${seqCompra}`;
+    if (this.usarCache) {
+      const cached = getFromCache(`itens_compra_${chaveCompra}`);
+      if (Array.isArray(cached) && cached.length > 0) {
+        return cached as Record<string, unknown>[];
+      }
+    }
+
+    // 1. Tenta primeiramente via Dados Abertos (Compras.gov.br) — ultra rápido (~40ms)
+    try {
+      const seqFormatado = String(seqCompra).padStart(6, "0");
+      const codigoCompra = `${cnpj}-1-${seqFormatado}/${ano}`;
+      const urlDadosAbertos = `${DADOS_ABERTOS_BASE}/modulo-contratacoes/2.1_consultarItensContratacoes_PNCP_14133_Id?tipo=numeroControlePNCPCompra&codigo=${encodeURIComponent(
+        codigoCompra
+      )}`;
+
+      const dadosDA = (await this.getJson(
+        urlDadosAbertos,
+        undefined,
+        true,
+        true
+      )) as Record<string, unknown> | null;
+
+      if (
+        dadosDA &&
+        typeof dadosDA === "object" &&
+        Array.isArray(dadosDA.resultado) &&
+        dadosDA.resultado.length > 0
+      ) {
+        const itensMapeados: Record<string, unknown>[] = [];
+        for (const it of dadosDA.resultado as Record<string, unknown>[]) {
+          const numItem = Number(it.numeroItemPncp || it.numeroItem || 0);
+          const descDet = String(it.descricaodetalhada || "").trim();
+          const descRes = String(it.descricaoResumida || "").trim();
+          const unMed = String(it.unidadeMedida || "").trim();
+          const valEst =
+            it.valorUnitarioEstimado !== null &&
+            it.valorUnitarioEstimado !== undefined
+              ? Number(it.valorUnitarioEstimado)
+              : null;
+          const valRes =
+            it.valorUnitarioResultado !== null &&
+            it.valorUnitarioResultado !== undefined
+              ? Number(it.valorUnitarioResultado)
+              : null;
+          const fornecedor = String(it.nomeFornecedor || "").trim();
+
+          const itemFormatado: Record<string, unknown> = {
+            numeroItem: numItem,
+            descricao: descDet || descRes,
+            informacaoComplementar: descRes,
+            unidadeMedida: unMed,
+            quantidade:
+              it.quantidade !== null && it.quantidade !== undefined
+                ? Number(it.quantidade)
+                : null,
+            valorUnitarioEstimado: Number.isFinite(valEst) ? valEst : null,
+            temResultado: Boolean(valRes && valRes > 0),
+            situacaoCompraItemNome: "Homologado",
+          };
+
+          if (valRes && valRes > 0) {
+            const resObj = {
+              numeroItem: numItem,
+              valorUnitarioHomologado: valRes,
+              nomeRazaoSocialFornecedor: fornecedor,
+              situacaoCompraItemResultadoNome: "Homologado",
+            };
+            itemFormatado._resultadoHomologado = resObj;
+            GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(
+              `${chaveCompra}|${numItem}`,
+              [resObj]
+            );
+          }
+
+          itensMapeados.push(itemFormatado);
+        }
+
+        if (this.usarCache) {
+          setInCache(`itens_compra_${chaveCompra}`, itensMapeados);
+        }
+        return itensMapeados;
+      }
+    } catch {
+      // Ignora erro em Dados Abertos e recorre ao PNCP oficial
+    }
+
+    // 2. Fallback resiliente: endpoint oficial do PNCP (/api/pncp/v1)
+    if (isCircuitBreakerApiV1Open()) {
+      return [];
+    }
+
     const urlItens = `${PNCP_API_V1_BASE}/orgaos/${cnpj}/compras/${ano}/${seqCompra}/itens`;
     const todosItens: Record<string, unknown>[] = [];
     let pag = 1;
@@ -565,6 +723,10 @@ export class PNCPClient {
       pag++;
     }
 
+    if (this.usarCache && todosItens.length > 0) {
+      setInCache(`itens_compra_${chaveCompra}`, todosItens);
+    }
+
     return todosItens;
   }
 
@@ -574,13 +736,28 @@ export class PNCPClient {
     seqCompra: string,
     numeroItem: string
   ): Promise<Record<string, unknown>[]> {
+    const chave = `${cnpj}|${ano}|${seqCompra}|${numeroItem}`;
+    const cachedResultado = GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.get(chave);
+    if (cachedResultado && cachedResultado.length > 0) {
+      return cachedResultado;
+    }
+
+    if (isCircuitBreakerApiV1Open()) {
+      return [];
+    }
+
     const url = `${PNCP_API_V1_BASE}/orgaos/${cnpj}/compras/${ano}/${seqCompra}/itens/${numeroItem}/resultados`;
     const dados = await this.getJson(url, undefined, true, true);
     if (Array.isArray(dados)) {
+      if (dados.length > 0) {
+        GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(chave, dados as Record<string, unknown>[]);
+      }
       return dados as Record<string, unknown>[];
     }
     if (dados && typeof dados === "object") {
-      return [dados as Record<string, unknown>];
+      const arr = [dados as Record<string, unknown>];
+      GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(chave, arr);
+      return arr;
     }
     return [];
   }

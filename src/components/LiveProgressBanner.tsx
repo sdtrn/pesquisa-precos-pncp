@@ -24,7 +24,7 @@ export function LiveProgressBanner({
   isSearching,
   onCancel,
 }: LiveProgressBannerProps) {
-  if (!isSearching && !progresso) return null;
+  if (!isSearching && (!progresso || (progresso.frac || 0) < 0.98)) return null;
 
   const pct = progresso
     ? Math.min(100, Math.max(3, Math.round((progresso.frac || 0) * 100)))

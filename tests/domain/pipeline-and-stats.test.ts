@@ -1,9 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { selecionarTop20Menores, limparTextoExibicao, formatarQuantitativoArp } from "@/lib/domain/pipeline";
 import { calcularEstatisticasPrecos, identificarOutliersIqr } from "@/lib/domain/statistics";
+import { PNCPClient } from "@/lib/domain/pncp-client";
 import type { ItemCandidato } from "@/lib/domain/types";
 
 describe("Regra R6 (1 item por ata), Sanitização e Estatísticas", () => {
+  it("normaliza termos de busca na API do PNCP preservando expressões compostas essenciais", () => {
+    expect(PNCPClient.normalizarTermoParaApiSearch("ar condicionado")).toBe("ar condicionado");
+    expect(PNCPClient.normalizarTermoParaApiSearch("ar condicionado split")).toBe("ar condicionado split");
+    expect(PNCPClient.normalizarTermoParaApiSearch("split inverter")).toBe("split inverter");
+    expect(PNCPClient.normalizarTermoParaApiSearch("ar condicionado split inverter")).toBe("split inverter");
+    expect(PNCPClient.normalizarTermoParaApiSearch("lona plastica preta")).toBe("lona");
+  });
+
   it("limpa tags HTML e caracteres de controle das descrições do PNCP", () => {
     expect(limparTextoExibicao("<p>Rolo de <strong>lona</strong>&nbsp;8x100m\x07</p>")).toBe(
       "Rolo de lona 8x100m"

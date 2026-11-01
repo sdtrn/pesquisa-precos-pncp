@@ -74,7 +74,16 @@ describe("Extração de Termos e Requisitos Mínimos e Classificação A/B/C", (
       "Aparelho de ar condicionado tipo split inverter, capacidade de 12000 BTU";
 
     const termos = gerarTermosBusca(descAr);
-    expect(termos).toEqual(["ar condicionado", "condicionador de ar"]);
+    expect(termos).toEqual([
+      "ar condicionado split",
+      "split inverter",
+      "condicionador de ar split",
+      "ar condicionado inverter",
+    ]);
+    expect(gerarTermosBusca("Aparelho de ar condicionado")).toEqual([
+      "ar condicionado",
+      "condicionador de ar",
+    ]);
     expect(termos).not.toContain("aparelho condicionado");
 
     const reqs = extrairRequisitosMinimos(descAr);
@@ -136,6 +145,13 @@ describe("Extração de Termos e Requisitos Mínimos e Classificação A/B/C", (
     );
     expect(itemCServico.aderencia).toBe("C");
 
+    const itemCSuporte = avaliarAderenciaItem(
+      "Suporte Aparelho Ar Condicionado material: concreto armado pré-moldado",
+      "UN",
+      reqs
+    );
+    expect(itemCSuporte.aderencia).toBe("C");
+
     // Triagem preliminar de Atas
     expect(
       verificarCompatibilidadePreliminarAta(
@@ -149,6 +165,14 @@ describe("Extração de Termos e Requisitos Mínimos e Classificação A/B/C", (
       verificarCompatibilidadePreliminarAta(
         "Contratação de empresa especializada em manutenção preventiva e corretiva de ar condicionado",
         "Ata 02/2026",
+        reqs
+      ).compativel
+    ).toBe(false);
+
+    expect(
+      verificarCompatibilidadePreliminarAta(
+        "Aquisição de suportes de concreto e peças de reposição para ar condicionado",
+        "Ata 03/2026",
         reqs
       ).compativel
     ).toBe(false);
