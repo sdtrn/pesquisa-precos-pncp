@@ -1,5 +1,7 @@
 export type OperadorRequisito = "contém" | "=" | ">=" | "<=" | "compatível" | ">" | "<";
 
+export type CriterioClassificacao = "menor_preco" | "maior_desconto";
+
 export interface RequisitoMinimo {
   Atributo: string;
   Operador: OperadorRequisito | string;
@@ -96,6 +98,7 @@ export interface ParametrosPipeline {
   termosBusca: string[];
   requisitos: RequisitoMinimo[];
   escopoOrgaos: string;
+  criterioClassificacao?: CriterioClassificacao;
   statusAta: string;
   tipoDataPeriodo: string;
   dataInicial?: string | null;
@@ -109,6 +112,7 @@ export interface ParametrosPipeline {
 export interface ResultadoPesquisa {
   momento_consulta: string;
   escopo_orgaos: string;
+  criterio_classificacao?: CriterioClassificacao;
   uf_selecionada?: string | null;
   regiao_selecionada?: string | null;
   apenas_municipios_bilionarios?: boolean;
@@ -150,6 +154,7 @@ export interface RegistroHistoricoPesquisa {
   timestampIso: string;
   descricaoObjeto: string;
   escopoOrgaos: string;
+  criterioClassificacao?: CriterioClassificacao;
   ufSelecionada?: string | null;
   regiaoSelecionada?: string | null;
   apenasMunicipiosBilionarios?: boolean;

@@ -114,15 +114,48 @@ export const UFS_BRASIL: Array<{ sigla: string; nome: string }> = [
   { sigla: "TO", nome: "Tocantins" },
 ];
 
+// Critérios de Julgamento / Classificação de ARPs
+import type { CriterioClassificacao } from "@/lib/domain/types";
+
+export const CRITERIO_MENOR_PRECO: CriterioClassificacao = "menor_preco";
+export const CRITERIO_MAIOR_DESCONTO: CriterioClassificacao = "maior_desconto";
+
+export const OPCOES_CRITERIO: Array<{
+  id: CriterioClassificacao;
+  nome: string;
+  descricaoCurta: string;
+}> = [
+  {
+    id: CRITERIO_MENOR_PRECO,
+    nome: "Menor Preço Unitário (R$)",
+    descricaoCurta: "Classifica e seleciona as ARPs pelos menores valores unitários monetários.",
+  },
+  {
+    id: CRITERIO_MAIOR_DESCONTO,
+    nome: "Maior Taxa de Desconto (%)",
+    descricaoCurta: "Classifica e seleciona as ARPs pelas maiores taxas de desconto percentual (ex: gestão de frota, combustíveis, cartões).",
+  },
+];
+
 export interface PresetExemplo {
   id: string;
   titulo: string;
   categoria: string;
   descricao: string;
   escopoSugerido?: string;
+  criterioSugerido?: CriterioClassificacao;
 }
 
 export const PRESETS_EXEMPLOS: PresetExemplo[] = [
+  {
+    id: "gestao-frota-combustivel",
+    titulo: "Gerenciamento de Frota com Combustível (Maior Desconto)",
+    categoria: "Frota / Combustível",
+    descricao:
+      "Contratação de serviços de gerenciamento e controle de frota de veículos, por meio de sistema informatizado e integrado via web, com cartão magnético/chip, para fornecimento e abastecimento contínuo de combustíveis (gasolina, etanol, diesel S10 e diesel comum) em rede credenciada de postos, com julgamento pela MAIOR TAXA DE DESCONTO.",
+    escopoSugerido: ESCOPO_TODOS,
+    criterioSugerido: CRITERIO_MAIOR_DESCONTO,
+  },
   {
     id: "lona-8x100",
     titulo: "Lona Plástica Preta 8x100m (200 micras)",
