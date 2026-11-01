@@ -1,4 +1,27 @@
-import type { EstatisticasPrecos, ItemCandidato } from "@/lib/domain/types";
+import type {
+  CriterioClassificacao,
+  EstatisticasPrecos,
+  ItemCandidato,
+} from "@/lib/domain/types";
+
+export function formatValorOuTaxa(
+  valor: number,
+  criterio?: CriterioClassificacao
+): string {
+  if (!Number.isFinite(valor)) return "-";
+  if (criterio === "maior_desconto") {
+    return `${valor.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}%`;
+  }
+  return valor.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
 function calcularPercentil(ordenados: number[], p: number): number {
   if (ordenados.length === 0) return 0;
@@ -13,12 +36,18 @@ function calcularPercentil(ordenados: number[], p: number): number {
 }
 
 /**
- * Calcula estatísticas completas de uma amostra de preços unitários (em R$):
+ * Calcula estatísticas completas de uma amostra de preços unitários (em R$) ou taxas de desconto (%):
  * média, mediana, menor, maior, desvio-padrão, coeficiente de variação (CV%),
  * quartis Q1/Q3, intervalo interquartil (IQR) e limites de detecção de outliers.
  */
-export function calcularEstatisticasPrecos(valores: number[]): EstatisticasPrecos {
-  const validos = valores.filter((v) => Number.isFinite(v) && v > 0);
+export function calcularEstatisticasPrecos(
+  valores: number[],
+  criterio?: CriterioClassificacao
+): EstatisticasPrecos {
+  const ehDesconto = criterio === "maior_desconto";
+  const validos = valores.filter((v) =>
+    Number.isFinite(v) && (ehDesconto ? v >= 0 : v > 0)
+  );
   const n = validos.length;
   if (n === 0) {
     return {
@@ -84,15 +113,26 @@ export function chaveItemUnica(item: Pick<ItemCandidato, "cnpj_orgao" | "numero_
  * Identifica itens com preços inexequíveis ou excessivamente elevados (outliers)
  * combinando o critério de Tukey (IQR 1.5x) e desvio em relação à mediana (±60% quando IQR é muito estreito).
  */
-export function identificarOutliersIqr(itens: ItemCandidato[]): Set<string> {
+export function identificarOutliersIqr(
+  itens: ItemCandidato[],
+  criterio?: CriterioClassificacao
+): Set<string> {
   const outliers = new Set<string>();
   if (itens.length < 4) {
     return outliers;
   }
 
-  const stats = calcularEstatisticasPrecos(itens.map((i) => i.valor_unitario));
-  const limInf = Math.min(stats.limiteInferiorOutlier, stats.mediana * 0.4);
-  const limSup = Math.max(stats.limiteSuperiorOutlier, stats.mediana * 1.75);
+  const ehDesconto = criterio === "maior_desconto";
+  const stats = calcularEstatisticasPrecos(
+    itens.map((i) => i.valor_unitario),
+    criterio
+  );
+  const limInf = ehDesconto
+    ? stats.limiteInferiorOutlier
+    : Math.min(stats.limiteInferiorOutlier, stats.mediana * 0.4);
+  const limSup = ehDesconto
+    ? stats.limiteSuperiorOutlier
+    : Math.max(stats.limiteSuperiorOutlier, stats.mediana * 1.75);
 
   for (const it of itens) {
     if (it.valor_unitario < limInf || it.valor_unitario > limSup) {

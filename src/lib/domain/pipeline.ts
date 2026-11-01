@@ -24,6 +24,7 @@ import {
   verificarStatusLocal,
 } from "@/lib/domain/tz-recife";
 import type {
+  CriterioClassificacao,
   ItemCandidato,
   NivelAderencia,
   ParametrosPipeline,
@@ -1157,12 +1158,15 @@ export async function executarPipelinePesquisa(
     if (itensValidosDestaAta.length === 0) continue;
 
     // Regra R6: deduplicação e máximo 1 item por ata
+    const ehDescontoR6 = params.criterioClassificacao === "maior_desconto";
     const itensDedupAta: ItemCandidato[] = [];
     const ordenadosAta = [...itensValidosDestaAta].sort((a, b) => {
       const ordA = a.aderencia === "A" ? 0 : 1;
       const ordB = b.aderencia === "A" ? 0 : 1;
       if (ordA !== ordB) return ordA - ordB;
-      return a.valor_unitario - b.valor_unitario;
+      return ehDescontoR6
+        ? b.valor_unitario - a.valor_unitario
+        : a.valor_unitario - b.valor_unitario;
     });
 
     for (const it of ordenadosAta) {
@@ -1261,12 +1265,14 @@ export async function executarPipelinePesquisa(
     const top20AB = selecionarTop20Menores(
       itensCandidatosAprovados,
       true,
-      TOP_N_ITENS_JANELA
+      TOP_N_ITENS_JANELA,
+      params.criterioClassificacao
     );
     const top20A = selecionarTop20Menores(
       itensCandidatosAprovados,
       false,
-      TOP_N_ITENS_JANELA
+      TOP_N_ITENS_JANELA,
+      params.criterioClassificacao
     );
     const unicosParaPdf = new Map<string, ItemCandidato>();
     for (const it of [...top20A, ...top20AB]) {
@@ -1312,6 +1318,7 @@ export async function executarPipelinePesquisa(
   return {
     momento_consulta: dataHoraConsultaStr,
     escopo_orgaos: params.escopoOrgaos,
+    criterio_classificacao: params.criterioClassificacao || "menor_preco",
     uf_selecionada: params.ufSelecionada || null,
     regiao_selecionada: params.regiaoSelecionada || null,
     apenas_municipios_bilionarios:
@@ -1336,13 +1343,14 @@ export async function executarPipelinePesquisa(
 }
 
 /**
- * Retorna os `limite` (padrão: 20) menores valores unitários em ordem crescente,
+ * Retorna os `limite` (padrão: 20) melhores itens (menor preço ou maior desconto),
  * garantindo estritamente NO MÁXIMO UM ITEM POR ATA (Regra R6).
  */
 export function selecionarTop20Menores(
   itensCandidatos: ItemCandidato[],
   incluirRevisaoB = false,
-  limite = TOP_N_ITENS_JANELA
+  limite = TOP_N_ITENS_JANELA,
+  criterioClassificacao?: CriterioClassificacao
 ): ItemCandidato[] {
   const permitidos = new Set<NivelAderencia>(
     incluirRevisaoB ? ["A", "B"] : ["A"]
@@ -1351,12 +1359,15 @@ export function selecionarTop20Menores(
     permitidos.has(it.aderencia)
   );
 
+  const ehDesconto = criterioClassificacao === "maior_desconto";
   const melhorPorAta = new Map<string, ItemCandidato>();
-  const ordenadosPorPreco = [...filtrados].sort(
-    (a, b) => a.valor_unitario - b.valor_unitario
-  );
+  const ordenados = [...filtrados].sort((a, b) => {
+    return ehDesconto
+      ? b.valor_unitario - a.valor_unitario
+      : a.valor_unitario - b.valor_unitario;
+  });
 
-  for (const it of ordenadosPorPreco) {
+  for (const it of ordenados) {
     const chaveAta = `${it.cnpj_orgao}|${it.numero_arp_licitacao}`;
     if (!melhorPorAta.has(chaveAta)) {
       melhorPorAta.set(chaveAta, it);
@@ -1364,6 +1375,10 @@ export function selecionarTop20Menores(
   }
 
   return Array.from(melhorPorAta.values())
-    .sort((a, b) => a.valor_unitario - b.valor_unitario)
+    .sort((a, b) =>
+      ehDesconto
+        ? b.valor_unitario - a.valor_unitario
+        : a.valor_unitario - b.valor_unitario
+    )
     .slice(0, limite);
 }
