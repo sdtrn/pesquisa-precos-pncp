@@ -10,7 +10,10 @@ import {
   avaliarOrgaoGerenciador,
   verificarEscopoEspecialOrgao,
 } from "@/lib/domain/municipios";
-import { avaliarAderenciaItem } from "@/lib/domain/parser-requisitos";
+import {
+  avaliarAderenciaItem,
+  verificarCompatibilidadePreliminarAta,
+} from "@/lib/domain/parser-requisitos";
 import { PNCPClient } from "@/lib/domain/pncp-client";
 import {
   agoraRecifeFormatado,
@@ -252,24 +255,57 @@ export async function executarPipelinePesquisa(
   const chavesDedupCompraItem = new Set<string>();
   const totalAtas = atasBrutas.length;
 
-  // 1.1 Pré-carrega detalhe de atas sem esfera ou município/IBGE no resumo
-  const atasParaDetalheTriagem: Array<[string, string, string, string]> = [];
-  for (const ataPre of atasBrutas) {
-    const chPre = PNCPClient.extrairChavesItemUrl(ataPre);
-    if (!chPre) continue;
-    const esfP = String(ataPre.esfera_id || "").trim().toUpperCase();
-    const munP = String(ataPre.municipio_nome || "").trim();
-    const ibgeP = String(ataPre.codigo_ibge || "").trim();
-    if (!esfP || (esfP === "M" && !munP && !ibgeP)) {
-      atasParaDetalheTriagem.push(chPre);
+  const apenasBilionarios =
+    params.apenasMunicipiosBilionarios !== undefined
+      ? Boolean(params.apenasMunicipiosBilionarios)
+      : true;
+
+  const inferirEsferaRapida = (
+    esferaAtual: string,
+    orgaoNome: string,
+    unidadeNome: string,
+    ufSigla: string
+  ): string => {
+    if (esferaAtual) return esferaAtual;
+    const txt = `${orgaoNome} ${unidadeNome}`.toUpperCase();
+    if (
+      txt.includes("MUNICIPIO") ||
+      txt.includes("MUNICÍPIO") ||
+      txt.includes("PREFEITURA") ||
+      txt.includes("CAMARA MUNICIPAL") ||
+      txt.includes("CÂMARA MUNICIPAL") ||
+      txt.includes("FUNDO MUNICIPAL") ||
+      txt.includes("SECRETARIA MUNICIPAL")
+    ) {
+      return "M";
     }
-  }
+    if (
+      txt.includes("FEDERAL") ||
+      txt.includes("MINISTERIO") ||
+      txt.includes("MINISTÉRIO") ||
+      txt.includes("COMANDO DA") ||
+      txt.includes("COMANDO DO") ||
+      txt.includes("UNIAO") ||
+      txt.includes("UNIÃO")
+    ) {
+      return "F";
+    }
+    if (ufSigla === "DF" && txt.includes("DISTRITO FEDERAL")) {
+      return "D";
+    }
+    if (
+      txt.includes("ESTADO ") ||
+      txt.includes("ESTADUAL") ||
+      txt.includes("GOVERNO DO ESTADO") ||
+      txt.includes("TRIBUNAL DE JUSTICA") ||
+      txt.includes("TRIBUNAL DE JUSTIÇA")
+    ) {
+      return "E";
+    }
+    return "";
+  };
 
-  if (atasParaDetalheTriagem.length > 0) {
-    await client.preCarregarResultadosEDetalhes([], atasParaDetalheTriagem);
-  }
-
-  // 2. Triagem Local (Período em America/Recife + Escopo R1/R2/R7)
+  // 2. Triagem Local (Período em America/Recife + Compatibilidade Preliminar + Escopo R1/R2/R7)
   const atasAprovadasTriagem: AtaAprovadaTriagem[] = [];
   const comprasParaPrecarregar: Array<[string, string, string]> = [];
   const comprasVistasPre = new Set<string>();
@@ -303,7 +339,12 @@ export async function executarPipelinePesquisa(
     let ufS = String(ataS.uf || "").trim().toUpperCase();
     let munS = String(ataS.municipio_nome || "").trim();
     let codIbgeS = String(ataS.codigo_ibge || "").trim();
-    let esferaIdS = String(ataS.esfera_id || "").trim().toUpperCase();
+    let esferaIdS = inferirEsferaRapida(
+      String(ataS.esfera_id || "").trim().toUpperCase(),
+      orgaoNome,
+      unidadeNome,
+      ufS
+    );
     const situacaoAtaS = String(
       ataS.situacao_nome || "Divulgada no PNCP"
     ).trim();
@@ -330,8 +371,75 @@ export async function executarPipelinePesquisa(
       ataS.numero_controle_pncp || ataS.title || ""
     ).trim();
 
+    // 2.1 Verifica período em memória (0ms) ANTES de qualquer chamada de rede
+    const {
+      dentroDoPeriodo,
+      requerRevisaoBPorDataAusente,
+      detalheMotivo: msgPeriodo,
+    } = verificarPeriodoLocal(
+      params.tipoDataPeriodo,
+      dtIni,
+      dtFim,
+      dtAssS,
+      dtPubS,
+      dtIniVigS,
+      dtFimVigS
+    );
+
+    if (!dentroDoPeriodo) {
+      const avalTemp = avaliarOrgaoGerenciador(esferaIdS, ufS, munS, codIbgeS);
+      descartados.push({
+        Nível: "Ata",
+        "Motivo do Descarte": "fora do período",
+        "Nº da ARP / Controle PNCP": numControleAta,
+        "Órgão Gerenciador/UF": orgaoUfStr,
+        Esfera: avalTemp.esferaNormalizada,
+        Município: munS || "-",
+        "Nº do Item/Lote": "-",
+        "Descrição do Objeto / Item": String(ataS.description || ""),
+        "Valor Unitário (R$)": null,
+        Unidade: "-",
+        "Data de Assinatura": formatarDataBr(dtAssS),
+        "Vigência da Ata": vigenciaStrS,
+        "Situação da Ata": situacaoAtaS,
+        "Link no PNCP": linkPncp,
+      });
+      continue;
+    }
+
+    // 2.2 Verifica compatibilidade preliminar do objeto da Ata em memória (0ms)
+    const compatAta = verificarCompatibilidadePreliminarAta(
+      String(ataS.description || ""),
+      String(ataS.title || ""),
+      params.requisitos
+    );
+    if (!compatAta.compativel) {
+      const avalTemp = avaliarOrgaoGerenciador(esferaIdS, ufS, munS, codIbgeS);
+      descartados.push({
+        Nível: "Ata",
+        "Motivo do Descarte": `Aderência C — ${compatAta.motivo}`,
+        "Nº da ARP / Controle PNCP": numControleAta,
+        "Órgão Gerenciador/UF": orgaoUfStr,
+        Esfera: avalTemp.esferaNormalizada,
+        Município: munS || "-",
+        "Nº do Item/Lote": "-",
+        "Descrição do Objeto / Item": String(ataS.description || ""),
+        "Valor Unitário (R$)": null,
+        Unidade: "-",
+        "Data de Assinatura": formatarDataBr(dtAssS),
+        "Vigência da Ata": vigenciaStrS,
+        "Situação da Ata": situacaoAtaS,
+        "Link no PNCP": linkPncp,
+      });
+      continue;
+    }
+
+    // 2.3 Só busca detalhe da ata na rede se realmente necessário para validar município bilionário
     let detAtaPre: Record<string, unknown> | null = null;
+    const precisaValidarMunicipioBilionario =
+      apenasBilionarios || params.escopoOrgaos === ESCOPO_PE_RECIFE;
     if (
+      precisaValidarMunicipioBilionario &&
       (!esferaIdS || (esferaIdS === "M" && !munS && !codIbgeS)) &&
       chavesUrl
     ) {
@@ -363,52 +471,17 @@ export async function executarPipelinePesquisa(
       : "Não";
     const esferaNorm = avalOrgao.esferaNormalizada;
 
-    const {
-      dentroDoPeriodo,
-      requerRevisaoBPorDataAusente,
-      detalheMotivo: msgPeriodo,
-    } = verificarPeriodoLocal(
-      params.tipoDataPeriodo,
-      dtIni,
-      dtFim,
-      dtAssS,
-      dtPubS,
-      dtIniVigS,
-      dtFimVigS
-    );
-
-    if (!dentroDoPeriodo) {
-      descartados.push({
-        Nível: "Ata",
-        "Motivo do Descarte": "fora do período",
-        "Nº da ARP / Controle PNCP": numControleAta,
-        "Órgão Gerenciador/UF": orgaoUfStr,
-        Esfera: esferaNorm,
-        Município: munS || "-",
-        "Nº do Item/Lote": "-",
-        "Descrição do Objeto / Item": String(ataS.description || ""),
-        "Valor Unitário (R$)": null,
-        Unidade: "-",
-        "Data de Assinatura": formatarDataBr(dtAssS),
-        "Vigência da Ata": vigenciaStrS,
-        "Situação da Ata": situacaoAtaS,
-        "Link no PNCP": linkPncp,
-      });
-      continue;
-    }
-
-    const apenasBilionarios =
-      params.apenasMunicipiosBilionarios !== undefined
-        ? Boolean(params.apenasMunicipiosBilionarios)
-        : true;
-
     if (
       params.escopoOrgaos === ESCOPO_TODOS ||
       params.escopoOrgaos === ESCOPO_VALIDADE
     ) {
       const aprovadoNacional = apenasBilionarios
         ? atendeValidadeBool
-        : ["F", "E", "D", "M"].includes(esferaIdS);
+        : Boolean(
+            ["F", "E", "D", "M"].includes(esferaIdS) ||
+              orgaoNome ||
+              cnpj
+          );
 
       if (!aprovadoNacional) {
         const motivoOrgao =
@@ -544,104 +617,118 @@ export async function executarPipelinePesquisa(
   const atasParaDetalheParalelo: Array<[string, string, string, string]> = [];
   const itensResVistos = new Set<string>();
   const atasDetVistas = new Set<string>();
-  const cacheAderenciaPorAtaItem = new Map<string, ResultadoAderencia>();
-  const itensBPermitidosPorAta = new Map<number, Set<string>>();
+  const cacheAderenciaPorCompraItem = new Map<string, ResultadoAderencia>();
+  const itensBPermitidosPorCompra = new Map<string, Set<string>>();
+  const comprasComCandidato = new Set<string>();
+  const comprasJaAvaliadasStep4 = new Set<string>();
 
   for (let idxCtx = 0; idxCtx < atasAprovadasTriagem.length; idxCtx++) {
     const ctx = atasAprovadasTriagem[idxCtx];
     const { cnpj, anoC, seqCompra, seqAta, ataS } = ctx;
+    const chaveCompra = `${cnpj}|${anoC}|${seqCompra}`;
     const objAtaStr = String(ataS.description || "").trim();
 
-    const itensCompra = await client.obterTodosItensCompra(
-      cnpj,
-      anoC,
-      seqCompra
-    );
-    if (itensCompra.length === 0) continue;
+    if (!comprasJaAvaliadasStep4.has(chaveCompra)) {
+      comprasJaAvaliadasStep4.add(chaveCompra);
 
-    let ataTemCandidato = false;
-    const candidatosBDestaAta: Array<{
-      atendidosCount: number;
-      vNum: number;
-      numItemStr: string;
-    }> = [];
-
-    for (const itemObj of itensCompra) {
-      const numItemStr = String(itemObj.numeroItem || "").trim();
-      const descItem = String(itemObj.descricao || "").trim();
-      const infCompItem = String(itemObj.informacaoComplementar || "").trim();
-      const unMedidaItem = String(itemObj.unidadeMedida || "").trim();
-
-      const avalItem = avaliarAderenciaItem(
-        descItem,
-        unMedidaItem,
-        params.requisitos,
-        infCompItem,
-        objAtaStr
+      const itensCompra = await client.obterTodosItensCompra(
+        cnpj,
+        anoC,
+        seqCompra
       );
-      cacheAderenciaPorAtaItem.set(`${idxCtx}|${numItemStr}`, avalItem);
+      if (itensCompra.length === 0) continue;
 
-      if (avalItem.aderencia === "C") continue;
+      let compraTemCandidato = false;
+      const candidatosBDestaCompra: Array<{
+        atendidosCount: number;
+        vNum: number;
+        numItemStr: string;
+      }> = [];
 
-      const sitItemNome = String(itemObj.situacaoCompraItemNome || "")
-        .trim()
-        .toLowerCase();
-      if (
-        itemObj.temResultado === false ||
-        (sitItemNome && sitItemNome !== "homologado")
-      ) {
-        continue;
+      for (const itemObj of itensCompra) {
+        const numItemStr = String(itemObj.numeroItem || "").trim();
+        const descItem = String(itemObj.descricao || "").trim();
+        const infCompItem = String(itemObj.informacaoComplementar || "").trim();
+        const unMedidaItem = String(itemObj.unidadeMedida || "").trim();
+
+        const avalItem = avaliarAderenciaItem(
+          descItem,
+          unMedidaItem,
+          params.requisitos,
+          infCompItem,
+          objAtaStr
+        );
+        cacheAderenciaPorCompraItem.set(
+          `${chaveCompra}|${numItemStr}`,
+          avalItem
+        );
+
+        if (avalItem.aderencia === "C") continue;
+
+        const sitItemNome = String(itemObj.situacaoCompraItemNome || "")
+          .trim()
+          .toLowerCase();
+        if (
+          itemObj.temResultado === false ||
+          (sitItemNome && sitItemNome !== "homologado")
+        ) {
+          continue;
+        }
+
+        if (avalItem.aderencia === "A") {
+          const chaveRes = `${chaveCompra}|${numItemStr}`;
+          if (!itensResVistos.has(chaveRes)) {
+            itensResVistos.add(chaveRes);
+            itensParaResultadoParalelo.push([cnpj, anoC, seqCompra, numItemStr]);
+          }
+          compraTemCandidato = true;
+        } else {
+          const valEst = Number(itemObj.valorUnitarioEstimado);
+          const vNum =
+            Number.isFinite(valEst) && valEst > 0
+              ? valEst
+              : Number.POSITIVE_INFINITY;
+          candidatosBDestaCompra.push({
+            atendidosCount: avalItem.atendidos.length,
+            vNum,
+            numItemStr,
+          });
+        }
       }
 
-      if (avalItem.aderencia === "A") {
-        const chaveRes = `${cnpj}|${anoC}|${seqCompra}|${numItemStr}`;
-        if (!itensResVistos.has(chaveRes)) {
-          itensResVistos.add(chaveRes);
-          itensParaResultadoParalelo.push([cnpj, anoC, seqCompra, numItemStr]);
-        }
-        ataTemCandidato = true;
-      } else {
-        const valEst = Number(itemObj.valorUnitarioEstimado);
-        const vNum =
-          Number.isFinite(valEst) && valEst > 0
-            ? valEst
-            : Number.POSITIVE_INFINITY;
-        candidatosBDestaAta.push({
-          atendidosCount: avalItem.atendidos.length,
-          vNum,
-          numItemStr,
+      if (candidatosBDestaCompra.length > 0) {
+        candidatosBDestaCompra.sort((a, b) => {
+          if (b.atendidosCount !== a.atendidosCount) {
+            return b.atendidosCount - a.atendidosCount;
+          }
+          if (a.vNum !== b.vNum) {
+            return a.vNum - b.vNum;
+          }
+          return a.numItemStr.localeCompare(b.numItemStr);
         });
+        const eleitosB = new Set(
+          candidatosBDestaCompra.slice(0, 2).map((x) => x.numItemStr)
+        );
+        itensBPermitidosPorCompra.set(chaveCompra, eleitosB);
+        for (const numI of eleitosB) {
+          const chaveRes = `${chaveCompra}|${numI}`;
+          if (!itensResVistos.has(chaveRes)) {
+            itensResVistos.add(chaveRes);
+            itensParaResultadoParalelo.push([cnpj, anoC, seqCompra, numI]);
+          }
+          compraTemCandidato = true;
+        }
       }
-    }
 
-    if (candidatosBDestaAta.length > 0) {
-      candidatosBDestaAta.sort((a, b) => {
-        if (b.atendidosCount !== a.atendidosCount) {
-          return b.atendidosCount - a.atendidosCount;
-        }
-        if (a.vNum !== b.vNum) {
-          return a.vNum - b.vNum;
-        }
-        return a.numItemStr.localeCompare(b.numItemStr);
-      });
-      const eleitosB = new Set(
-        candidatosBDestaAta.slice(0, 2).map((x) => x.numItemStr)
-      );
-      itensBPermitidosPorAta.set(idxCtx, eleitosB);
-      for (const numI of eleitosB) {
-        const chaveRes = `${cnpj}|${anoC}|${seqCompra}|${numI}`;
-        if (!itensResVistos.has(chaveRes)) {
-          itensResVistos.add(chaveRes);
-          itensParaResultadoParalelo.push([cnpj, anoC, seqCompra, numI]);
-        }
-        ataTemCandidato = true;
+      if (compraTemCandidato) {
+        comprasComCandidato.add(chaveCompra);
       }
     }
 
     const precisaDetalheAta =
       ctx.detAtaPre === null &&
       (ctx.dtAssS === null || ctx.dtFimVigS === null);
-    if (ataTemCandidato && precisaDetalheAta) {
+    if (comprasComCandidato.has(chaveCompra) && precisaDetalheAta) {
       const chaveAtaDet = `${cnpj}|${anoC}|${seqCompra}|${seqAta}`;
       if (!atasDetVistas.has(chaveAtaDet)) {
         atasDetVistas.add(chaveAtaDet);
@@ -755,7 +842,9 @@ export async function executarPipelinePesquisa(
           ? Number(itemObj.valorUnitarioEstimado)
           : null;
 
-      let avalItem = cacheAderenciaPorAtaItem.get(`${idxCtx}|${numItemStr}`);
+      let avalItem = cacheAderenciaPorCompraItem.get(
+        `${cnpj}|${anoC}|${seqCompra}|${numItemStr}`
+      );
       if (!avalItem) {
         avalItem = avaliarAderenciaItem(
           descItem,
@@ -839,7 +928,9 @@ export async function executarPipelinePesquisa(
       }
 
       if (aderenciaItem === "B") {
-        const eleitosBAta = itensBPermitidosPorAta.get(idxCtx);
+        const eleitosBAta = itensBPermitidosPorCompra.get(
+          `${cnpj}|${anoC}|${seqCompra}`
+        );
         if (eleitosBAta && !eleitosBAta.has(numItemStr)) {
           descartados.push({
             Nível: "Item",

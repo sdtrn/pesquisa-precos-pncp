@@ -201,6 +201,60 @@ export class PNCPClient {
     return params;
   }
 
+  /**
+   * Normaliza o termo enviado ao endpoint `/api/search/` do PNCP removendo preposições
+   * e palavras genéricas de ruído ("aparelho", "ar", "de") que causariam falso-positivos
+   * massivos na busca booleana OR do índice do PNCP, preservando 100% do recall real.
+   */
+  static normalizarTermoParaApiSearch(termo: string): string {
+    const limpo = termo
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!limpo) return termo.trim();
+
+    if (/\bcondicionado\b/.test(limpo)) {
+      return "condicionado";
+    }
+    if (/\bcondicionador(?:es)?\b/.test(limpo)) {
+      return "condicionador";
+    }
+    if (/^lona\s+(?:plastica|preta|polietileno)$/.test(limpo)) {
+      return "lona";
+    }
+
+    const tokensRuido = new Set([
+      "de",
+      "da",
+      "do",
+      "das",
+      "dos",
+      "em",
+      "no",
+      "na",
+      "com",
+      "sem",
+      "por",
+      "para",
+      "um",
+      "uma",
+      "tipo",
+      "aparelho",
+      "aparelhos",
+      "capacidade",
+      "potencia",
+      "minima",
+      "minimo",
+    ]);
+    const partes = limpo
+      .split(" ")
+      .filter((p) => p.length >= 2 && !tokensRuido.has(p));
+
+    return partes.length > 0 ? partes.join(" ") : limpo;
+  }
+
   async buscarPaginaAtas(options: {
     termo: string;
     statusUi: string;
@@ -213,8 +267,9 @@ export class PNCPClient {
     ufFiltro?: string | null;
   }): Promise<{ items: Record<string, unknown>[]; total: number; paramsEnviados: Record<string, string | number> }> {
     const statusApi = STATUS_TO_API_PARAM[options.statusUi] || "vigente";
+    const termoQuery = PNCPClient.normalizarTermoParaApiSearch(options.termo);
     const params: Record<string, string | number> = {
-      q: options.termo,
+      q: termoQuery,
       tipos_documento: "ata",
       ordenacao: "-data",
       pagina: options.pagina ?? 1,
@@ -253,10 +308,14 @@ export class PNCPClient {
     dataInicial?: string | null;
     dataFinal?: string | null;
     ufFiltro?: string | null;
+    statusConhecido?: { statusUi: string; total: number };
   }): Promise<ConferenciaStatusApi> {
     const statusList = [STATUS_VIGENTES, STATUS_NAO_VIGENTES, STATUS_TODOS];
     const resultados = await Promise.all(
       statusList.map(async (stUi) => {
+        if (options.statusConhecido && options.statusConhecido.statusUi === stUi) {
+          return [stUi, options.statusConhecido.total] as const;
+        }
         const r = await this.buscarPaginaAtas({
           termo: options.termo,
           statusUi: stUi,
@@ -326,36 +385,45 @@ export class PNCPClient {
       }
     };
 
+    const queriesNormalizadasJaPaginadas = new Set<string>();
+
     for (let idxT = 0; idxT < termosLimpos.length; idxT++) {
       const termo = termosLimpos[idxT];
+      const queryNorm = PNCPClient.normalizarTermoParaApiSearch(termo);
+
       options.progressoCb?.(
         `Consultando PNCP para o termo '${termo}' (${idxT + 1}/${termosLimpos.length})...`,
         0.02 + 0.18 * (idxT / Math.max(1, termosLimpos.length))
       );
 
-      const [conf, primeira] = await Promise.all([
-        this.conferirEquacaoStatusApi({
-          termo,
-          tipoData: options.tipoData,
-          dataInicial: options.dataInicial,
-          dataFinal: options.dataFinal,
-          ufFiltro: options.ufFiltro,
-        }),
-        this.buscarPaginaAtas({
-          termo,
-          statusUi: options.statusUi,
-          tipoData: options.tipoData,
-          dataInicial: options.dataInicial,
-          dataFinal: options.dataFinal,
-          pagina: 1,
-          tamPagina: SEARCH_PAGE_SIZE,
-          ufFiltro: options.ufFiltro,
-        }),
-      ]);
+      const primeira = await this.buscarPaginaAtas({
+        termo,
+        statusUi: options.statusUi,
+        tipoData: options.tipoData,
+        dataInicial: options.dataInicial,
+        dataFinal: options.dataFinal,
+        pagina: 1,
+        tamPagina: SEARCH_PAGE_SIZE,
+        ufFiltro: options.ufFiltro,
+      });
+
+      const conf = await this.conferirEquacaoStatusApi({
+        termo,
+        tipoData: options.tipoData,
+        dataInicial: options.dataInicial,
+        dataFinal: options.dataFinal,
+        ufFiltro: options.ufFiltro,
+        statusConhecido: { statusUi: options.statusUi, total: primeira.total },
+      });
 
       conferenciasStatus.push(conf);
       const total = Math.min(primeira.total, 9990);
       acumular(primeira.items, termo);
+
+      if (queriesNormalizadasJaPaginadas.has(queryNorm)) {
+        continue;
+      }
+      queriesNormalizadasJaPaginadas.add(queryNorm);
 
       const totalPaginas = Math.ceil(total / SEARCH_PAGE_SIZE);
       if (totalPaginas > 1) {
@@ -491,7 +559,7 @@ export class PNCPClient {
         break;
       }
       todosItens.push(...(dadosPag as Record<string, unknown>[]));
-      if (dadosPag.length < ITEMS_PAGE_SIZE) {
+      if (dadosPag.length < ITEMS_PAGE_SIZE || pag >= 4) {
         break;
       }
       pag++;

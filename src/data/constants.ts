@@ -7,9 +7,9 @@ export const PNCP_CONSULTA_V1_BASE = "https://pncp.gov.br/api/consulta/v1";
 export const PNCP_APP_ATAS_BASE = "https://pncp.gov.br/app/atas";
 
 // Parâmetros de rede seguros e otimizados (Fluid Compute Node.js)
-export const REQUEST_TIMEOUT_MS = 9000;
+export const REQUEST_TIMEOUT_MS = 6500;
 export const MAX_RETRIES = 2;
-export const MAX_PARALLEL_WORKERS = 10;
+export const MAX_PARALLEL_WORKERS = 25;
 export const SEARCH_PAGE_SIZE = 100;
 export const ITEMS_PAGE_SIZE = 500;
 

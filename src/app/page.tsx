@@ -27,6 +27,10 @@ import type {
 } from "@/lib/domain/types";
 import { selecionarTop20Menores } from "@/lib/domain/pipeline";
 import {
+  gerarTermosBusca,
+  extrairRequisitosMinimos,
+} from "@/lib/domain/parser-requisitos";
+import {
   calcularEstatisticasPrecos,
   chaveItemUnica,
 } from "@/lib/domain/statistics";
@@ -113,24 +117,53 @@ export default function HomePage() {
     }
   }, [darkMode]);
 
-  // Extract terms & requirements from object description via API
-  const handleAnalyzeRequirements = async () => {
-    if (!descricaoObjeto.trim()) return;
-    try {
-      const res = await fetch("/api/parse-requisitos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ descricao: descricaoObjeto }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setTermosBusca(data.termos ?? []);
-        setRequisitos(data.requisitos ?? []);
-        setShowRequirementsPanel(true);
-      }
-    } catch {
-      setShowRequirementsPanel(true);
+  // Mantém os termos e requisitos sincronizados quando a descrição muda
+  const handleChangeDescricao = (novaDescricao: string) => {
+    setDescricaoObjeto(novaDescricao);
+    if (!novaDescricao.trim()) {
+      setTermosBusca([]);
+      setRequisitos([]);
+      setShowRequirementsPanel(false);
+    } else if (showRequirementsPanel || termosBusca.length > 0) {
+      setTermosBusca(gerarTermosBusca(novaDescricao));
+      setRequisitos(extrairRequisitosMinimos(novaDescricao));
     }
+  };
+
+  // Extract terms & requirements from object description instantaneously
+  const handleAnalyzeRequirements = () => {
+    if (!descricaoObjeto.trim()) return;
+    setTermosBusca(gerarTermosBusca(descricaoObjeto));
+    setRequisitos(extrairRequisitosMinimos(descricaoObjeto));
+    setShowRequirementsPanel(true);
+  };
+
+  // Limpa/reseta todos os filtros, requisitos e resultados para iniciar nova pesquisa
+  const handleResetSearch = () => {
+    abortControllerRef.current?.abort();
+    setIsSearching(false);
+    setProgresso(null);
+    setErroPesquisa(null);
+    setSavedNotice(null);
+    setResultado(null);
+    setSelectedKeys(new Set());
+    setIncluirClasseB(false);
+    setCurrentHistoryId(undefined);
+    setShowTop20Modal(false);
+
+    setDescricaoObjeto("");
+    setTermosBusca([]);
+    setRequisitos([]);
+    setShowRequirementsPanel(false);
+
+    setEscopo(ESCOPO_TODOS);
+    setRegiaoFiltro("Nordeste");
+    setApenasMunicipiosBilionarios(true);
+    setStatusArp(STATUS_VIGENTES);
+    setTipoData(DATA_ASSINATURA);
+    const { inicio, fim } = getDefaultDateRange();
+    setDataInicial(inicio);
+    setDataFinal(fim);
   };
 
   // Recompute Top 20 when `incluirClasseB` toggles
@@ -192,22 +225,10 @@ export default function HomePage() {
     let reqsParaUsar = requisitos;
 
     if (termosParaUsar.length === 0) {
-      try {
-        const resParse = await fetch("/api/parse-requisitos", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ descricao: descricaoObjeto }),
-        });
-        if (resParse.ok) {
-          const parsed = await resParse.json();
-          termosParaUsar = parsed.termos ?? [];
-          reqsParaUsar = parsed.requisitos ?? [];
-          setTermosBusca(termosParaUsar);
-          setRequisitos(reqsParaUsar);
-        }
-      } catch {
-        // continue with fallback
-      }
+      termosParaUsar = gerarTermosBusca(descricaoObjeto);
+      reqsParaUsar = extrairRequisitosMinimos(descricaoObjeto);
+      setTermosBusca(termosParaUsar);
+      setRequisitos(reqsParaUsar);
     }
 
     if (termosParaUsar.length === 0) {
@@ -457,7 +478,7 @@ export default function HomePage() {
         {/* 2. Search Parameters Form */}
         <SearchParametersForm
           descricaoObjeto={descricaoObjeto}
-          onChangeDescricao={setDescricaoObjeto}
+          onChangeDescricao={handleChangeDescricao}
           statusArp={statusArp}
           onChangeStatusArp={setStatusArp}
           tipoData={tipoData}
@@ -470,6 +491,13 @@ export default function HomePage() {
           onChangeSalvarNoHistorico={setSalvarNoHistorico}
           onAnalyzeRequirements={handleAnalyzeRequirements}
           onExecuteSearch={handleExecuteSearch}
+          onResetSearch={handleResetSearch}
+          hasActiveData={Boolean(
+            resultado ||
+              showRequirementsPanel ||
+              termosBusca.length > 0 ||
+              erroPesquisa
+          )}
           isSearching={isSearching}
         />
 

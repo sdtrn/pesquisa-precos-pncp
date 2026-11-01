@@ -3,6 +3,7 @@ import {
   gerarTermosBusca,
   extrairRequisitosMinimos,
   avaliarAderenciaItem,
+  verificarCompatibilidadePreliminarAta,
 } from "@/lib/domain/parser-requisitos";
 
 const DESC_LONA =
@@ -66,5 +67,98 @@ describe("Extração de Termos e Requisitos Mínimos e Classificação A/B/C", (
       reqs
     );
     expect(resCDimensao.aderencia).toBe("C");
+  });
+
+  it("trata com precisão 'Aparelho de ar condicionado tipo split inverter, capacidade de 12000 BTU'", () => {
+    const descAr =
+      "Aparelho de ar condicionado tipo split inverter, capacidade de 12000 BTU";
+
+    const termos = gerarTermosBusca(descAr);
+    expect(termos).toEqual(["ar condicionado", "condicionador de ar"]);
+    expect(termos).not.toContain("aparelho condicionado");
+
+    const reqs = extrairRequisitosMinimos(descAr);
+    expect(reqs.find((r) => r.Atributo === "Objeto principal")?.Valor).toBe(
+      "ar condicionado"
+    );
+    expect(reqs.find((r) => r.Atributo === "Tipo / Categoria")?.Valor).toBe(
+      "split"
+    );
+    expect(reqs.find((r) => r.Atributo === "Tecnologia")?.Valor).toBe(
+      "inverter"
+    );
+    expect(reqs.find((r) => r.Atributo === "Potência")?.Valor).toBe("12000");
+    expect(reqs.find((r) => r.Atributo === "Acessório")).toBeUndefined();
+
+    // Item A com ponto separador de milhar (12.000 BTUs) e sem a palavra 'aparelho'
+    const itemA1 = avaliarAderenciaItem(
+      "AR CONDICIONADO SPLIT HI-WALL INVERTER, CAPACIDADE 12.000 BTUs, CICLO FRIO, 220V",
+      "UNIDADE",
+      reqs
+    );
+    expect(itemA1.aderencia).toBe("A");
+
+    // Item A escrito como 'CONDICIONADOR DE AR' e '12.000 BTU/h'
+    const itemA2 = avaliarAderenciaItem(
+      "CONDICIONADOR DE AR TIPO SPLIT INVERTER 12.000 BTU/H FRIO",
+      "UN",
+      reqs
+    );
+    expect(itemA2.aderencia).toBe("A");
+
+    // Item B quando omite 'inverter' (mas não diz convencional)
+    const itemB = avaliarAderenciaItem(
+      "AR CONDICIONADO TIPO SPLIT 12.000 BTUS CICLO FRIO",
+      "UN",
+      reqs
+    );
+    expect(itemB.aderencia).toBe("B");
+
+    // Item C quando é convencional ou outra capacidade (18.000 BTUs / 9.000 BTUs) ou serviço de instalação/manutenção
+    const itemCConv = avaliarAderenciaItem(
+      "AR CONDICIONADO SPLIT CONVENCIONAL 12.000 BTUS",
+      "UN",
+      reqs
+    );
+    expect(itemCConv.aderencia).toBe("C");
+
+    const itemC18k = avaliarAderenciaItem(
+      "AR CONDICIONADO SPLIT INVERTER 18.000 BTUS",
+      "UN",
+      reqs
+    );
+    expect(itemC18k.aderencia).toBe("C");
+
+    const itemCServico = avaliarAderenciaItem(
+      "SERVIÇO DE INSTALAÇÃO E MANUTENÇÃO PREVENTIVA DE AR CONDICIONADO SPLIT INVERTER 12.000 BTUS",
+      "SERVIÇO",
+      reqs
+    );
+    expect(itemCServico.aderencia).toBe("C");
+
+    // Triagem preliminar de Atas
+    expect(
+      verificarCompatibilidadePreliminarAta(
+        "Registro de preços para futura e eventual aquisição de aparelhos de ar condicionado",
+        "Ata 01/2026",
+        reqs
+      ).compativel
+    ).toBe(true);
+
+    expect(
+      verificarCompatibilidadePreliminarAta(
+        "Contratação de empresa especializada em manutenção preventiva e corretiva de ar condicionado",
+        "Ata 02/2026",
+        reqs
+      ).compativel
+    ).toBe(false);
+
+    expect(
+      verificarCompatibilidadePreliminarAta(
+        "Aquisição de aparelho de ultrassom odontológico e insumos hospitalares",
+        "Ata 03/2026",
+        reqs
+      ).compativel
+    ).toBe(false);
   });
 });

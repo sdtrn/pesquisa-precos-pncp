@@ -23,6 +23,9 @@ export function parseFloatPtbr(valStr?: string | null): number | null {
     s = s.replace(/\./g, "").replace(",", ".");
   } else if (s.includes(",")) {
     s = s.replace(",", ".");
+  } else if (/^[1-9]\d{0,2}(?:\.\d{3})+$/.test(s)) {
+    // Ponto separador de milhar em PT-BR (ex.: "12.000", "9.000", "18.000")
+    s = s.replace(/\./g, "");
   }
   const num = Number(s);
   return Number.isFinite(num) ? num : null;
@@ -135,6 +138,21 @@ const STOPWORDS_GERAIS = new Set([
   "mensal",
   "anual",
   "diaria",
+  "aparelho",
+  "aparelhos",
+  "equipamento",
+  "equipamentos",
+  "capacidade",
+  "potencia",
+  "ciclo",
+  "frio",
+  "quente",
+  "tensao",
+  "volts",
+  "bivolt",
+  "cerca",
+  "minima",
+  "maxima",
 ]);
 
 function escapeRegex(s: string): string {
@@ -190,6 +208,18 @@ export function gerarTermosBusca(descricao: string): string[] {
       termosLona.push("lona preta");
     }
     return termosLona;
+  }
+
+  // Caso de Aparelho de Ar-Condicionado / Condicionador de Ar (quando o objeto principal é climatização e não veículo)
+  const ehVeiculoContexto =
+    /\b(veiculos?|automoveis|automovel|automotor|hatch|sedan|suv|picape|caminhonete|camionete|van|furgao|onibus|micro-?onibus|caminhao|ambulancia)\b/.test(
+      textoNorm
+    );
+  if (
+    !ehVeiculoContexto &&
+    /\b(ar[\s-]*condicionado|condicionador(?:es)?\s+de\s+ar)\b/.test(textoNorm)
+  ) {
+    return ["ar condicionado", "condicionador de ar"];
   }
 
   const { acaoPrincipal, substantivos } = extrairNucleoSubstantivo(textoNorm);
@@ -252,12 +282,39 @@ export function extrairRequisitosMinimos(descricao: string): RequisitoMinimo[] {
     return requisitos;
   }
 
+  const ehContextoVeiculo = [
+    "veiculo",
+    "veiculos",
+    "automovel",
+    "automoveis",
+    "automotor",
+    "hatch",
+    "sedan",
+    "suv",
+    "picape",
+    "caminhonete",
+    "camionete",
+    "carro",
+  ].some((w) => textoNorm.includes(w));
+
+  const ehObjetoArCondicionado =
+    !ehContextoVeiculo &&
+    /\b(ar[\s-]*condicionado|condicionador(?:es)?\s+de\s+ar)\b/.test(textoNorm);
+
   // 1. Objeto Principal
   if (/\blonas?\b/.test(textoNorm)) {
     requisitos.push({
       Atributo: "Objeto principal",
       Operador: "contém",
       Valor: "lona",
+      Unidade: "-",
+      Obrigatorio: true,
+    });
+  } else if (ehObjetoArCondicionado) {
+    requisitos.push({
+      Atributo: "Objeto principal",
+      Operador: "contém",
+      Valor: "ar condicionado",
       Unidade: "-",
       Obrigatorio: true,
     });
@@ -297,7 +354,6 @@ export function extrairRequisitosMinimos(descricao: string): RequisitoMinimo[] {
     [["motocicleta", "moto"], "motocicleta"],
     [["passeio"], "passeio"],
     [["split"], "split"],
-    [["inverter"], "inverter"],
   ];
   const tiposEncontrados: string[] = [];
   for (const [variantes, nomeTipo] of tiposVeiculoEquip) {
@@ -312,6 +368,17 @@ export function extrairRequisitosMinimos(descricao: string): RequisitoMinimo[] {
       Atributo: "Tipo / Categoria",
       Operador: "=",
       Valor: tiposEncontrados.join(" / "),
+      Unidade: "-",
+      Obrigatorio: true,
+    });
+  }
+
+  // 2b. Tecnologia (Inverter vs Convencional)
+  if (/\binverter\b/.test(textoNorm)) {
+    requisitos.push({
+      Atributo: "Tecnologia",
+      Operador: "=",
+      Valor: "inverter",
       Unidade: "-",
       Obrigatorio: true,
     });
@@ -455,21 +522,6 @@ export function extrairRequisitosMinimos(descricao: string): RequisitoMinimo[] {
   }
 
   // 8. Atributos específicos de veículos / equipamentos
-  const ehContextoVeiculo = [
-    "veiculo",
-    "veiculos",
-    "automovel",
-    "automoveis",
-    "automotor",
-    "hatch",
-    "sedan",
-    "suv",
-    "picape",
-    "caminhonete",
-    "camionete",
-    "carro",
-  ].some((w) => textoNorm.includes(w));
-
   let matchMotor = textoNorm.match(
     /(?:motor(?:izacao)?(?:\s+minima|\s+de)?\s*|cilindrada\s*)(\d[.,]\d)\b|\b([12][.,][034568])\s*(?:flex|diesel|gasolina|turbo|8v|12v|16v)\b/
   );
@@ -501,12 +553,18 @@ export function extrairRequisitosMinimos(descricao: string): RequisitoMinimo[] {
       Obrigatorio: true,
     });
   }
-  const matchBtu = textoNorm.match(/(\d{4,6}(?:[.,]\d{3})?)\s*btus?\b/);
+  const matchBtu = textoNorm.match(
+    /(\d{1,3}(?:[.,]\d{3})+|\d{4,6})\s*btus?(?:\s*\/\s*h)?\b/
+  );
   if (matchBtu) {
     const btuLimpo = matchBtu[1].replace(/\./g, "").replace(/,/g, "");
+    const pedeMinimoBtu =
+      /(?:minimo|minima|a partir de)\s+(?:de\s+)?(?:\d{1,3}(?:[.,]\d{3})+|\d{4,6})\s*btus?/.test(
+        textoNorm
+      );
     requisitos.push({
       Atributo: "Potência",
-      Operador: ">=",
+      Operador: pedeMinimoBtu ? ">=" : "=",
       Valor: btuLimpo,
       Unidade: "BTUs",
       Obrigatorio: true,
@@ -559,8 +617,12 @@ export function extrairRequisitosMinimos(descricao: string): RequisitoMinimo[] {
     });
   }
 
-  // 8f. Ar-condicionado / Tração / Regime
-  if (textoNorm.includes("ar condicionado") || textoNorm.includes("ar-condicionado")) {
+  // 8f. Ar-condicionado (apenas quando acessório de veículo) / Tração / Regime
+  if (
+    ehContextoVeiculo &&
+    (textoNorm.includes("ar condicionado") ||
+      textoNorm.includes("ar-condicionado"))
+  ) {
     requisitos.push({
       Atributo: "Acessório",
       Operador: "contém",
@@ -859,6 +921,24 @@ export function verificarUnidadeCompativel(
   return { compativel: true, mensagem: `Unidade '${unidadeApi}'` };
 }
 
+function extrairBtusItem(textoNorm: string): number | null {
+  const mMil = textoNorm.match(/\b(\d{1,2})\s*mil\s*btus?(?:\s*\/\s*h)?\b/);
+  if (mMil) {
+    return Number(mMil[1]) * 1000;
+  }
+  const mBtu = textoNorm.match(
+    /\b(\d{1,3}(?:[.,]\d{3})+|\d{4,6})\s*btus?(?:\s*\/\s*h)?\b/
+  );
+  if (mBtu) {
+    const limpo = mBtu[1].replace(/[.,]/g, "");
+    const n = Number(limpo);
+    if (Number.isFinite(n) && n >= 1000) {
+      return n;
+    }
+  }
+  return null;
+}
+
 function palavraPresenteOuSinonimo(
   palavra: string,
   textoItemNorm: string,
@@ -875,6 +955,19 @@ function palavraPresenteOuSinonimo(
     const padraoVeic =
       /\b(veiculos?|automoveis|automovel|automotor|carro|caminhonetes?|camionetes?|picapes?|pickup|sedan|seda|hatch|suv|utilitarios?|vans?|furgao|onibus|micro-?onibus|caminhao|ambulancias?|motocicletas?)\b/;
     return padraoVeic.test(textoItemNorm);
+  }
+
+  if (palavra === "condicionado" || palavra === "condicionador") {
+    const padraoArCond =
+      /\b(ar[\s-]*condicionado|condicionador(?:es)?\s+de\s+ar|climatizador(?:es)?\s+split|evaporadora\s+e\s+condensadora)\b/;
+    if (padraoArCond.test(textoItemNorm)) return true;
+    if (
+      padraoArCond.test(textoContextoAtaNorm) &&
+      /\b(split|inverter|btus?|evaporadora|condensadora)\b/.test(textoItemNorm)
+    ) {
+      return true;
+    }
+    return false;
   }
 
   const base = palavra.replace(/s$/, "");
@@ -1052,6 +1145,92 @@ export function avaliarAderenciaItem(
         }
       }
 
+      if (
+        (valorNorm.includes("condicionado") ||
+          valorNorm.includes("condicionador")) &&
+        !valorNorm.includes("manutencao") &&
+        !valorNorm.includes("instalacao") &&
+        !valorNorm.includes("limpeza") &&
+        !valorNorm.includes("locacao")
+      ) {
+        const unApiLow = semAcentosMinusculo(unidadeMedidaApi || "");
+        const termosExclusaoArCond = [
+          "manutencao preventiva",
+          "manutencao corretiva",
+          "servico de manutencao",
+          "servicos de manutencao",
+          "manutencao de ar",
+          "manutencao em ar",
+          "limpeza e higienizacao",
+          "higienizacao de ar",
+          "servico de limpeza",
+          "servico de instalacao",
+          "servicos de instalacao",
+          "instalacao de ar condicionado",
+          "instalacao e desinstalacao",
+          "desinstalacao de",
+          "remanejamento de",
+          "recarga de gas",
+          "carga de gas",
+          "locacao de ar",
+          "aluguel de ar",
+          "compressor para ar",
+          "compressor rotativo",
+          "placa eletronica",
+          "placa receptora",
+          "controle remoto",
+          "suporte para condensadora",
+          "suporte para ar",
+          "cortina de ar",
+          "defletor de ar",
+          "tubo de cobre",
+          "tubulacao de cobre",
+          "bomba de dreno",
+          "capacitor para",
+          "turbina evaporadora",
+          "motor ventilador",
+          "serpentina",
+          "filtro de ar",
+          "higienizador",
+          "bolsa coletora",
+          "ar condicionado automotivo",
+          "ar condicionado veicular",
+        ];
+        const unidadesServicoOuPeca = new Set([
+          "servico",
+          "servicos",
+          "serv",
+          "srv",
+          "sv",
+          "hora",
+          "horas",
+          "hr",
+          "mes",
+          "mensal",
+          "diaria",
+          "metro",
+          "metros",
+          "m",
+          "kg",
+          "quilo",
+          "litro",
+          "par",
+        ]);
+        if (
+          termosExclusaoArCond.some((s) => textoNorm.includes(s)) ||
+          unidadesServicoOuPeca.has(unApiLow)
+        ) {
+          return {
+            aderencia: "C",
+            motivo:
+              "Item refere-se a serviço (manutenção, instalação, limpeza, locação) ou peça/acessório avulso",
+            atendidos,
+            ausentes,
+            reprovados: ["Serviço ou peça distinta do aparelho de ar-condicionado"],
+          };
+        }
+      }
+
       atendidos.push(`Objeto: ${valorStr}`);
       continue;
     }
@@ -1130,6 +1309,8 @@ export function avaliarAderenciaItem(
           "empilhadeira",
           "guincho",
           "reboque",
+          "janela",
+          "portatil",
         ];
         const outrosNoItem = tiposConflitantes.filter(
           (t) =>
@@ -1383,6 +1564,45 @@ export function avaliarAderenciaItem(
       continue;
     }
 
+    // 10b. Tecnologia (Inverter vs Convencional)
+    if (atribNorm.includes("tecnologia") || valorNorm === "inverter") {
+      if (/\binverter\b/.test(textoNorm)) {
+        atendidos.push("Tecnologia: inverter");
+      } else if (/\b(convencional|on[\s/-]*off)\b/.test(textoNorm)) {
+        reprovados.push(
+          "Tecnologia incompatível (convencional/on-off em vez de inverter)"
+        );
+      } else {
+        ausentes.push("Tecnologia (inverter) não informada na descrição");
+      }
+      continue;
+    }
+
+    // 10c. Potência / Capacidade em BTUs
+    if (
+      semAcentosMinusculo(unidadeReq).startsWith("btu") ||
+      atribNorm.includes("btu")
+    ) {
+      const reqBtu = parseFloatPtbr(valorStr);
+      if (reqBtu !== null) {
+        const btuItem = extrairBtusItem(textoNorm);
+        if (btuItem !== null) {
+          if (compararNum(btuItem, operador, reqBtu)) {
+            atendidos.push(`${atrib}: ${btuItem} BTUs (${operador} ${reqBtu} BTUs)`);
+          } else {
+            reprovados.push(
+              `${atrib} incompatível (${btuItem} BTUs vs ${operador} ${reqBtu} BTUs)`
+            );
+          }
+        } else {
+          ausentes.push(
+            `${atrib} (${operador} ${reqBtu} BTUs) não informado na descrição`
+          );
+        }
+      }
+      continue;
+    }
+
     // 11. Requisito genérico
     const reqNum = parseFloatPtbr(valorStr);
     if (
@@ -1391,8 +1611,9 @@ export function avaliarAderenciaItem(
     ) {
       const unNorm = semAcentosMinusculo(unidadeReq);
       if (unNorm && unNorm !== "-") {
+        const unRegexStr = escapeRegex(unNorm).replace(/s$/, "s?");
         const mGen = textoNorm.match(
-          new RegExp(`0?(\\d+(?:[.,]\\d+)?)\\s*${escapeRegex(unNorm)}\\b`)
+          new RegExp(`0?(\\d+(?:[.,]\\d+)?)\\s*${unRegexStr}\\b`)
         );
         if (mGen) {
           const valEnc = parseFloatPtbr(mGen[1]);
@@ -1445,4 +1666,124 @@ export function avaliarAderenciaItem(
     ausentes: [],
     reprovados: [],
   };
+}
+
+/**
+ * Triagem rápida em memória do resumo da Ata (título + descrição) antes de abrir os itens
+ * na API do PNCP. Descarta apenas Atas 100% incompatíveis com o objeto pesquisado
+ * (ex.: atas exclusivas de manutenção/limpeza/instalação quando se busca aquisição do bem,
+ * ou atas de medicamentos/impressoras/softwares trazidas por termos genéricos),
+ * preservando 100% das atas específicas ou guarda-chuva (materiais/equipamentos diversos).
+ */
+export function verificarCompatibilidadePreliminarAta(
+  descricaoAta: string | null | undefined,
+  tituloAta: string | null | undefined,
+  requisitos: RequisitoMinimo[]
+): { compativel: boolean; motivo: string } {
+  const textoAta = semAcentosMinusculo(
+    `${tituloAta || ""} ${descricaoAta || ""}`
+  );
+  if (!textoAta) {
+    return { compativel: true, motivo: "" };
+  }
+
+  const reqObj = requisitos.find(
+    (r) =>
+      r.Obrigatorio !== false &&
+      semAcentosMinusculo(r.Atributo).includes("objeto")
+  );
+  if (!reqObj) {
+    return { compativel: true, motivo: "" };
+  }
+
+  const valObjNorm = semAcentosMinusculo(reqObj.Valor);
+
+  // 1. Pesquisa de Aparelho de Ar-Condicionado / Climatização (Aquisição)
+  if (
+    (valObjNorm.includes("condicionado") ||
+      valObjNorm.includes("condicionador")) &&
+    !valObjNorm.includes("manutencao") &&
+    !valObjNorm.includes("instalacao") &&
+    !valObjNorm.includes("limpeza") &&
+    !valObjNorm.includes("locacao")
+  ) {
+    const temPalavraChaveClimatizacao =
+      /\b(ar[\s-]*condicionado|condicionador\w*|climatiz\w*|split|inverter|btus?|refrigera\w*|eletrodomest\w*|eletroeletron\w*|equipament\w*\s+permanent\w*|materiais?\s+permanent\w*|mobiliari\w*)\b/.test(
+        textoAta
+      );
+
+    if (!temPalavraChaveClimatizacao) {
+      return {
+        compativel: false,
+        motivo:
+          "objeto da ata incompatível com o item pesquisado (sem relação com ar-condicionado/climatização)",
+      };
+    }
+
+    const ehServicoExclusivoAr =
+      /\b(manutencao preventiva|manutencao corretiva|servicos? de manutencao|manutencao de ar|manutencao em ar|manutencao predial|limpeza e higienizacao|servicos? de limpeza|higienizacao de|servicos? de instalacao|instalacao e desinstalacao|instalacao de ar|desinstalacao|recarga de gas|locacao de ar|locacao de aparelhos|ar condicionado automotivo|ar condicionado veicular)\b/.test(
+        textoAta
+      );
+    const mencionaAquisicaoDeAparelhos =
+      /\b(aquisicao de aparelhos|aquisicao de ar|aquisicao de condicionador|aquisicao de equipamentos|aquisicao de eletrodomesticos|fornecimento de aparelhos|fornecimento de ar condicionado|fornecimento de condicionador|eventual aquisicao|compra de aparelhos)\b/.test(
+        textoAta
+      );
+
+    if (ehServicoExclusivoAr && !mencionaAquisicaoDeAparelhos) {
+      return {
+        compativel: false,
+        motivo:
+          "ata exclusiva de prestação de serviços (manutenção/instalação/limpeza/locação) — objeto pesquisado é aquisição do equipamento",
+      };
+    }
+  }
+
+  // 2. Pesquisa de Locação de Veículos
+  if (valObjNorm.includes("locacao") && valObjNorm.includes("veicul")) {
+    const temPalavraVeiculo =
+      /\b(veicul\w*|automov\w*|automotor\w*|frota|carro\w*|hatch\w*|sedan|seda|picape\w*|pickup|caminhonete\w*|camionete\w*|suv|utilitari\w*|van|vans|furgao|onibus|micro-?onibus|caminhao|caminhoes|ambulancia\w*|motocicleta\w*|transporte)\b/.test(
+        textoAta
+      );
+    if (!temPalavraVeiculo) {
+      return {
+        compativel: false,
+        motivo:
+          "objeto da ata incompatível com locação de veículos (outro tipo de locação ou serviço)",
+      };
+    }
+
+    const ehServicoNaoLocacaoVeic =
+      /\b(manutencao preventiva|manutencao corretiva|aquisicao de pecas|fornecimento de pecas|fornecimento de combustiv\w*|lavagem de veicul\w*|seguro veicular|rastreamento veicular|passagens? aereas?|passagens? rodoviarias?|aquisicao de veicul\w*|compra de veicul\w*)\b/.test(
+        textoAta
+      ) && !/\b(locacao|aluguel)\b/.test(textoAta);
+
+    if (ehServicoNaoLocacaoVeic) {
+      return {
+        compativel: false,
+        motivo:
+          "ata de aquisição/manutenção/combustível/seguro (objeto pesquisado é locação de veículos)",
+      };
+    }
+  }
+
+  // 3. Pesquisa de Lona (Aquisição)
+  if (valObjNorm.includes("lona") && !valObjNorm.includes("locacao")) {
+    const ehExclusivoComunicacaoOuFreio =
+      /\b(impressao digital|confeccao de banner\w*|comunicacao visual|lona de freio|lona para freio|pecas automotivas|locacao de tenda\w*|locacao de lona\w*)\b/.test(
+        textoAta
+      ) &&
+      !/\b(lona plastica|lona preta|polietileno|material de construcao|materiais de construcao|ferragens|insumos agricolas)\b/.test(
+        textoAta
+      );
+
+    if (ehExclusivoComunicacaoOuFreio) {
+      return {
+        compativel: false,
+        motivo:
+          "objeto da ata incompatível (comunicação visual/banner, freio automotivo ou locação)",
+      };
+    }
+  }
+
+  return { compativel: true, motivo: "" };
 }
