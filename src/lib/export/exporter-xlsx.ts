@@ -1,6 +1,10 @@
 import ExcelJS from "exceljs";
 import { limparTextoExibicao } from "@/lib/domain/pipeline";
-import type { ItemCandidato, RegistroDescartado } from "@/lib/domain/types";
+import type {
+  CriterioClassificacao,
+  ItemCandidato,
+  RegistroDescartado,
+} from "@/lib/domain/types";
 
 /**
  * Remove caracteres de controle invisíveis ilegais na especificação XML do Excel,
@@ -156,8 +160,10 @@ export async function gerarPlanilhaXlsx(
   itensSelecionados: ItemCandidato[],
   itensJanelaTop20: ItemCandidato[],
   indicesSelecionados: number[],
-  descartados: RegistroDescartado[]
+  descartados: RegistroDescartado[],
+  criterioClassificacao: CriterioClassificacao = "menor_preco"
 ): Promise<Uint8Array> {
+  const ehDesconto = criterioClassificacao === "maior_desconto";
   const wb = new ExcelJS.Workbook();
   wb.creator = "Sistema de Pesquisa de Preços PNCP — Sérgio Dantas Torres";
   wb.created = new Date();
@@ -242,6 +248,7 @@ export async function gerarPlanilhaXlsx(
   };
 
   const moedaFormat = "R$ #,##0.00";
+  const formatoValores = ehDesconto ? '0.00"%"' : moedaFormat;
 
   // =========================================================================
   // ABA 1: Planilha_Parecer (Diagramada para Folha A4)
@@ -281,7 +288,7 @@ export async function gerarPlanilhaXlsx(
 
   const headersAba1 = [
     "Descrição do objeto",
-    "Valor Unitário (R$)",
+    ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)",
     "Nº da ARP / Licitação",
     "Data de Assinatura",
     "Órgão Gerenciador/UF",
@@ -331,7 +338,7 @@ export async function gerarPlanilhaXlsx(
         c.fill = fillZebra;
       }
       if (colIdx === 2) {
-        c.numFmt = moedaFormat;
+        c.numFmt = formatoValores;
         c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
       } else if (colIdx === 3) {
         c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
@@ -348,7 +355,7 @@ export async function gerarPlanilhaXlsx(
     rowNum++;
   });
 
-  // Linha final: MÉDIA DOS VALORES UNITÁRIOS com FÓRMULA =AVERAGE(B2:B{N})
+  // Linha final: MÉDIA DOS VALORES UNITÁRIOS / TAXAS com FÓRMULA =AVERAGE(B2:B{N})
   const ultimaLinhaDados = Math.max(2, rowNum - 1);
   const formulaMedia =
     itensSelecionados.length > 0
@@ -356,7 +363,7 @@ export async function gerarPlanilhaXlsx(
       : { formula: "0" };
 
   const rowMedia = ws1.addRow([
-    "MÉDIA DOS VALORES UNITÁRIOS",
+    ehDesconto ? "MÉDIA DAS TAXAS DE DESCONTO" : "MÉDIA DOS VALORES UNITÁRIOS",
     formulaMedia,
     "—",
     "—",
@@ -370,7 +377,7 @@ export async function gerarPlanilhaXlsx(
     c.fill = fillMedia;
     c.border = borderMedia;
     if (colIdx === 2) {
-      c.numFmt = moedaFormat;
+      c.numFmt = formatoValores;
       c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
     } else if (colIdx >= 3) {
       c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
@@ -525,7 +532,7 @@ export async function gerarPlanilhaXlsx(
   const headersAba2 = [
     "Selecionado (Sim/Não)",
     "Descrição do objeto",
-    "Valor Unitário (R$)",
+    ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)",
     "Quantitativo previsto na ARP",
     "Unidade",
     "Nº do Item/Lote",
@@ -614,7 +621,7 @@ export async function gerarPlanilhaXlsx(
       }
 
       if (colIdx === 3) {
-        c.numFmt = moedaFormat;
+        c.numFmt = formatoValores;
         c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
       } else if (colIdx === 6) {
         c.numFmt = "@";
@@ -657,7 +664,7 @@ export async function gerarPlanilhaXlsx(
     "Município",
     "Nº do Item/Lote",
     "Descrição do Objeto / Item",
-    "Valor Unitário (R$)",
+    ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)",
     "Unidade",
     "Data de Assinatura",
     "Vigência da Ata",
@@ -706,7 +713,7 @@ export async function gerarPlanilhaXlsx(
         c.numFmt = "@";
         c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
       } else if (colIdx === 9 && valNum !== null) {
-        c.numFmt = moedaFormat;
+        c.numFmt = formatoValores;
         c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
       } else if ([1, 5, 6, 10, 11, 12, 13].includes(colIdx)) {
         c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };

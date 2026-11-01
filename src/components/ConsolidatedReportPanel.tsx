@@ -14,6 +14,7 @@ import {
   Loader2,
 } from "lucide-react";
 import type {
+  CriterioClassificacao,
   ItemCandidato,
   ResultadoPesquisa,
   EstatisticasPrecos,
@@ -24,7 +25,7 @@ import {
 } from "@/lib/export/exporter-xlsx";
 import { gerarCsvConsolidado } from "@/lib/export/exporter-csv";
 import { gerarRelatorioPdfA4 } from "@/lib/export/exporter-pdf";
-import { chaveItemUnica } from "@/lib/domain/statistics";
+import { chaveItemUnica, formatValorOuTaxa } from "@/lib/domain/statistics";
 
 interface ConsolidatedReportPanelProps {
   descricaoObjeto: string;
@@ -33,18 +34,10 @@ interface ConsolidatedReportPanelProps {
   itensSelecionados: ItemCandidato[];
   indicesSelecionados: number[];
   estatisticas: EstatisticasPrecos;
+  criterioClassificacao?: CriterioClassificacao;
   onOpenTop20Modal: () => void;
   onSaveToHistoryManual: () => void;
   savedNotice: string | null;
-}
-
-function formatBRL(val: number): string {
-  return val.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 }
 
 function triggerBrowserDownload(blob: Blob, filename: string) {
@@ -65,12 +58,15 @@ export function ConsolidatedReportPanel({
   itensSelecionados,
   indicesSelecionados,
   estatisticas,
+  criterioClassificacao = "menor_preco",
   onOpenTop20Modal,
   onSaveToHistoryManual,
   savedNotice,
 }: ConsolidatedReportPanelProps) {
   const [isExportingXlsx, setIsExportingXlsx] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+
+  const ehDesconto = criterioClassificacao === "maior_desconto";
 
   const handleDownloadXlsx = async () => {
     try {
@@ -79,7 +75,8 @@ export function ConsolidatedReportPanel({
         itensSelecionados,
         candidatosTop20,
         indicesSelecionados,
-        resultado.descartados
+        resultado.descartados,
+        criterioClassificacao
       );
       const blob = new Blob([new Uint8Array(buffer)], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -97,7 +94,8 @@ export function ConsolidatedReportPanel({
       const bytes = await gerarRelatorioPdfA4(
         resultado,
         itensSelecionados,
-        descricaoObjeto
+        descricaoObjeto,
+        criterioClassificacao
       );
       const blob = new Blob([new Uint8Array(bytes)], {
         type: "application/pdf",
@@ -110,7 +108,7 @@ export function ConsolidatedReportPanel({
   };
 
   const handleDownloadCsv = () => {
-    const csvContent = gerarCsvConsolidado(itensSelecionados);
+    const csvContent = gerarCsvConsolidado(itensSelecionados, criterioClassificacao);
     const blob = new Blob([csvContent], {
       type: "text/csv;charset=utf-8;",
     });
@@ -153,7 +151,11 @@ export function ConsolidatedReportPanel({
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#1B365D] dark:text-[#F3E5AB] bg-[#1B365D]/10 hover:bg-[#1B365D]/20 dark:bg-slate-800 border border-[#1B365D]/25 dark:border-[#B59410]/40 transition-all"
             >
               <ListChecks className="w-4 h-4" />
-              <span>Selecionar entre os 20 menores preços</span>
+              <span>
+                {ehDesconto
+                  ? "Selecionar entre as 20 maiores taxas de desconto"
+                  : "Selecionar entre os 20 menores preços"}
+              </span>
             </button>
 
             <button
@@ -217,10 +219,10 @@ export function ConsolidatedReportPanel({
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 my-5">
           <div className="p-3.5 rounded-xl bg-gradient-to-br from-[#1B365D] to-[#122644] text-white shadow-sm">
             <span className="text-[10px] uppercase tracking-wider text-slate-300 block">
-              Média Unitária Final
+              {ehDesconto ? "Média das Taxas de Desconto" : "Média Unitária Final"}
             </span>
             <span className="font-mono text-lg font-bold text-[#F3E5AB] tabular-nums">
-              {formatBRL(estatisticas.media)}
+              {formatValorOuTaxa(estatisticas.media, criterioClassificacao)}
             </span>
           </div>
 
@@ -229,25 +231,25 @@ export function ConsolidatedReportPanel({
               Mediana
             </span>
             <span className="font-mono text-base font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
-              {formatBRL(estatisticas.mediana)}
+              {formatValorOuTaxa(estatisticas.mediana, criterioClassificacao)}
             </span>
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
             <span className="text-[10px] uppercase tracking-wider text-slate-500 block">
-              Menor Preço
+              {ehDesconto ? "Menor Taxa" : "Menor Preço"}
             </span>
             <span className="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums">
-              {formatBRL(estatisticas.menor)}
+              {formatValorOuTaxa(estatisticas.menor, criterioClassificacao)}
             </span>
           </div>
 
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
             <span className="text-[10px] uppercase tracking-wider text-slate-500 block">
-              Maior Preço
+              {ehDesconto ? "Maior Taxa" : "Maior Preço"}
             </span>
             <span className="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums">
-              {formatBRL(estatisticas.maior)}
+              {formatValorOuTaxa(estatisticas.maior, criterioClassificacao)}
             </span>
           </div>
 
@@ -256,7 +258,7 @@ export function ConsolidatedReportPanel({
               Desvio Padrão
             </span>
             <span className="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums">
-              {formatBRL(estatisticas.desvioPadrao)}
+              {formatValorOuTaxa(estatisticas.desvioPadrao, criterioClassificacao)}
             </span>
           </div>
 
@@ -279,7 +281,9 @@ export function ConsolidatedReportPanel({
               onClick={onOpenTop20Modal}
               className="font-bold text-[#1B365D] dark:text-[#D4AF37] underline"
             >
-              Selecionar entre os 20 menores preços
+              {ehDesconto
+                ? "Selecionar entre as 20 maiores taxas de desconto"
+                : "Selecionar entre os 20 menores preços"}
             </button>{" "}
             para compor sua cesta de preços.
           </div>
@@ -289,7 +293,9 @@ export function ConsolidatedReportPanel({
               <thead>
                 <tr className="bg-[#1B365D] text-white uppercase text-[11px]">
                   <th className="py-3 px-3">Descrição do objeto</th>
-                  <th className="py-3 px-3 text-right">Valor Unitário (R$)</th>
+                  <th className="py-3 px-3 text-right">
+                    {ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)"}
+                  </th>
                   <th className="py-3 px-3">Nº da ARP / Licitação</th>
                   <th className="py-3 px-2 text-center">Data de Assinatura</th>
                   <th className="py-3 px-3">Órgão Gerenciador/UF</th>
@@ -307,7 +313,7 @@ export function ConsolidatedReportPanel({
                       {item.descricao_objeto}
                     </td>
                     <td className="py-2.5 px-3 text-right font-mono font-bold tabular-nums whitespace-nowrap text-slate-900 dark:text-white">
-                      {formatBRL(item.valor_unitario)}
+                      {formatValorOuTaxa(item.valor_unitario, criterioClassificacao)}
                     </td>
                     <td className="py-2.5 px-3 font-mono whitespace-nowrap">
                       {item.numero_arp_licitacao}
@@ -338,7 +344,7 @@ export function ConsolidatedReportPanel({
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#1B365D]/10 text-[#1B365D] dark:bg-[#B59410]/20 dark:text-[#F3E5AB] font-semibold hover:underline whitespace-nowrap"
                               >
-                                <span>ARP Inicial</span>
+                                <span>Página PNCP</span>
                                 <ExternalLink className="w-3 h-3" />
                               </a>
                             )}
@@ -367,10 +373,12 @@ export function ConsolidatedReportPanel({
                 {/* Final Highlighted Average Row */}
                 <tr className="bg-[#D9E1F2] dark:bg-[#1B365D]/60 font-bold text-slate-900 dark:text-white border-t-2 border-[#1B365D] dark:border-[#B59410]">
                   <td className="py-3 px-3 font-heading uppercase tracking-wide">
-                    MÉDIA DOS VALORES UNITÁRIOS
+                    {ehDesconto
+                      ? "MÉDIA DAS TAXAS DE DESCONTO"
+                      : "MÉDIA DOS VALORES UNITÁRIOS"}
                   </td>
                   <td className="py-3 px-3 text-right font-mono text-sm tabular-nums text-[#1B365D] dark:text-[#F3E5AB]">
-                    {formatBRL(estatisticas.media)}
+                    {formatValorOuTaxa(estatisticas.media, criterioClassificacao)}
                   </td>
                   <td
                     colSpan={5}
@@ -380,7 +388,10 @@ export function ConsolidatedReportPanel({
                     <code className="font-mono font-semibold">
                       =AVERAGE(B2:B{itensSelecionados.length + 1})
                     </code>{" "}
-                    • Mediana: <strong>{formatBRL(estatisticas.mediana)}</strong>
+                    • Mediana:{" "}
+                    <strong>
+                      {formatValorOuTaxa(estatisticas.mediana, criterioClassificacao)}
+                    </strong>
                   </td>
                 </tr>
               </tbody>
@@ -418,7 +429,7 @@ export function ConsolidatedReportPanel({
                         {ata.numero_arp_licitacao}
                       </span>
                       <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                        {formatBRL(ata.valor_unitario)}
+                        {formatValorOuTaxa(ata.valor_unitario, criterioClassificacao)}
                       </span>
                     </div>
 
@@ -444,7 +455,7 @@ export function ConsolidatedReportPanel({
                         </a>
                       )}
 
-                      {ev.arpInicial.url && (
+                      {ev.arpInicial.url && ev.arpInicial.url !== ev.linkPncp && (
                         <a
                           href={ev.arpInicial.url}
                           target="_blank"

@@ -47,7 +47,7 @@ describe("Regra R6 (1 item por ata), Sanitização e Estatísticas", () => {
     expect(stats.quantidade).toBe(6);
     expect(stats.menor).toBe(100);
     expect(stats.maior).toBe(450);
-    expect(stats.mediana).toBeCloseTo(109, 1);
+    expect(stats.mediana).toBe(109);
     expect(stats.limiteSuperiorOutlier).toBeLessThan(450);
 
     const itensMock = valores.map((v, i) => ({

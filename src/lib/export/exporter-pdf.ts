@@ -1,12 +1,19 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { calcularEstatisticasPrecos } from "@/lib/domain/statistics";
+import {
+  calcularEstatisticasPrecos,
+  formatValorOuTaxa,
+} from "@/lib/domain/statistics";
 import { formatarMoedaBr } from "@/lib/export/exporter-csv";
 import {
   descreverArquivosEvidenciaItem,
   sanitizarCelulaExcel,
 } from "@/lib/export/exporter-xlsx";
-import type { ItemCandidato, ResultadoPesquisa } from "@/lib/domain/types";
+import type {
+  CriterioClassificacao,
+  ItemCandidato,
+  ResultadoPesquisa,
+} from "@/lib/domain/types";
 
 /**
  * Gera um Relatório Técnico Executivo em PDF (Folha A4 Retrato) pronto para juntada em
@@ -15,8 +22,10 @@ import type { ItemCandidato, ResultadoPesquisa } from "@/lib/domain/types";
 export async function gerarRelatorioPdfA4(
   res: ResultadoPesquisa,
   itensSelecionados: ItemCandidato[],
-  descricaoObjeto?: string
+  descricaoObjeto?: string,
+  criterioClassificacao: CriterioClassificacao = "menor_preco"
 ): Promise<Uint8Array> {
+  const ehDesconto = criterioClassificacao === "maior_desconto";
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -46,7 +55,9 @@ export async function gerarRelatorioPdfA4(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   doc.text(
-    "Levantamento Auditável de Preços Unitários Homologados (Lei nº 14.133/2021 — IN SEGES/ME nº 65/2021)",
+    ehDesconto
+      ? "Levantamento Auditável de Taxas de Desconto Homologadas (Lei nº 14.133/2021 — IN SEGES/ME nº 65/2021)"
+      : "Levantamento Auditável de Preços Unitários Homologados (Lei nº 14.133/2021 — IN SEGES/ME nº 65/2021)",
     12,
     17
   );
@@ -141,10 +152,10 @@ export async function gerarRelatorioPdfA4(
     head: [
       [
         "Qtd. ARPs",
-        "Média Unitária",
+        ehDesconto ? "Média das Taxas" : "Média Unitária",
         "Mediana",
-        "Menor Preço",
-        "Maior Preço",
+        ehDesconto ? "Menor Taxa" : "Menor Preço",
+        ehDesconto ? "Maior Taxa" : "Maior Preço",
         "Desvio-Padrão",
         "Coef. Variação (CV)",
       ],
@@ -152,11 +163,11 @@ export async function gerarRelatorioPdfA4(
     body: [
       [
         String(stats.quantidade),
-        formatarMoedaBr(stats.media),
-        formatarMoedaBr(stats.mediana),
-        formatarMoedaBr(stats.menor),
-        formatarMoedaBr(stats.maior),
-        formatarMoedaBr(stats.desvioPadrao),
+        formatValorOuTaxa(stats.media, criterioClassificacao),
+        formatValorOuTaxa(stats.mediana, criterioClassificacao),
+        formatValorOuTaxa(stats.menor, criterioClassificacao),
+        formatValorOuTaxa(stats.maior, criterioClassificacao),
+        formatValorOuTaxa(stats.desvioPadrao, criterioClassificacao),
         `${stats.coeficienteVariacao.toFixed(2).replace(".", ",")}%`,
       ],
     ],
@@ -179,7 +190,7 @@ export async function gerarRelatorioPdfA4(
 
   const bodyConsolidado = itensSelecionados.map((it) => [
     sanitizarCelulaExcel(it.descricao_objeto),
-    formatarMoedaBr(Number(it.valor_unitario || 0)),
+    formatValorOuTaxa(Number(it.valor_unitario || 0), criterioClassificacao),
     sanitizarCelulaExcel(it.numero_arp_licitacao),
     sanitizarCelulaExcel(it.data_assinatura || "não informado"),
     sanitizarCelulaExcel(it.orgao_gerenciador_uf),
@@ -187,8 +198,8 @@ export async function gerarRelatorioPdfA4(
   ]);
 
   bodyConsolidado.push([
-    "MÉDIA DOS VALORES UNITÁRIOS",
-    formatarMoedaBr(stats.media),
+    ehDesconto ? "MÉDIA DAS TAXAS DE DESCONTO" : "MÉDIA DOS VALORES UNITÁRIOS",
+    formatValorOuTaxa(stats.media, criterioClassificacao),
     "—",
     "—",
     "—",
@@ -214,7 +225,7 @@ export async function gerarRelatorioPdfA4(
     head: [
       [
         "Descrição do objeto",
-        "Valor Unitário (R$)",
+        ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)",
         "Nº da ARP / Licitação",
         "Data de Assinatura",
         "Órgão Gerenciador/UF",

@@ -2,7 +2,8 @@ import {
   descreverArquivosEvidenciaItem,
   sanitizarCelulaExcel,
 } from "@/lib/export/exporter-xlsx";
-import type { ItemCandidato } from "@/lib/domain/types";
+import type { CriterioClassificacao, ItemCandidato } from "@/lib/domain/types";
+import { formatValorOuTaxa } from "@/lib/domain/statistics";
 
 export function formatarMoedaBr(valor: number): string {
   const num = Number.isFinite(valor) ? valor : 0;
@@ -21,14 +22,18 @@ function escaparCampoCsv(val: string): string {
 
 /**
  * Gera o conteúdo `.csv` da Tabela Consolidada (codificação UTF-8 com BOM e separador `;`),
- * contendo a coluna de Data de Assinatura, a média dos valores unitários e os links diretos
- * das ARPs iniciais e de seus eventuais Termos Aditivos.
+ * contendo a coluna de Data de Assinatura, a média dos valores unitários / taxas de desconto
+ * e os links diretos das ARPs iniciais e de seus eventuais Termos Aditivos.
  */
-export function gerarCsvConsolidado(itensSelecionados: ItemCandidato[]): string {
+export function gerarCsvConsolidado(
+  itensSelecionados: ItemCandidato[],
+  criterioClassificacao: CriterioClassificacao = "menor_preco"
+): string {
+  const ehDesconto = criterioClassificacao === "maior_desconto";
   const linhas: string[] = [];
   const cabecalho = [
     "Descrição do objeto",
-    "Valor Unitário (R$)",
+    ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)",
     "Nº da ARP / Licitação",
     "Data de Assinatura",
     "Órgão Gerenciador/UF",
@@ -43,7 +48,7 @@ export function gerarCsvConsolidado(itensSelecionados: ItemCandidato[]): string 
   for (const item of itensSelecionados) {
     const val = Number(item.valor_unitario || 0);
     soma += val;
-    const valFmt = formatarMoedaBr(val);
+    const valFmt = formatValorOuTaxa(val, criterioClassificacao).replace(/\u00A0/g, " ");
     const ev = descreverArquivosEvidenciaItem(item);
     const linksAditivos =
       ev.termosAditivos.length > 0
@@ -66,9 +71,9 @@ export function gerarCsvConsolidado(itensSelecionados: ItemCandidato[]): string 
 
   if (itensSelecionados.length > 0) {
     const media = soma / itensSelecionados.length;
-    const mediaFmt = formatarMoedaBr(media);
+    const mediaFmt = formatValorOuTaxa(media, criterioClassificacao).replace(/\u00A0/g, " ");
     const rowMedia = [
-      "MÉDIA DOS VALORES UNITÁRIOS",
+      ehDesconto ? "MÉDIA DAS TAXAS DE DESCONTO" : "MÉDIA DOS VALORES UNITÁRIOS",
       mediaFmt,
       "—",
       "—",
