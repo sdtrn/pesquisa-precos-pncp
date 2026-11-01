@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import { calcularEstatisticasPrecos } from "@/lib/domain/statistics";
 import { formatarMoedaBr } from "@/lib/export/exporter-csv";
 import {
-  obterLinksEvidenciaItem,
+  descreverArquivosEvidenciaItem,
   sanitizarCelulaExcel,
 } from "@/lib/export/exporter-xlsx";
 import type { ItemCandidato, ResultadoPesquisa } from "@/lib/domain/types";
@@ -262,14 +262,29 @@ export async function gerarRelatorioPdfA4(
   );
   yPos += 2;
 
-  const bodyEvidencias = itensSelecionados.map((it) => {
-    const [linkPncp, linkPdf] = obterLinksEvidenciaItem(it);
-    return [
-      sanitizarCelulaExcel(it.numero_arp_licitacao),
-      sanitizarCelulaExcel(it.orgao_gerenciador_uf),
-      linkPncp,
-      linkPdf,
-    ];
+  const bodyEvidencias: string[][] = [];
+  itensSelecionados.forEach((it) => {
+    const ev = descreverArquivosEvidenciaItem(it);
+    const arpTxt = sanitizarCelulaExcel(it.numero_arp_licitacao);
+    const orgaoTxt = sanitizarCelulaExcel(it.orgao_gerenciador_uf);
+    const rotuloInicial =
+      ev.termosAditivos.length > 0 ? `${arpTxt} (ARP Inicial)` : arpTxt;
+
+    bodyEvidencias.push([
+      rotuloInicial,
+      orgaoTxt,
+      ev.linkPncp,
+      ev.arpInicial.url,
+    ]);
+
+    ev.termosAditivos.forEach((adit) => {
+      bodyEvidencias.push([
+        `${arpTxt} — ${adit.rotulo}`,
+        orgaoTxt,
+        ev.linkPncp,
+        adit.url,
+      ]);
+    });
   });
 
   autoTable(doc, {
@@ -288,10 +303,10 @@ export async function gerarRelatorioPdfA4(
     },
     head: [
       [
-        "Nº da ARP / Licitação",
+        "Nº da ARP / Licitação (e Termos Aditivos)",
         "Órgão Gerenciador/UF",
         "Link Direto da ARP no Portal PNCP",
-        "Link Direto para Download do PDF da ARP",
+        "Link Direto para Download do PDF (ARP Inicial / Termos Aditivos)",
       ],
     ],
     body: bodyEvidencias,

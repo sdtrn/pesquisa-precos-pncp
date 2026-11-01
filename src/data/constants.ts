@@ -13,15 +13,15 @@ export const MAX_PARALLEL_WORKERS = 10;
 export const SEARCH_PAGE_SIZE = 100;
 export const ITEMS_PAGE_SIZE = 500;
 
-// Opções de escopo dos órgãos
-export const ESCOPO_VALIDADE = "Critério de validade";
+// Opções de escopo dos órgãos (3 filtros principais conforme definição do usuário)
 export const ESCOPO_TODOS = "Todos os órgãos do Brasil";
 export const ESCOPO_POR_REGIAO = "ARPs por Região";
-export const ESCOPO_POR_ESTADO = "ARPs por Estado (UF)"; // Mantido para retrocompatibilidade
 export const ESCOPO_PE_RECIFE = "Governo de Pernambuco e Prefeitura do Recife";
+// Mantidos para retrocompatibilidade com histórico/testes anteriores
+export const ESCOPO_VALIDADE = "Critério de validade";
+export const ESCOPO_POR_ESTADO = "ARPs por Estado (UF)";
 
 export const OPCOES_ESCOPO = [
-  ESCOPO_VALIDADE,
   ESCOPO_TODOS,
   ESCOPO_POR_REGIAO,
   ESCOPO_PE_RECIFE,

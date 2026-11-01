@@ -22,6 +22,9 @@ export interface ArquivoArp {
   titulo: string;
   tipo: string;
   url: string;
+  sequencial?: number;
+  dataPublicacao?: string;
+  ehTermoAditivo?: boolean;
 }
 
 export interface ItemCandidato {

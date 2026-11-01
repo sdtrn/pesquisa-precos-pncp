@@ -1,5 +1,5 @@
 import {
-  obterLinksEvidenciaItem,
+  descreverArquivosEvidenciaItem,
   sanitizarCelulaExcel,
 } from "@/lib/export/exporter-xlsx";
 import type { ItemCandidato } from "@/lib/domain/types";
@@ -21,7 +21,8 @@ function escaparCampoCsv(val: string): string {
 
 /**
  * Gera o conteúdo `.csv` da Tabela Consolidada (codificação UTF-8 com BOM e separador `;`),
- * contendo a coluna de Data de Assinatura, a média dos valores unitários e os links diretos das ARPs.
+ * contendo a coluna de Data de Assinatura, a média dos valores unitários e os links diretos
+ * das ARPs iniciais e de seus eventuais Termos Aditivos.
  */
 export function gerarCsvConsolidado(itensSelecionados: ItemCandidato[]): string {
   const linhas: string[] = [];
@@ -33,7 +34,8 @@ export function gerarCsvConsolidado(itensSelecionados: ItemCandidato[]): string 
     "Órgão Gerenciador/UF",
     "Fornecedor",
     "Link Direto da ARP no Portal PNCP",
-    "Link Direto Download PDF da ARP",
+    "Link Direto Download PDF da ARP Inicial",
+    "Links Diretos dos Termos Aditivos da ARP",
   ];
   linhas.push(cabecalho.map(escaparCampoCsv).join(";"));
 
@@ -42,7 +44,11 @@ export function gerarCsvConsolidado(itensSelecionados: ItemCandidato[]): string 
     const val = Number(item.valor_unitario || 0);
     soma += val;
     const valFmt = formatarMoedaBr(val);
-    const [linkPncp, linkPdf] = obterLinksEvidenciaItem(item);
+    const ev = descreverArquivosEvidenciaItem(item);
+    const linksAditivos =
+      ev.termosAditivos.length > 0
+        ? ev.termosAditivos.map((t) => `${t.rotulo}: ${t.url}`).join(" | ")
+        : "Sem termos aditivos";
 
     const row = [
       sanitizarCelulaExcel(item.descricao_objeto),
@@ -51,8 +57,9 @@ export function gerarCsvConsolidado(itensSelecionados: ItemCandidato[]): string 
       sanitizarCelulaExcel(item.data_assinatura || "não informado"),
       sanitizarCelulaExcel(item.orgao_gerenciador_uf),
       sanitizarCelulaExcel(item.fornecedor),
-      linkPncp,
-      linkPdf,
+      ev.linkPncp,
+      ev.arpInicial.url,
+      linksAditivos,
     ];
     linhas.push(row.map(escaparCampoCsv).join(";"));
   }
@@ -63,6 +70,7 @@ export function gerarCsvConsolidado(itensSelecionados: ItemCandidato[]): string 
     const rowMedia = [
       "MÉDIA DOS VALORES UNITÁRIOS",
       mediaFmt,
+      "—",
       "—",
       "—",
       "—",

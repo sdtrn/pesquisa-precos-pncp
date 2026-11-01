@@ -1,6 +1,10 @@
 import { describe, it, expect } from "vitest";
 import ExcelJS from "exceljs";
-import { gerarPlanilhaXlsx, sanitizarCelulaExcel } from "@/lib/export/exporter-xlsx";
+import {
+  gerarPlanilhaXlsx,
+  sanitizarCelulaExcel,
+  descreverArquivosEvidenciaItem,
+} from "@/lib/export/exporter-xlsx";
 import { gerarCsvConsolidado } from "@/lib/export/exporter-csv";
 import { gerarRelatorioPdfA4 } from "@/lib/export/exporter-pdf";
 import type { ItemCandidato, ResultadoPesquisa } from "@/lib/domain/types";
@@ -98,5 +102,79 @@ describe("Exportadores Auditáveis (.XLSX A4, .CSV e .PDF A4)", () => {
     const pdfBytes = await gerarRelatorioPdfA4(resMock as ResultadoPesquisa, [item]);
     const headerStr = new TextDecoder().decode(pdfBytes.slice(0, 5));
     expect(headerStr).toBe("%PDF-");
+  });
+
+  it("inclui links diretos de Termos Aditivos além da ARP Inicial no XLSX, CSV e PDF", async () => {
+    const itemComAditivos: Partial<ItemCandidato> = {
+      descricao_objeto: "Ar-Condicionado Split 12000 BTUs",
+      valor_unitario: 1950,
+      numero_arp_licitacao: "ARP nº 045/2025",
+      data_assinatura: "15/03/2025",
+      orgao_gerenciador_uf: "Prefeitura do Recife/PE",
+      fornecedor: "Clima Frio Ltda",
+      link_ata_pncp: "https://pncp.gov.br/app/atas/11111111000100/2025/10/1",
+      arquivos_arp: [
+        {
+          titulo: "Ata de Registro de Preços nº 045/2025",
+          tipo: "Ata de Registro de Preços",
+          url: "https://pncp.gov.br/pncp-api/v1/orgaos/11111111000100/compras/2025/10/atas/1/arquivos/1",
+          sequencial: 1,
+          ehTermoAditivo: false,
+        },
+        {
+          titulo: "1º Termo Aditivo de Prorrogação de Vigência",
+          tipo: "Termo Aditivo",
+          url: "https://pncp.gov.br/pncp-api/v1/orgaos/11111111000100/compras/2025/10/atas/1/arquivos/2",
+          sequencial: 2,
+          ehTermoAditivo: true,
+        },
+        {
+          titulo: "2º Termo Aditivo",
+          tipo: "Termo Aditivo",
+          url: "https://pncp.gov.br/pncp-api/v1/orgaos/11111111000100/compras/2025/10/atas/1/arquivos/3",
+          sequencial: 3,
+          ehTermoAditivo: true,
+        },
+      ],
+    };
+
+    const ev = descreverArquivosEvidenciaItem(itemComAditivos as ItemCandidato);
+    expect(ev.arpInicial.url).toContain("/arquivos/1");
+    expect(ev.termosAditivos).toHaveLength(2);
+    expect(ev.termosAditivos[0].rotulo).toBe(
+      "1º Termo Aditivo de Prorrogação de Vigência"
+    );
+    expect(ev.termosAditivos[0].url).toContain("/arquivos/2");
+    expect(ev.termosAditivos[1].url).toContain("/arquivos/3");
+
+    const csv = gerarCsvConsolidado([itemComAditivos as ItemCandidato]);
+    expect(csv).toContain("1º Termo Aditivo de Prorrogação de Vigência");
+    expect(csv).toContain("/arquivos/2");
+    expect(csv).toContain("/arquivos/3");
+
+    const xlsxBytes = await gerarPlanilhaXlsx(
+      [itemComAditivos as ItemCandidato],
+      [itemComAditivos as ItemCandidato],
+      [0],
+      []
+    );
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(xlsxBytes.buffer as ArrayBuffer);
+    const ws1 = wb.getWorksheet("Planilha_Parecer")!;
+    const textosColA: string[] = [];
+    ws1.eachRow((r) => {
+      textosColA.push(String(r.getCell(1).value || ""));
+    });
+    expect(
+      textosColA.some((t) => t.includes("ARP nº 045/2025 (ARP Inicial)"))
+    ).toBe(true);
+    expect(
+      textosColA.some((t) =>
+        t.includes("ARP nº 045/2025 — 1º Termo Aditivo de Prorrogação de Vigência")
+      )
+    ).toBe(true);
+    expect(
+      textosColA.some((t) => t.includes("ARP nº 045/2025 — 2º Termo Aditivo"))
+    ).toBe(true);
   });
 });

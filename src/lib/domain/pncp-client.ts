@@ -532,23 +532,53 @@ export class PNCPClient {
       return [];
     }
 
+    const itensBrutos = dados.filter(
+      (arq): arq is Record<string, unknown> =>
+        Boolean(arq && typeof arq === "object" && (arq as Record<string, unknown>).statusAtivo !== false)
+    );
+
+    // Ordenar pelo sequencialDocumento crescente para garantir que a ARP Inicial venha primeiro
+    // e eventuais Termos Aditivos / Apostilamentos / Prorrogações venham na sequência cronológica
+    itensBrutos.sort((a, b) => {
+      const seqA = Number(a.sequencialDocumento || 0);
+      const seqB = Number(b.sequencialDocumento || 0);
+      if (seqA && seqB && seqA !== seqB) return seqA - seqB;
+      return 0;
+    });
+
+    const regexAditivo =
+      /aditiv|prorroga|apostil|renova|reajust|repactua|altera|errata|retifica/i;
+
     const arquivosLimpos: ArquivoArp[] = [];
-    for (const arq of dados) {
-      if (!arq || typeof arq !== "object") continue;
-      const a = arq as Record<string, unknown>;
-      let urlArq = String(a.url || "").trim();
+    for (let idx = 0; idx < itensBrutos.length; idx++) {
+      const a = itensBrutos[idx];
+      const seqDoc = Number(a.sequencialDocumento || idx + 1);
+      let urlArq = String(a.url || a.uri || "").trim();
       if (!urlArq && a.sequencialDocumento) {
         urlArq = `https://pncp.gov.br/pncp-api/v1/orgaos/${cnpj}/compras/${ano}/${seqCompra}/atas/${seqAta}/arquivos/${a.sequencialDocumento}`;
       }
       if (urlArq) {
+        const tipoStr = String(
+          a.tipoDocumentoNome || "Ata de Registro de Preços"
+        ).trim();
+        const tituloBruto = String(
+          a.titulo || a.tipoDocumentoNome || `Arquivo ${seqDoc}`
+        ).trim();
+        const ehAditivo =
+          regexAditivo.test(tipoStr) ||
+          regexAditivo.test(tituloBruto) ||
+          idx > 0;
+        const dtPub = String(
+          a.dataPublicacaoPncp || a.dataInclusao || ""
+        ).trim();
+
         arquivosLimpos.push({
-          titulo: String(
-            a.titulo || a.tipoDocumentoNome || "Arquivo da ARP"
-          ).trim(),
-          tipo: String(
-            a.tipoDocumentoNome || "Ata de Registro de Preços"
-          ).trim(),
+          titulo: tituloBruto,
+          tipo: tipoStr,
           url: urlArq,
+          sequencial: seqDoc,
+          dataPublicacao: dtPub || undefined,
+          ehTermoAditivo: ehAditivo,
         });
       }
     }

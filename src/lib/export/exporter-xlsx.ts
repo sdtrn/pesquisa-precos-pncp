@@ -34,22 +34,115 @@ function calcularAlturaLinhaA4(
   return Math.max(alturaMinima, Math.min(180, maxLinhas * alturaPorLinha + 8));
 }
 
+export interface TermoAditivoEvidencia {
+  rotulo: string;
+  titulo: string;
+  tipo: string;
+  url: string;
+}
+
+export interface EvidenciaArquivosArp {
+  linkPncp: string;
+  arpInicial: {
+    titulo: string;
+    url: string;
+  };
+  termosAditivos: TermoAditivoEvidencia[];
+  todosLinksTexto: string;
+}
+
+export function descreverArquivosEvidenciaItem(
+  item: ItemCandidato
+): EvidenciaArquivosArp {
+  const linkPncp = sanitizarCelulaExcel(item.link_ata_pncp || "");
+  const arquivosValidos = Array.isArray(item.arquivos_arp)
+    ? item.arquivos_arp.filter((a) => Boolean(a && a.url))
+    : [];
+
+  const regexAdit =
+    /aditiv|prorroga|apostil|renova|reajust|repactua|altera|errata|retifica/i;
+
+  if (arquivosValidos.length === 0) {
+    const linkDl = sanitizarCelulaExcel(item.link_download_arp || linkPncp);
+    return {
+      linkPncp,
+      arpInicial: {
+        titulo: "ARP Inicial",
+        url: linkDl,
+      },
+      termosAditivos: [],
+      todosLinksTexto: linkDl ? `ARP Inicial: ${linkDl}` : "",
+    };
+  }
+
+  // Identifica qual documento é a ARP Inicial (primeiro documento que não seja explicitamente aditivo)
+  let idxInicial = arquivosValidos.findIndex(
+    (a) =>
+      !a.ehTermoAditivo &&
+      !regexAdit.test(String(a.titulo || "")) &&
+      !regexAdit.test(String(a.tipo || ""))
+  );
+  if (idxInicial === -1) {
+    idxInicial = 0;
+  }
+
+  const arqIni = arquivosValidos[idxInicial];
+  const arpInicial = {
+    titulo: sanitizarCelulaExcel(arqIni.titulo || "ARP Inicial"),
+    url: sanitizarCelulaExcel(arqIni.url || linkPncp),
+  };
+
+  const termosAditivos: TermoAditivoEvidencia[] = [];
+  let contadorAdit = 0;
+
+  arquivosValidos.forEach((arq, i) => {
+    if (i === idxInicial) return;
+    contadorAdit++;
+    const tit = sanitizarCelulaExcel(arq.titulo || "");
+    const tip = sanitizarCelulaExcel(arq.tipo || "");
+    const urlAdit = sanitizarCelulaExcel(arq.url || "");
+    if (!urlAdit) return;
+
+    let rotulo = "";
+    if (regexAdit.test(tit)) {
+      rotulo = tit;
+    } else if (regexAdit.test(tip)) {
+      rotulo =
+        tit && tit.toLowerCase() !== tip.toLowerCase()
+          ? `${tip} — ${tit}`
+          : `${contadorAdit}º ${tip}`;
+    } else {
+      rotulo = tit
+        ? `${contadorAdit}º Termo Aditivo / Doc. (${tit})`
+        : `${contadorAdit}º Termo Aditivo`;
+    }
+
+    termosAditivos.push({
+      rotulo,
+      titulo: tit || rotulo,
+      tipo: tip || "Termo Aditivo",
+      url: urlAdit,
+    });
+  });
+
+  const partesTxt = [
+    `ARP Inicial (${arpInicial.titulo}): ${arpInicial.url}`,
+    ...termosAditivos.map((t) => `${t.rotulo}: ${t.url}`),
+  ];
+
+  return {
+    linkPncp,
+    arpInicial,
+    termosAditivos,
+    todosLinksTexto: partesTxt.join(" | "),
+  };
+}
+
 export function obterLinksEvidenciaItem(
   item: ItemCandidato
 ): [string, string, string] {
-  const linkPncp = sanitizarCelulaExcel(item.link_ata_pncp || "");
-  const arquivos = item.arquivos_arp || [];
-  if (Array.isArray(arquivos) && arquivos.length > 0) {
-    const primeiroUrl = sanitizarCelulaExcel(arquivos[0]?.url || linkPncp);
-    const partesTxt = arquivos.map((arq, i) => {
-      const tit = sanitizarCelulaExcel(arq.titulo || `Arquivo ${i + 1}`);
-      const u = sanitizarCelulaExcel(arq.url || "");
-      return u ? `${tit}: ${u}` : tit;
-    });
-    return [linkPncp, primeiroUrl, partesTxt.join(" | ")];
-  }
-  const linkDl = sanitizarCelulaExcel(item.link_download_arp || linkPncp);
-  return [linkPncp, linkDl, linkDl];
+  const ev = descreverArquivosEvidenciaItem(item);
+  return [ev.linkPncp, ev.arpInicial.url, ev.todosLinksTexto];
 }
 
 /**
@@ -309,11 +402,11 @@ export async function gerarPlanilhaXlsx(
     }
 
     const rowHeadEv = ws1.addRow([
-      "Nº da ARP / Licitação",
+      "Nº da ARP / Licitação (e Termos Aditivos)",
       "Data de Assinatura",
       "Órgão Gerenciador/UF",
       "Link Direto da ARP no Portal PNCP",
-      "Link Direto para Download do PDF/Arquivo da ARP",
+      "Link Direto para Download do PDF (ARP Inicial / Termos Aditivos)",
       "",
     ]);
     const headEvNum = rowHeadEv.number;
@@ -327,15 +420,22 @@ export async function gerarPlanilhaXlsx(
       c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
     }
 
-    itensSelecionados.forEach((item, idxE) => {
-      const arpTxt = sanitizarCelulaExcel(item.numero_arp_licitacao);
-      const dtAssTxt = sanitizarCelulaExcel(
-        item.data_assinatura || "não informado"
-      );
-      const orgaoTxt = sanitizarCelulaExcel(item.orgao_gerenciador_uf);
-      const [linkPncp, linkPdf] = obterLinksEvidenciaItem(item);
-
-      const rEv = ws1.addRow([arpTxt, dtAssTxt, orgaoTxt, linkPncp, linkPdf, ""]);
+    const adicionarLinhaEvidenciaA4 = (
+      col1Txt: string,
+      dtAssTxt: string,
+      orgaoTxt: string,
+      linkPncp: string,
+      linkPdf: string,
+      usarZebra: boolean
+    ) => {
+      const rEv = ws1.addRow([
+        col1Txt,
+        dtAssTxt,
+        orgaoTxt,
+        linkPncp,
+        linkPdf,
+        "",
+      ]);
       const evNum = rEv.number;
       ws1.mergeCells(evNum, 5, evNum, 6);
       rEv.height = 22;
@@ -344,23 +444,71 @@ export async function gerarPlanilhaXlsx(
         const ce = rEv.getCell(colI);
         ce.font = fontBodyA4;
         ce.border = borderCell;
-        if (idxE % 2 === 1) {
+        if (usarZebra) {
           ce.fill = fillZebra;
         }
         if (colI === 2) {
-          ce.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+          ce.alignment = {
+            horizontal: "center",
+            vertical: "middle",
+            wrapText: true,
+          };
         } else if (colI === 4 && linkPncp.startsWith("http")) {
           ce.value = { text: linkPncp, hyperlink: linkPncp };
           ce.font = fontLinkA4;
-          ce.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+          ce.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
         } else if (colI === 5 && linkPdf.startsWith("http")) {
           ce.value = { text: linkPdf, hyperlink: linkPdf };
           ce.font = fontLinkA4;
-          ce.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+          ce.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
         } else {
-          ce.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+          ce.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
         }
       }
+    };
+
+    itensSelecionados.forEach((item, idxE) => {
+      const arpTxt = sanitizarCelulaExcel(item.numero_arp_licitacao);
+      const dtAssTxt = sanitizarCelulaExcel(
+        item.data_assinatura || "não informado"
+      );
+      const orgaoTxt = sanitizarCelulaExcel(item.orgao_gerenciador_uf);
+      const ev = descreverArquivosEvidenciaItem(item);
+      const usarZebra = idxE % 2 === 1;
+
+      const rotuloArpInicial =
+        ev.termosAditivos.length > 0 ? `${arpTxt} (ARP Inicial)` : arpTxt;
+      adicionarLinhaEvidenciaA4(
+        rotuloArpInicial,
+        dtAssTxt,
+        orgaoTxt,
+        ev.linkPncp,
+        ev.arpInicial.url,
+        usarZebra
+      );
+
+      ev.termosAditivos.forEach((adit) => {
+        adicionarLinhaEvidenciaA4(
+          `${arpTxt} — ${adit.rotulo}`,
+          dtAssTxt,
+          orgaoTxt,
+          ev.linkPncp,
+          adit.url,
+          usarZebra
+        );
+      });
     });
   }
 
@@ -369,8 +517,8 @@ export async function gerarPlanilhaXlsx(
   // =========================================================================
   const ws2 = wb.addWorksheet("Memoria_de_Pesquisa");
   const largurasAba2 = [
-    18, 52, 20, 24, 16, 16, 34, 30, 34, 18, 26, 20, 22, 16, 28, 20, 42, 42, 14,
-    44, 24, 22, 26, 18, 34, 28,
+    18, 52, 20, 24, 16, 16, 34, 30, 34, 18, 26, 20, 22, 16, 28, 20, 42, 42, 48,
+    14, 44, 24, 22, 26, 18, 34, 28,
   ];
   ws2.columns = largurasAba2.map((w) => ({ width: w }));
 
@@ -392,7 +540,8 @@ export async function gerarPlanilhaXlsx(
     "Tipo de órgão",
     "CNPJ do órgão",
     "Link da ata no PNCP",
-    "Link Direto Download PDF da ARP",
+    "Link Direto Download PDF da ARP Inicial",
+    "Links Diretos dos Termos Aditivos da ARP",
     "Aderência",
     "Detalhamento da Aderência",
     "Órgão atende ao critério de validade (Sim/Não)",
@@ -414,7 +563,14 @@ export async function gerarPlanilhaXlsx(
   const setIndicesSel = new Set(indicesSelecionados);
   itensJanelaTop20.forEach((item, idx) => {
     const foiSelecionado = setIndicesSel.has(idx) ? "Sim" : "Não";
-    const [linkUrl, linkPdfUrl] = obterLinksEvidenciaItem(item);
+    const ev = descreverArquivosEvidenciaItem(item);
+    const linkUrl = ev.linkPncp;
+    const linkPdfUrl = ev.arpInicial.url;
+    const linksAditivosTxt =
+      ev.termosAditivos.length > 0
+        ? ev.termosAditivos.map((t) => `${t.rotulo}: ${t.url}`).join(" | ")
+        : "Sem termos aditivos";
+    const primeiroLinkAditivo = ev.termosAditivos[0]?.url || "";
 
     const r = ws2.addRow([
       foiSelecionado,
@@ -435,6 +591,7 @@ export async function gerarPlanilhaXlsx(
       sanitizarCelulaExcel(item.cnpj_orgao),
       linkUrl,
       linkPdfUrl,
+      linksAditivosTxt,
       sanitizarCelulaExcel(item.aderencia),
       sanitizarCelulaExcel(item.detalhe_aderencia),
       sanitizarCelulaExcel(item.orgao_atende_validade),
@@ -470,8 +627,12 @@ export async function gerarPlanilhaXlsx(
         c.value = { text: linkPdfUrl, hyperlink: linkPdfUrl };
         c.font = fontLink;
         c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+      } else if (colIdx === 19 && primeiroLinkAditivo.startsWith("http")) {
+        c.value = { text: linksAditivosTxt, hyperlink: primeiroLinkAditivo };
+        c.font = fontLink;
+        c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
       } else if (
-        [1, 4, 5, 10, 11, 12, 13, 14, 16, 19, 21].includes(colIdx)
+        [1, 4, 5, 10, 11, 12, 13, 14, 16, 20, 22].includes(colIdx)
       ) {
         c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
       } else {

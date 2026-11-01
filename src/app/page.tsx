@@ -14,7 +14,7 @@ import { AuditAnalyticsDashboard } from "@/components/AuditAnalyticsDashboard";
 import { ConsolidatedReportPanel } from "@/components/ConsolidatedReportPanel";
 import { HistoryDrawer } from "@/components/HistoryDrawer";
 import {
-  ESCOPO_VALIDADE,
+  ESCOPO_TODOS,
   ESCOPO_POR_REGIAO,
   STATUS_VIGENTES,
   DATA_ASSINATURA,
@@ -53,7 +53,7 @@ export default function HomePage() {
   const [darkMode, setDarkMode] = useState(false);
 
   // Scope & Parameters State
-  const [escopo, setEscopo] = useState<string>(ESCOPO_VALIDADE);
+  const [escopo, setEscopo] = useState<string>(ESCOPO_TODOS);
   const [regiaoFiltro, setRegiaoFiltro] = useState<string>("Nordeste");
   const [apenasMunicipiosBilionarios, setApenasMunicipiosBilionarios] =
     useState<boolean>(true);
@@ -351,11 +351,17 @@ export default function HomePage() {
     setDescricaoObjeto(entry.descricaoObjeto);
     setTermosBusca(entry.termosBusca);
     setRequisitos(entry.resultado.requisitos || []);
-    setEscopo(entry.escopoOrgaos);
+    const escopoRestaurado =
+      entry.escopoOrgaos.startsWith("Critério de validade")
+        ? ESCOPO_TODOS
+        : entry.escopoOrgaos;
+    setEscopo(escopoRestaurado);
     if (entry.regiaoSelecionada) {
       setRegiaoFiltro(entry.regiaoSelecionada);
     }
-    if (entry.apenasMunicipiosBilionarios !== undefined) {
+    if (entry.escopoOrgaos.startsWith("Critério de validade")) {
+      setApenasMunicipiosBilionarios(true);
+    } else if (entry.apenasMunicipiosBilionarios !== undefined) {
       setApenasMunicipiosBilionarios(entry.apenasMunicipiosBilionarios);
     }
     setStatusArp(entry.statusAta);

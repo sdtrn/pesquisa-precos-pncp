@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  Shield,
   Globe2,
   MapPin,
   Landmark,
@@ -16,7 +15,6 @@ import {
   OPCOES_ESCOPO,
   UFS_BRASIL,
   REGIOES_BRASIL,
-  ESCOPO_VALIDADE,
   ESCOPO_TODOS,
   ESCOPO_POR_REGIAO,
   ESCOPO_PE_RECIFE,
@@ -45,31 +43,24 @@ const SCOPE_META: Record<
     explanation: string;
   }
 > = {
-  [ESCOPO_VALIDADE]: {
-    icon: Shield,
-    shortBadge: "Padrão Auditável (R1 + R2)",
-    subtitle: "União, Estados, DF e Municípios (com ou sem regra de ≥ R$ 1 Bi)",
-    explanation:
-      "Considera Atas de Registro de Preços da União (Federal), dos 26 Estados, do Distrito Federal e dos Municípios brasileiros conforme a regra municipal escolhida ao lado (apenas os 177 municípios com orçamento ≥ R$ 1 bilhão ou todos os municípios).",
-  },
   [ESCOPO_TODOS]: {
     icon: Globe2,
-    shortBadge: "Escopo Nacional Amplo",
-    subtitle: "Todas as esferas e municípios brasileiros",
+    shortBadge: "Escopo Nacional (Todas as Esferas)",
+    subtitle: "Todos os órgãos de todas as esferas de todo o Brasil",
     explanation:
-      "Atas de Registro de Preços de todos os órgãos e entidades públicas do Brasil (União, Estados, Distrito Federal e todos os Municípios), registrando na Memória de Pesquisa se cada órgão atende ou não ao critério de validade (Sim/Não).",
+      "Abrange Atas de Registro de Preços da União (Federal), dos 26 Estados, do Distrito Federal e dos Municípios brasileiros, aplicando o critério municipal selecionado abaixo (por padrão: apenas os 177 municípios bilionários com orçamento ≥ R$ 1 bilhão, ou todos os municípios sem exceção).",
   },
   [ESCOPO_POR_REGIAO]: {
     icon: MapPin,
     shortBadge: "Recorte Regional (5 Regiões)",
     subtitle: "Órgãos sediados na Região geográfica selecionada",
     explanation:
-      "Filtra Atas de Registro de Preços pertencentes exclusivamente aos Estados e Municípios sediados na Região escolhida (Nordeste, Norte, Centro-Oeste, Sudeste ou Sul), permitindo optar entre apenas municípios bilionários (≥ R$ 1 bi) ou todos os municípios da região.",
+      "Filtra Atas de Registro de Preços pertencentes exclusivamente aos Estados e Municípios sediados na Região escolhida (Nordeste, Norte, Centro-Oeste, Sudeste ou Sul), permitindo optar entre apenas os municípios bilionários (≥ R$ 1 bi) ou todos os municípios da região sem exceção.",
   },
   [ESCOPO_PE_RECIFE]: {
     icon: Landmark,
     shortBadge: "Recorte Executivo PE / Recife",
-    subtitle: "Poder Executivo Estadual de PE e Executivo do Recife",
+    subtitle: "Órgãos do Governo de Pernambuco e da Prefeitura do Recife",
     explanation:
       "Filtra estritamente Atas de Registro de Preços do Poder Executivo do Estado de Pernambuco (esfera Estadual, poder Executivo, UF PE) e do Poder Executivo do Município do Recife (esfera Municipal, poder Executivo, IBGE 2611606 / RECIFE-PE).",
   },
@@ -103,12 +94,13 @@ export function ScopeSelectorBanner({
     });
   }, [searchMun, filterUfMun]);
 
-  const activeMeta = SCOPE_META[escopo] || SCOPE_META[ESCOPO_VALIDADE];
+  const activeMeta = SCOPE_META[escopo] || SCOPE_META[ESCOPO_TODOS];
   const regiaoObj =
     REGIOES_BRASIL.find((r) => r.nome === regiaoFiltro) || REGIOES_BRASIL[0];
 
+  // Habilita o seletor de critério municipal quando escolhido "Todos os órgãos do Brasil" ou "ARPs por Região"
   const permiteEscolherRegraMunicipal =
-    escopo === ESCOPO_POR_REGIAO || escopo === ESCOPO_VALIDADE;
+    escopo === ESCOPO_TODOS || escopo === ESCOPO_POR_REGIAO;
 
   return (
     <section aria-label="Seleção de Escopo de Órgãos" className="mb-6">
@@ -120,22 +112,17 @@ export function ScopeSelectorBanner({
           </h2>
           <HelpTooltip
             title="Como funciona o Escopo Institucional de Órgãos?"
-            summary="Define quais órgãos públicos terão suas Atas de Registro de Preços aceitas na pesquisa:"
+            summary="Escolha um dos 3 filtros de abrangência institucional para definir quais órgãos terão suas Atas aceitas na pesquisa:"
             options={[
               {
-                label: "Critério de validade (Padrão)",
+                label: "Todos os órgãos do Brasil (Padrão)",
                 description:
-                  "Aceita atas da União (Federal), dos 26 Estados, do Distrito Federal e dos Municípios (podendo escolher entre apenas os 177 municípios com orçamento ≥ R$ 1 bilhão ou todos).",
-              },
-              {
-                label: "Todos os órgãos do Brasil",
-                description:
-                  "Aceita atas de qualquer órgão federal, estadual, distrital ou municipal do país sem restrição geográfica ou orçamentária.",
+                  "Abrange todos os órgãos de todas as esferas (União, Estados, DF e Municípios) em todo o território nacional. Permite escolher abaixo se aceita apenas os 177 municípios bilionários (≥ R$ 1 bi) ou todos os municípios sem exceção.",
               },
               {
                 label: "ARPs por Região",
                 description:
-                  "Restringe a pesquisa aos órgãos sediados em uma das 5 regiões do Brasil (Nordeste, Norte, Centro-Oeste, Sudeste ou Sul), permitindo escolher se aplica ou não a regra de municípios bilionários.",
+                  "Restringe a pesquisa aos órgãos sediados em uma das 5 regiões do Brasil (Nordeste, Norte, Centro-Oeste, Sudeste ou Sul), também com opção de filtrar apenas municípios bilionários ou todos os municípios da região.",
               },
               {
                 label: "Governo de Pernambuco e Prefeitura do Recife",
@@ -152,14 +139,14 @@ export function ScopeSelectorBanner({
           className="text-xs font-medium text-[#1B365D] dark:text-[#D4AF37] hover:underline flex items-center gap-1"
         >
           <Info className="w-3.5 h-3.5" />
-          Ver tabela oficial dos 177 municípios (≥ R$ 1 bi)
+          Ver tabela oficial dos 177 municípios bilionários (≥ R$ 1 bi)
         </button>
       </div>
 
-      {/* 4 Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* 3 Cards Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
         {OPCOES_ESCOPO.map((item) => {
-          const meta = SCOPE_META[item] || SCOPE_META[ESCOPO_VALIDADE];
+          const meta = SCOPE_META[item] || SCOPE_META[ESCOPO_TODOS];
           const Icon = meta.icon;
           const isSelected = escopo === item;
 
@@ -227,17 +214,17 @@ export function ScopeSelectorBanner({
           </div>
         </div>
 
-        {(escopo === ESCOPO_POR_REGIAO || permiteEscolherRegraMunicipal) && (
-          <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700/80 grid grid-cols-1 md:grid-cols-2 gap-3">
-            {/* Region Selector (visible when ARPs por Região is selected) */}
+        {permiteEscolherRegraMunicipal && (
+          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-700/80 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+            {/* Region Selector (only when ARPs por Região is selected) */}
             {escopo === ESCOPO_POR_REGIAO && (
-              <div className="flex flex-col gap-1">
+              <div className="lg:col-span-5 flex flex-col gap-1.5">
                 <label
                   htmlFor="regiao-escopo-select"
                   className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5"
                 >
                   <MapPin className="w-3.5 h-3.5 text-[#1B365D] dark:text-[#D4AF37]" />
-                  <span>Região Geográfica do Brasil:</span>
+                  <span>Selecionar Região Geográfica:</span>
                   <HelpTooltip
                     title="Filtro por Região do Brasil"
                     summary="Filtra apenas as Atas de Registro de Preços dos órgãos localizados nos estados da região escolhida:"
@@ -265,57 +252,100 @@ export function ScopeSelectorBanner({
               </div>
             )}
 
-            {/* Municipal Criterion Selector (Billionaire Municipalities vs. All Municipalities) */}
-            {permiteEscolherRegraMunicipal && (
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor="regra-municipios-select"
-                  className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5"
-                >
-                  <Building2 className="w-3.5 h-3.5 text-[#B59410]" />
-                  <span>Critério quanto aos Municípios:</span>
-                  <HelpTooltip
-                    title="Filtro de Municípios (Bilionários vs. Todos)"
-                    summary="Define quais prefeituras e órgãos municipais serão aceitos na pesquisa:"
-                    options={[
-                      {
-                        label:
-                          "Com regra de Municípios Bilionários (≥ R$ 1 bilhão)",
-                        description:
-                          "Aceita apenas atas municipais pertencentes aos 177 grandes municípios brasileiros com orçamento anual (LOA 2026) igual ou superior a R$ 1 bilhão, garantindo maior porte e segurança amostral (Regras R1 e R2).",
-                      },
-                      {
-                        label: "Todos os Municípios (sem regra de orçamento)",
-                        description:
-                          "Aceita atas de qualquer prefeitura/município (dentro do escopo/região escolhida), independentemente do valor do orçamento municipal.",
-                      },
-                    ]}
-                  />
-                </label>
-                <select
-                  id="regra-municipios-select"
-                  value={apenasMunicipiosBilionarios ? "BILIONARIOS" : "TODOS"}
-                  onChange={(e) =>
-                    onChangeApenasMunicipiosBilionarios(
-                      e.target.value === "BILIONARIOS"
-                    )
-                  }
-                  className="px-3 py-2 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 border border-[#1B365D]/30 dark:border-[#B59410]/40 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#1B365D]"
-                >
-                  <option value="BILIONARIOS">
-                    Com regra de Municípios Bilionários (Orçamento ≥ R$ 1 bi — 177 municípios)
-                  </option>
-                  <option value="TODOS">
-                    Todos os Municípios (sem restrição de orçamento)
-                  </option>
-                </select>
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  {apenasMunicipiosBilionarios
-                    ? "Ativo: Apenas os 177 municípios com orçamento ≥ R$ 1 bilhão são aprovados."
-                    : "Ativo: Todos os municípios são aceitos (sem filtro de porte orçamentário)."}
-                </span>
+            {/* Municipal Criterion Selector (enabled for both "Todos os órgãos do Brasil" and "ARPs por Região") */}
+            <div
+              className={`${
+                escopo === ESCOPO_POR_REGIAO
+                  ? "lg:col-span-7"
+                  : "lg:col-span-12"
+              } flex flex-col gap-1.5`}
+            >
+              <div className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <Building2 className="w-3.5 h-3.5 text-[#B59410]" />
+                <span>Critério quanto aos Municípios:</span>
+                <HelpTooltip
+                  title="Filtro de Municípios (Bilionários vs. Todos sem exceção)"
+                  summary="Define quais prefeituras e órgãos municipais serão aceitos na pesquisa (habilitado para 'Todos os órgãos do Brasil' e 'ARPs por Região'):"
+                  options={[
+                    {
+                      label:
+                        "Apenas os municípios bilionários (Padrão pré-selecionado)",
+                      description:
+                        "Aceita apenas atas municipais pertencentes aos 177 municípios brasileiros com orçamento anual (LOA 2026) ≥ R$ 1 bilhão, garantindo maior porte contratual e segurança amostral (Regras R1 e R2).",
+                    },
+                    {
+                      label: "Todos os municípios sem exceção",
+                      description:
+                        "Aceita atas de todas as prefeituras e órgãos municipais (do Brasil ou da Região escolhida), sem qualquer restrição de orçamento municipal.",
+                    },
+                  ]}
+                />
               </div>
-            )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => onChangeApenasMunicipiosBilionarios(true)}
+                  className={`p-2.5 rounded-xl border text-left text-xs transition-all flex items-start gap-2.5 ${
+                    apenasMunicipiosBilionarios
+                      ? "bg-[#1B365D] text-white border-[#B59410] shadow-sm font-semibold"
+                      : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-[#1B365D]/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    checked={apenasMunicipiosBilionarios}
+                    onChange={() => onChangeApenasMunicipiosBilionarios(true)}
+                    className="mt-0.5 accent-[#B59410]"
+                  />
+                  <div>
+                    <div className="font-bold">
+                      Apenas os municípios bilionários (≥ R$ 1 bi)
+                    </div>
+                    <div
+                      className={`text-[11px] ${
+                        apenasMunicipiosBilionarios
+                          ? "text-slate-200"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      Padrão recomendado — valida os 177 municípios (Regras R1/R2)
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => onChangeApenasMunicipiosBilionarios(false)}
+                  className={`p-2.5 rounded-xl border text-left text-xs transition-all flex items-start gap-2.5 ${
+                    !apenasMunicipiosBilionarios
+                      ? "bg-[#1B365D] text-white border-[#B59410] shadow-sm font-semibold"
+                      : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:border-[#1B365D]/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    checked={!apenasMunicipiosBilionarios}
+                    onChange={() => onChangeApenasMunicipiosBilionarios(false)}
+                    className="mt-0.5 accent-[#B59410]"
+                  />
+                  <div>
+                    <div className="font-bold">
+                      Todos os municípios sem exceção
+                    </div>
+                    <div
+                      className={`text-[11px] ${
+                        !apenasMunicipiosBilionarios
+                          ? "text-slate-200"
+                          : "text-slate-500"
+                      }`}
+                    >
+                      Aceita qualquer prefeitura sem filtro de porte orçamentário
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

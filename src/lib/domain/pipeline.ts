@@ -2,6 +2,7 @@ import {
   ESCOPO_PE_RECIFE,
   ESCOPO_POR_ESTADO,
   ESCOPO_POR_REGIAO,
+  ESCOPO_TODOS,
   ESCOPO_VALIDADE,
   TOP_N_ITENS_JANELA,
 } from "@/data/constants";
@@ -401,12 +402,15 @@ export async function executarPipelinePesquisa(
         ? Boolean(params.apenasMunicipiosBilionarios)
         : true;
 
-    if (params.escopoOrgaos === ESCOPO_VALIDADE) {
-      const aprovadoValidade = apenasBilionarios
+    if (
+      params.escopoOrgaos === ESCOPO_TODOS ||
+      params.escopoOrgaos === ESCOPO_VALIDADE
+    ) {
+      const aprovadoNacional = apenasBilionarios
         ? atendeValidadeBool
         : ["F", "E", "D", "M"].includes(esferaIdS);
 
-      if (!aprovadoValidade) {
+      if (!aprovadoNacional) {
         const motivoOrgao =
           avalOrgao.motivoDescarteEscopoA || "município fora da lista";
         descartados.push({
@@ -1148,7 +1152,7 @@ export async function executarPipelinePesquisa(
     }
   }
 
-  // Enriquecer os top 20 candidatos A e A+B com os links diretos de PDF das ARPs
+  // Enriquecer os top 20 candidatos A e A+B com os links diretos de PDF das ARPs (ARP inicial + Termos Aditivos)
   try {
     const top20AB = selecionarTop20Menores(
       itensCandidatosAprovados,
@@ -1162,14 +1166,23 @@ export async function executarPipelinePesquisa(
     );
     const unicosParaPdf = new Map<string, ItemCandidato>();
     for (const it of [...top20A, ...top20AB]) {
-      unicosParaPdf.set(
-        `${it.cnpj_orgao}|${it.ano_compra}|${it.seq_compra}|${it.seq_ata}`,
-        it
-      );
+      const chaveAtaArq = `${it.cnpj_orgao}|${it.ano_compra}|${it.seq_compra}|${it.seq_ata}`;
+      if (!unicosParaPdf.has(chaveAtaArq)) {
+        unicosParaPdf.set(chaveAtaArq, it);
+      }
     }
     await client.enriquecerItensComArquivosAta(
       Array.from(unicosParaPdf.values())
     );
+    // Propagar arquivos_arp para quaisquer outros itens aprovados da mesma ARP
+    for (const it of itensCandidatosAprovados) {
+      const chaveAtaArq = `${it.cnpj_orgao}|${it.ano_compra}|${it.seq_compra}|${it.seq_ata}`;
+      const ref = unicosParaPdf.get(chaveAtaArq);
+      if (ref && ref.arquivos_arp) {
+        it.arquivos_arp = ref.arquivos_arp;
+        it.link_download_arp = ref.link_download_arp;
+      }
+    }
   } catch {
     // Segue normalmente se algum endpoint de arquivo oscilar
   }

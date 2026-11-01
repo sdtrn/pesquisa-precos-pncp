@@ -20,7 +20,7 @@ import type {
 } from "@/lib/domain/types";
 import {
   gerarPlanilhaXlsx,
-  obterLinksEvidenciaItem,
+  descreverArquivosEvidenciaItem,
 } from "@/lib/export/exporter-xlsx";
 import { gerarCsvConsolidado } from "@/lib/export/exporter-csv";
 import { gerarRelatorioPdfA4 } from "@/lib/export/exporter-pdf";
@@ -327,17 +327,39 @@ export function ConsolidatedReportPanel({
                       {item.fornecedor}
                     </td>
                     <td className="py-2.5 px-2 text-center">
-                      {item.link_ata_pncp && (
-                        <a
-                          href={item.link_ata_pncp}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#1B365D]/10 text-[#1B365D] dark:bg-[#B59410]/20 dark:text-[#F3E5AB] font-semibold hover:underline"
-                        >
-                          <span>Abrir</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      )}
+                      {(() => {
+                        const ev = descreverArquivosEvidenciaItem(item);
+                        return (
+                          <div className="flex flex-col items-center gap-1">
+                            {ev.linkPncp && (
+                              <a
+                                href={ev.linkPncp}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded bg-[#1B365D]/10 text-[#1B365D] dark:bg-[#B59410]/20 dark:text-[#F3E5AB] font-semibold hover:underline whitespace-nowrap"
+                              >
+                                <span>ARP Inicial</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            )}
+                            {ev.termosAditivos.map((adit, idxAdit) => (
+                              <a
+                                key={`${adit.url}-${idxAdit}`}
+                                href={adit.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={adit.rotulo}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30 text-[10px] font-semibold hover:underline whitespace-nowrap"
+                              >
+                                <Download className="w-2.5 h-2.5" />
+                                <span className="max-w-[125px] truncate">
+                                  {adit.rotulo}
+                                </span>
+                              </a>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -367,23 +389,23 @@ export function ConsolidatedReportPanel({
         )}
       </div>
 
-      {/* Documentary Evidence Cards: Direct PNCP Page Links & PDF Downloads */}
+      {/* Documentary Evidence Cards: Direct PNCP Page Links, Initial ARP PDF & Termos Aditivos */}
       {itensSelecionados.length > 0 && (
         <div className="glass-panel rounded-2xl p-5 sm:p-6 shadow-sm">
           <div className="mb-4">
             <h3 className="font-heading text-sm font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 flex items-center gap-2">
               <FileArchive className="w-4 h-4 text-[#B59410]" />
-              Evidências Documentais: Links e Arquivos PDF das Atas Selecionadas (
+              Evidências Documentais: Links Diretos das ARPs Iniciais e Termos Aditivos (
               {itensSelecionados.length})
             </h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Acesse diretamente a página oficial de cada Ata no PNCP ou baixe o documento PDF de comprovação para instrução do processo administrativo.
+              Acesse diretamente a página oficial de cada Ata no PNCP, baixe o PDF da ARP Inicial e, quando houver, acesse os links diretos de todos os Termos Aditivos / Prorrogações vinculados à ARP.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {itensSelecionados.map((ata) => {
-              const [linkPncp, linkPdf] = obterLinksEvidenciaItem(ata);
+              const ev = descreverArquivosEvidenciaItem(ata);
 
               return (
                 <div
@@ -408,11 +430,11 @@ export function ConsolidatedReportPanel({
                     </p>
                   </div>
 
-                  <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="space-y-2.5 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                     <div className="flex flex-wrap items-center gap-2">
-                      {linkPncp && (
+                      {ev.linkPncp && (
                         <a
-                          href={linkPncp}
+                          href={ev.linkPncp}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#1B365D] text-white hover:bg-[#142949] transition-colors"
@@ -422,18 +444,47 @@ export function ConsolidatedReportPanel({
                         </a>
                       )}
 
-                      {linkPdf && (
+                      {ev.arpInicial.url && (
                         <a
-                          href={linkPdf}
+                          href={ev.arpInicial.url}
                           target="_blank"
                           rel="noopener noreferrer"
+                          title={ev.arpInicial.titulo}
                           className="flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 transition-colors"
                         >
                           <Download className="w-3.5 h-3.5 text-[#B59410]" />
-                          <span>PDF da ARP</span>
+                          <span>PDF ARP Inicial</span>
                         </a>
                       )}
                     </div>
+
+                    {ev.termosAditivos.length > 0 && (
+                      <div className="pt-2 border-t border-dashed border-amber-300/70 dark:border-amber-700/50 space-y-1.5">
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center justify-between">
+                          <span>Termos Aditivos / Prorrogações</span>
+                          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-900 dark:text-amber-200 font-mono">
+                            {ev.termosAditivos.length}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          {ev.termosAditivos.map((adit, idxAdit) => (
+                            <a
+                              key={`${adit.url}-${idxAdit}`}
+                              href={adit.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 hover:bg-amber-100/80 dark:bg-amber-950/40 dark:hover:bg-amber-900/50 text-amber-900 dark:text-amber-200 border border-amber-300/80 dark:border-amber-700/60 transition-colors"
+                            >
+                              <span className="inline-flex items-center gap-1.5 truncate">
+                                <Download className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                                <span className="truncate">{adit.rotulo}</span>
+                              </span>
+                              <ExternalLink className="w-3 h-3 shrink-0 opacity-75" />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
