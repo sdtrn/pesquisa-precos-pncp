@@ -83,6 +83,10 @@ test("Task 2: extrairQuantitativoUnidades - extração de dígitos e numerais po
     3
   );
   assert.strictEqual(
+    extrairQuantitativoUnidades("prestação de posto de vigilância com três postos", "posto_mes"),
+    3
+  );
+  assert.strictEqual(
     extrairQuantitativoUnidades("Aluguel de quatro caminhonetes 4x4", "veiculo_mes"),
     4
   );

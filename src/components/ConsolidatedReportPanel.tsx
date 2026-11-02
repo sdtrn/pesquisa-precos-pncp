@@ -89,7 +89,8 @@ export function ConsolidatedReportPanel({
         candidatosTop20,
         indicesSelecionados,
         resultado.descartados,
-        criterioClassificacao
+        criterioClassificacao,
+        resultado.unidade_referencia_padrao
       );
       const blob = new Blob([new Uint8Array(buffer)], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

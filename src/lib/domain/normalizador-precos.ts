@@ -237,10 +237,9 @@ export function extrairQuantitativoUnidades(
   // Ex: "dois vigilantes", "dez carros", "dois (2) veículos", "vinte e quatro postos"
   const regExtenso = new RegExp(
     `\\b([a-z]+(?:\\s+e\\s+[a-z]+)?)\\s*(?:\\(\\s*(\\d+)\\s*\\)\\s*)?(?:unidades?\\s+(?:de\\s+)?)?${substantivos}\\b`,
-    "i"
+    "gi"
   );
-  const mExtenso = s.match(regExtenso);
-  if (mExtenso) {
+  for (const mExtenso of s.matchAll(regExtenso)) {
     if (mExtenso[2]) {
       const val = parseInt(mExtenso[2], 10);
       if (val > 0) return val;
@@ -254,10 +253,9 @@ export function extrairQuantitativoUnidades(
   // Padrão 5: "com N postos", "para N veículos", "de N postos"
   const regCompostos = new RegExp(
     `\\b(?:com|para|de|contendo)\\s+(\\d+|[a-z]+(?:\\s+e\\s+[a-z]+)?)\\s*(?:unidades?\\s+de\\s+)?${substantivos}\\b`,
-    "i"
+    "gi"
   );
-  const mCompostos = s.match(regCompostos);
-  if (mCompostos) {
+  for (const mCompostos of s.matchAll(regCompostos)) {
     const numStr = mCompostos[1];
     if (/^\d+$/.test(numStr)) {
       const val = parseInt(numStr, 10);

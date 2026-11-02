@@ -87,7 +87,9 @@ export function HistoryDrawer({
       selecionados,
       top20,
       entry.indicesSelecionados,
-      entry.resultado.descartados
+      entry.resultado.descartados,
+      entry.criterioClassificacao,
+      entry.resultado.unidade_referencia_padrao
     );
     const blob = new Blob([new Uint8Array(buf)], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -105,7 +107,8 @@ export function HistoryDrawer({
     const bytes = await gerarRelatorioPdfA4(
       entry.resultado,
       selecionados,
-      entry.descricaoObjeto
+      entry.descricaoObjeto,
+      entry.criterioClassificacao
     );
     const blob = new Blob([new Uint8Array(bytes)], {
       type: "application/pdf",

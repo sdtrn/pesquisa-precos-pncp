@@ -1465,6 +1465,8 @@ export async function executarPipelinePesquisa(
     resumoDescartes[chaveMot] = (resumoDescartes[chaveMot] || 0) + 1;
   }
 
+  const ehDesconto = params.criterioClassificacao === "maior_desconto";
+
   return {
     momento_consulta: dataHoraConsultaStr,
     escopo_orgaos: params.escopoOrgaos,
@@ -1472,7 +1474,9 @@ export async function executarPipelinePesquisa(
     modo_normalizacao_escolhido: params.modoNormalizacao || "auto",
     modo_normalizacao_aplicado: modoNormalizacaoEfetivo,
     unidade_referencia_padrao:
-      modoNormalizacaoEfetivo === "posto_mes"
+      ehDesconto
+        ? "%"
+        : modoNormalizacaoEfetivo === "posto_mes"
         ? "R$/mês/posto"
         : modoNormalizacaoEfetivo === "veiculo_mes"
         ? "R$/mês/veículo"
