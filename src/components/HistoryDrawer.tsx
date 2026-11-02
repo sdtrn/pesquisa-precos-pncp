@@ -109,7 +109,7 @@ export function HistoryDrawer({
     const blob = new Blob([new Uint8Array(bytes)], {
       type: "application/pdf",
     });
-    downloadBlob(blob, `historico_parecer_${entry.id.slice(0, 10)}.pdf`);
+    downloadBlob(blob, `historico_pesquisa_precos_${entry.id.slice(0, 10)}.pdf`);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {

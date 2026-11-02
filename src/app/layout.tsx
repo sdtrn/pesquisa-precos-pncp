@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Pesquisa de Preços PNCP | Auditoria & Parecer Técnico (Lei 14.133/2021)",
+  title: "Pesquisa de Preços PNCP | Auditoria e Rastreabilidade (Lei nº 14.133/2021)",
   description:
     "Plataforma de pesquisa de preços em Atas de Registro de Preços do PNCP com auditoria R1–R7, análise estatística, gráficos de dispersão e exportação para Excel (.xlsx), PDF e CSV. Desenvolvido por Sérgio Dantas Torres.",
   authors: [{ name: "Sérgio Dantas Torres" }],

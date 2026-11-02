@@ -1,4 +1,8 @@
 import ExcelJS from "exceljs";
+import {
+  DECLARACAO_INDEPENDENCIA_TEXTO,
+  TERMO_DE_USO_DISCLAIMER_TEXTO,
+} from "@/data/constants";
 import { limparTextoExibicao } from "@/lib/domain/pipeline";
 import type {
   CriterioClassificacao,
@@ -152,7 +156,7 @@ export function obterLinksEvidenciaItem(
 /**
  * Gera o arquivo `.xlsx` em memória (Uint8Array) com fonte Arial em todas as células,
  * diagramação ajustada para folha A4 e 3 abas:
- *   1. `Planilha_Parecer` (com fórmula =AVERAGE(B2:B{N}) e Quadro de Evidências)
+ *   1. `Planilha_Consolidada` (com fórmula =AVERAGE(B2:B{N}) e Quadro de Evidências)
  *   2. `Memoria_de_Pesquisa`
  *   3. `Descartados`
  */
@@ -251,9 +255,9 @@ export async function gerarPlanilhaXlsx(
   const formatoValores = ehDesconto ? '0.00"%"' : moedaFormat;
 
   // =========================================================================
-  // ABA 1: Planilha_Parecer (Diagramada para Folha A4)
+  // ABA 1: Planilha_Consolidada (Diagramada para Folha A4)
   // =========================================================================
-  const ws1 = wb.addWorksheet("Planilha_Parecer", {
+  const ws1 = wb.addWorksheet("Planilha_Consolidada", {
     pageSetup: {
       paperSize: 9, // A4
       orientation: "portrait",
@@ -517,6 +521,63 @@ export async function gerarPlanilhaXlsx(
         );
       });
     });
+
+    // Bloco Institucional: Declaração de Independência e Termo de Uso (Disclaimer)
+    ws1.addRow([]);
+    const rowDiscTit = ws1.addRow([
+      "DECLARAÇÃO DE INDEPENDÊNCIA INSTITUCIONAL E TERMO DE USO (DISCLAIMER)",
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+    const discTitNum = rowDiscTit.number;
+    ws1.mergeCells(discTitNum, 1, discTitNum, 6);
+    rowDiscTit.height = 20;
+    for (let cI = 1; cI <= 6; cI++) {
+      const c = rowDiscTit.getCell(cI);
+      c.font = fontBoldA4;
+      c.fill = fillSubHeader;
+      c.border = borderCell;
+      c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+    }
+
+    const rowDisc1 = ws1.addRow([
+      DECLARACAO_INDEPENDENCIA_TEXTO,
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+    const disc1Num = rowDisc1.number;
+    ws1.mergeCells(disc1Num, 1, disc1Num, 6);
+    rowDisc1.height = 24;
+    for (let cI = 1; cI <= 6; cI++) {
+      const c = rowDisc1.getCell(cI);
+      c.font = fontBoldA4;
+      c.border = borderCell;
+      c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+    }
+
+    const rowDisc2 = ws1.addRow([
+      TERMO_DE_USO_DISCLAIMER_TEXTO,
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+    const disc2Num = rowDisc2.number;
+    ws1.mergeCells(disc2Num, 1, disc2Num, 6);
+    rowDisc2.height = 32;
+    for (let cI = 1; cI <= 6; cI++) {
+      const c = rowDisc2.getCell(cI);
+      c.font = fontBodyA4;
+      c.border = borderCell;
+      c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+    }
   }
 
   // =========================================================================

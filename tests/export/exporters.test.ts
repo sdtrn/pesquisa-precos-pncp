@@ -47,12 +47,12 @@ describe("Exportadores Auditáveis (.XLSX A4, .CSV e .PDF A4)", () => {
     await wb.xlsx.load(bytes.buffer as ArrayBuffer);
 
     expect(wb.worksheets.map((w) => w.name)).toEqual([
-      "Planilha_Parecer",
+      "Planilha_Consolidada",
       "Memoria_de_Pesquisa",
       "Descartados",
     ]);
 
-    const ws1 = wb.getWorksheet("Planilha_Parecer")!;
+    const ws1 = wb.getWorksheet("Planilha_Consolidada")!;
     expect(ws1.getCell("A4").value).toBe("MÉDIA DOS VALORES UNITÁRIOS");
     expect(ws1.getCell("B4").value).toEqual({ formula: "AVERAGE(B2:B3)" });
     expect(ws1.getCell("B4").font?.name).toBe("Arial");
@@ -160,7 +160,7 @@ describe("Exportadores Auditáveis (.XLSX A4, .CSV e .PDF A4)", () => {
     );
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(xlsxBytes.buffer as ArrayBuffer);
-    const ws1 = wb.getWorksheet("Planilha_Parecer")!;
+    const ws1 = wb.getWorksheet("Planilha_Consolidada")!;
     const textosColA: string[] = [];
     ws1.eachRow((r) => {
       textosColA.push(String(r.getCell(1).value || ""));

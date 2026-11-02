@@ -9,11 +9,15 @@ export class MockJsPDF {
   lastAutoTable = { finalY: 50 };
 
   setFillColor() {}
+  setDrawColor() {}
   rect() {}
   setTextColor() {}
   setFont() {}
   setFontSize() {}
   text() {}
+  splitTextToSize(text: string, _maxW?: number) {
+    return [text];
+  }
   addPage() {
     this.pages++;
   }

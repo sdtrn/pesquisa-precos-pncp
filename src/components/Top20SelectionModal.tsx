@@ -155,7 +155,7 @@ export function Top20SelectionModal({
               </span>
             </div>
             <p className="text-xs text-slate-200 mt-0.5">
-              Selecione as Atas de Registro de Preços que comporão a cesta final do Parecer Técnico e o cálculo da Média e Mediana.
+              Selecione as Atas de Registro de Preços que comporão a cesta final da Pesquisa de Preços e o cálculo da Média e Mediana.
             </p>
           </div>
           <button
@@ -520,7 +520,7 @@ export function Top20SelectionModal({
             >
               <CheckCircle2 className="w-4 h-4" />
               <span>
-                Confirmar Seleção ({estatisticasSelecionados.quantidade}) e Gerar Parecer
+                Confirmar Seleção ({estatisticasSelecionados.quantidade}) e Gerar Relatório
               </span>
             </button>
           </div>

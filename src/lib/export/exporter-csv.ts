@@ -4,6 +4,10 @@ import {
 } from "@/lib/export/exporter-xlsx";
 import type { CriterioClassificacao, ItemCandidato } from "@/lib/domain/types";
 import { formatValorOuTaxa } from "@/lib/domain/statistics";
+import {
+  DECLARACAO_INDEPENDENCIA_TEXTO,
+  TERMO_DE_USO_DISCLAIMER_TEXTO,
+} from "@/data/constants";
 
 export function formatarMoedaBr(valor: number): string {
   const num = Number.isFinite(valor) ? valor : 0;
@@ -85,6 +89,10 @@ export function gerarCsvConsolidado(
     ];
     linhas.push(rowMedia.map(escaparCampoCsv).join(";"));
   }
+
+  linhas.push("");
+  linhas.push(escaparCampoCsv(`DECLARAÇÃO DE INDEPENDÊNCIA INSTITUCIONAL: ${DECLARACAO_INDEPENDENCIA_TEXTO}`));
+  linhas.push(escaparCampoCsv(`TERMO DE USO (DISCLAIMER): ${TERMO_DE_USO_DISCLAIMER_TEXTO}`));
 
   return `\uFEFF${linhas.join("\r\n")}\r\n`;
 }

@@ -4,6 +4,8 @@ import {
   CRITERIO_MENOR_PRECO,
   CRITERIO_MAIOR_DESCONTO,
   PRESETS_EXEMPLOS,
+  DECLARACAO_INDEPENDENCIA_TEXTO,
+  TERMO_DE_USO_DISCLAIMER_TEXTO,
 } from "../../src/data/constants.ts";
 import type { CriterioClassificacao } from "../../src/lib/domain/types.ts";
 
@@ -24,5 +26,12 @@ test("Task 1: Constantes de critério de classificação e preset de combustíve
   assert.ok(presetCombustivel, "Preset 'gestao-frota-combustivel' deve existir em PRESETS_EXEMPLOS");
   assert.strictEqual(presetCombustivel.criterioSugerido, "maior_desconto");
   assert.match(presetCombustivel.titulo, /Gerenciamento de Frota/i);
-  assert.match(presetCombustivel.descricao, /desconto/i);
+  assert.strictEqual(
+    presetCombustivel.descricao,
+    "Gerenciamento de frota com fornecimento de combustível"
+  );
+
+  // Validação das constantes de independência e disclaimer
+  assert.ok(DECLARACAO_INDEPENDENCIA_TEXTO.includes("MGI"));
+  assert.ok(TERMO_DE_USO_DISCLAIMER_TEXTO.includes("as is"));
 });

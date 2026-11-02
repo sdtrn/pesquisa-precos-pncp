@@ -6,6 +6,10 @@ import {
 } from "@/lib/domain/statistics";
 import { formatarMoedaBr } from "@/lib/export/exporter-csv";
 import {
+  DECLARACAO_INDEPENDENCIA_TEXTO,
+  TERMO_DE_USO_DISCLAIMER_TEXTO,
+} from "@/data/constants";
+import {
   descreverArquivosEvidenciaItem,
   sanitizarCelulaExcel,
 } from "@/lib/export/exporter-xlsx";
@@ -17,7 +21,7 @@ import type {
 
 /**
  * Gera um Relatório Técnico Executivo em PDF (Folha A4 Retrato) pronto para juntada em
- * Parecer Técnico / Processo Administrativo (Lei nº 14.133/2021).
+ * Processo Administrativo de Contratação (Lei nº 14.133/2021).
  */
 export async function gerarRelatorioPdfA4(
   res: ResultadoPesquisa,
@@ -177,12 +181,12 @@ export async function gerarRelatorioPdfA4(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   yPos = (doc as any).lastAutoTable.finalY + 6;
 
-  // Bloco 3: Tabela Consolidada para o Parecer Técnico
+  // Bloco 3: Tabela Consolidada de Preços / Taxas
   doc.setTextColor(27, 54, 93);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.text(
-    "3. TABELA CONSOLIDADA — TÓPICO 'PESQUISA DE PREÇOS' DO PARECER TÉCNICO",
+    "3. TABELA CONSOLIDADA DE PREÇOS / TAXAS DE DESCONTO HOMOLOGADAS",
     12,
     yPos
   );
@@ -329,6 +333,52 @@ export async function gerarRelatorioPdfA4(
     },
     margin: { left: 12, right: 12 },
   });
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  yPos = (doc as any).lastAutoTable.finalY + 8;
+  if (yPos > 240) {
+    doc.addPage();
+    yPos = 18;
+  }
+
+  // Bloco 5: Declaração de Independência e Termo de Uso (Disclaimer)
+  doc.setFillColor(254, 243, 199);
+  if (typeof (doc as any).setDrawColor === "function") {
+    (doc as any).setDrawColor(217, 119, 6);
+  }
+  doc.rect(12, yPos, pageWidth - 24, 28, "FD");
+
+  doc.setTextColor(146, 64, 14);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.text(
+    "5. DECLARAÇÃO DE INDEPENDÊNCIA INSTITUCIONAL E TERMO DE USO (DISCLAIMER)",
+    15,
+    yPos + 5.5
+  );
+
+  const quebrarTexto = (txt: string, w: number) =>
+    typeof (doc as any).splitTextToSize === "function"
+      ? (doc as any).splitTextToSize(txt, w)
+      : txt;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.2);
+  doc.setTextColor(30, 41, 59);
+  doc.text(
+    quebrarTexto(DECLARACAO_INDEPENDENCIA_TEXTO, pageWidth - 30),
+    15,
+    yPos + 10.5
+  );
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.8);
+  doc.setTextColor(71, 85, 105);
+  doc.text(
+    quebrarTexto(TERMO_DE_USO_DISCLAIMER_TEXTO, pageWidth - 30),
+    15,
+    yPos + 17.5
+  );
 
   // Rodapé em todas as páginas
   const pageCount = doc.getNumberOfPages();

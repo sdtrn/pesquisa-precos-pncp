@@ -66,7 +66,7 @@ export function HeaderInstitucional({
               <code className="font-mono text-[11px] px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                 America/Recife
               </code>{" "}
-              e geração de Parecer Técnico em Excel e PDF
+              e geração de Relatório Consolidado em Excel e PDF
             </p>
           </div>
         </div>

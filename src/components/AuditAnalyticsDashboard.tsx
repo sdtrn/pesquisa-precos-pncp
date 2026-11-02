@@ -308,13 +308,13 @@ export function AuditAnalyticsDashboard({
                         : "Gráfico de Dispersão dos Preços Unitários Homologados (R$)"}
                     </h3>
                     <p className="text-xs text-slate-500">
-                      Pontos dourados indicam itens selecionados para o parecer; linhas tracejadas indicam a Média ({formatValorOuTaxa(estatisticasSelecionados.media, criterioClassificacao)}) e a Mediana ({formatValorOuTaxa(estatisticasSelecionados.mediana, criterioClassificacao)}) da seleção.
+                      Pontos dourados indicam itens selecionados para a consolidação; linhas tracejadas indicam a Média ({formatValorOuTaxa(estatisticasSelecionados.media, criterioClassificacao)}) e a Mediana ({formatValorOuTaxa(estatisticasSelecionados.mediana, criterioClassificacao)}) da seleção.
                     </p>
                   </div>
                   <div className="flex items-center gap-4 text-xs">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded-full bg-[#B59410]" />
-                      Selecionado no Parecer
+                      Selecionado na Consolidação
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded-full bg-slate-400" />

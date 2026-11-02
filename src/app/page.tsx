@@ -644,7 +644,7 @@ export default function HomePage() {
                   Este sistema realiza consultas automatizadas e extração de dados públicos disponibilizados pela API oficial do Portal Nacional de Contratações Públicas (PNCP) estritamente <em>“as is”</em> (no estado em que se encontram). O desenvolvedor não se responsabiliza por eventuais instabilidades técnicas, indisponibilidades da infraestrutura governamental, omissões, dados incompletos ou erros de lançamento contidos nos dados originais fornecidos pelos órgãos licitantes.
                 </p>
                 <p className="text-slate-600 dark:text-slate-400">
-                  <strong className="text-slate-900 dark:text-slate-200">Atenção ao Usuário e Agente Público:</strong> É dever e responsabilidade do usuário final conferir e validar o inteiro teor da Ata de Registro de Preços, seus Termos Aditivos e a vigência diretamente na fonte oficial do PNCP antes da instrução processual ou emissão de parecer técnico (Lei nº 14.133/2021).
+                  <strong className="text-slate-900 dark:text-slate-200">Atenção ao Usuário e Agente Público:</strong> É dever e responsabilidade do usuário final conferir e validar o inteiro teor da Ata de Registro de Preços, seus Termos Aditivos e a vigência diretamente na fonte oficial do PNCP antes da instrução processual ou tomada de decisão administrativa (Lei nº 14.133/2021).
                 </p>
               </div>
             </div>

@@ -12,6 +12,7 @@ import {
   FileArchive,
   CheckCircle2,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import type {
   CriterioClassificacao,
@@ -26,6 +27,10 @@ import {
 import { gerarCsvConsolidado } from "@/lib/export/exporter-csv";
 import { gerarRelatorioPdfA4 } from "@/lib/export/exporter-pdf";
 import { chaveItemUnica, formatValorOuTaxa } from "@/lib/domain/statistics";
+import {
+  DECLARACAO_INDEPENDENCIA_TEXTO,
+  TERMO_DE_USO_DISCLAIMER_TEXTO,
+} from "@/data/constants";
 
 interface ConsolidatedReportPanelProps {
   descricaoObjeto: string;
@@ -101,7 +106,7 @@ export function ConsolidatedReportPanel({
         type: "application/pdf",
       });
       const stamp = new Date().toISOString().slice(0, 10);
-      triggerBrowserDownload(blob, `parecer_tecnico_pncp_${stamp}.pdf`);
+      triggerBrowserDownload(blob, `relatorio_pesquisa_precos_pncp_${stamp}.pdf`);
     } finally {
       setIsExportingPdf(false);
     }
@@ -128,7 +133,7 @@ export function ConsolidatedReportPanel({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="font-heading text-lg font-bold text-slate-900 dark:text-white">
-                Planilha Consolidada para Parecer Técnico
+                Tabela Consolidada de Pesquisa de Preços
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-semibold bg-[#1B365D] text-white dark:bg-[#B59410] dark:text-slate-950">
                 {itensSelecionados.length} ARP(s) selecionada(s)
@@ -275,7 +280,7 @@ export function ConsolidatedReportPanel({
         {/* Consolidated Parecer Table */}
         {itensSelecionados.length === 0 ? (
           <div className="p-8 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-center text-xs text-slate-500">
-            Nenhum item selecionado para o parecer. Clique em{" "}
+            Nenhum item selecionado para a consolidação. Clique em{" "}
             <button
               type="button"
               onClick={onOpenTop20Modal}
@@ -503,6 +508,19 @@ export function ConsolidatedReportPanel({
           </div>
         </div>
       )}
+      {/* Declaração de Independência e Termo de Uso (Disclaimer) */}
+      <div className="rounded-xl border border-amber-300/80 dark:border-amber-700/60 bg-amber-50/70 dark:bg-amber-950/20 p-4 text-xs text-amber-950 dark:text-amber-200 space-y-2">
+        <div className="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-300">
+          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+          <span>Declaração de Independência Institucional e Termo de Uso (Disclaimer)</span>
+        </div>
+        <p className="font-semibold text-slate-800 dark:text-slate-200">
+          {DECLARACAO_INDEPENDENCIA_TEXTO}
+        </p>
+        <p className="text-slate-600 dark:text-slate-400">
+          {TERMO_DE_USO_DISCLAIMER_TEXTO}
+        </p>
+      </div>
     </section>
   );
 }

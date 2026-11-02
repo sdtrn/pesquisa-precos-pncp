@@ -97,8 +97,8 @@ describe("Exporters com suporte a Taxa de Desconto (%)", () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(buffer.buffer as ArrayBuffer);
 
-    const ws1 = wb.getWorksheet("Planilha_Parecer");
-    assert.ok(ws1, "Planilha_Parecer deve existir");
+    const ws1 = wb.getWorksheet("Planilha_Consolidada");
+    assert.ok(ws1, "Planilha_Consolidada deve existir");
     assert.equal(ws1.getCell("B1").value, "Taxa de Desconto (%)");
     assert.equal(ws1.getCell("A3").value, "MÉDIA DAS TAXAS DE DESCONTO");
 

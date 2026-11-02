@@ -137,6 +137,12 @@ export const OPCOES_CRITERIO: Array<{
   },
 ];
 
+export const DECLARACAO_INDEPENDENCIA_TEXTO =
+  "Ferramenta independente desenvolvida pela iniciativa privada, sem vínculo institucional com o Ministério da Gestão e da Inovação em Serviços Públicos (MGI) ou com o Governo Federal.";
+
+export const TERMO_DE_USO_DISCLAIMER_TEXTO =
+  "O sistema extrai dados 'as is' (no estado em que se encontram) da API oficial do governo e não se responsabiliza por instabilidades, omissões ou erros nos dados originais do PNCP, devendo o usuário final validar a ata na fonte oficial.";
+
 export interface PresetExemplo {
   id: string;
   titulo: string;
@@ -148,44 +154,43 @@ export interface PresetExemplo {
 
 export const PRESETS_EXEMPLOS: PresetExemplo[] = [
   {
+    id: "locacao-veiculos-hatch",
+    titulo: "Locação mensal de veículos tipo hatch",
+    categoria: "Veículos",
+    descricao: "Locação mensal de veículos tipo hatch",
+    escopoSugerido: ESCOPO_VALIDADE,
+    criterioSugerido: CRITERIO_MENOR_PRECO,
+  },
+  {
     id: "gestao-frota-combustivel",
-    titulo: "Gerenciamento de Frota com Combustível (Maior Desconto)",
+    titulo: "Gerenciamento de frota com fornecimento de combustível",
     categoria: "Frota / Combustível",
-    descricao:
-      "Contratação de serviços de gerenciamento e controle de frota de veículos, por meio de sistema informatizado e integrado via web, com cartão magnético/chip, para fornecimento e abastecimento contínuo de combustíveis (gasolina, etanol, diesel S10 e diesel comum) em rede credenciada de postos, com julgamento pela MAIOR TAXA DE DESCONTO.",
+    descricao: "Gerenciamento de frota com fornecimento de combustível",
     escopoSugerido: ESCOPO_TODOS,
     criterioSugerido: CRITERIO_MAIOR_DESCONTO,
   },
   {
-    id: "lona-8x100",
-    titulo: "Lona Plástica Preta 8x100m (200 micras)",
-    categoria: "Material / Engenharia",
-    descricao:
-      "Rolo de lona em plástico medindo no mínimo 8MX100M. Rolo de lona - em plástico resistente, novo de primeiro uso, acondicionado em bobina, cor preto fosco medindo no mínimo 8mX100m com no mínimo 200 micras (0,200mm). Pesando no mínimo 110 kg.",
+    id: "vigilancia-armada",
+    titulo: "Serviço de vigilância armada",
+    categoria: "Segurança",
+    descricao: "Serviço de vigilância armada",
     escopoSugerido: ESCOPO_VALIDADE,
+    criterioSugerido: CRITERIO_MENOR_PRECO,
   },
   {
-    id: "veiculo-hatch",
-    titulo: "Locação de Veículo Hatch 1.0 (Sem Motorista)",
-    categoria: "Frota / Serviços",
-    descricao:
-      "Locação mensal de veículo tipo hatch, motorização mínima 1.0 flex, 4 portas, capacidade para 5 passageiros, com ar-condicionado, sem motorista.",
+    id: "auxiliar-servicos-gerais",
+    titulo: "Auxiliar de serviços gerais",
+    categoria: "Serviços Gerais",
+    descricao: "Auxiliar de serviços gerais",
     escopoSugerido: ESCOPO_VALIDADE,
+    criterioSugerido: CRITERIO_MENOR_PRECO,
   },
   {
-    id: "ar-condicionado-12000",
-    titulo: "Ar-Condicionado Split Inverter 12.000 BTUs",
-    categoria: "Equipamentos / Climatização",
-    descricao:
-      "Aparelho de ar condicionado tipo split inverter, capacidade de 12000 BTUs, ciclo frio, cor branca.",
+    id: "prestacao-servico-motorista",
+    titulo: "Prestação de serviço de motorista",
+    categoria: "Transporte",
+    descricao: "Prestação de serviço de motorista",
     escopoSugerido: ESCOPO_VALIDADE,
-  },
-  {
-    id: "caminhonete-4x4",
-    titulo: "Locação de Caminhonete Picape 4x4 Diesel",
-    categoria: "Frota / Serviços",
-    descricao:
-      "Locação mensal de veículo tipo picape cabine dupla, tração 4x4, combustível diesel, 4 portas, 5 lugares, ar condicionado, sem motorista.",
-    escopoSugerido: ESCOPO_VALIDADE,
+    criterioSugerido: CRITERIO_MENOR_PRECO,
   },
 ];
