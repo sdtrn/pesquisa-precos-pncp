@@ -867,6 +867,12 @@ export async function executarPipelinePesquisa(
       const infCompItem = limparTextoExibicao(itemObj.informacaoComplementar);
       const unMedidaItem = limparTextoExibicao(itemObj.unidadeMedida);
       const qtdItemCompra = itemObj.quantidade;
+      const qtdItemCompraNum =
+        itemObj.quantidade !== null &&
+        itemObj.quantidade !== undefined &&
+        Number.isFinite(Number(itemObj.quantidade))
+          ? Number(itemObj.quantidade)
+          : undefined;
       const valEstimadoNum =
         itemObj.valorUnitarioEstimado !== null &&
         itemObj.valorUnitarioEstimado !== undefined &&
@@ -1245,7 +1251,7 @@ export async function executarPipelinePesquisa(
           descricaoItem: descItem,
           informacaoComplementar: infCompItem,
           unidadeMedidaItem: unMedidaItem,
-          quantidadeItem: qtdItemCompra,
+          quantidadeItem: qtdItemCompraNum,
           modoNormalizacao: modoNormalizacaoEfetivo,
         });
 
