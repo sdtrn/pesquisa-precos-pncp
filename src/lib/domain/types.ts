@@ -72,6 +72,7 @@ export interface ItemCandidato {
   status_escolhido: string;
   periodo_aplicado: string;
   termos_usados: string;
+  eh_item_sintetico_ata?: boolean;
 }
 
 export interface RegistroDescartado {

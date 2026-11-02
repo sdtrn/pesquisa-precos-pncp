@@ -42,9 +42,9 @@ function recordApiV1Success(): void {
 
 function recordApiV1Failure(): void {
   circuitBreakerApiV1Failures++;
-  if (circuitBreakerApiV1Failures >= 3) {
-    // 30 segundos de circuito aberto para não bloquear requisições
-    circuitBreakerApiV1TrippedUntil = Date.now() + 30000;
+  if (circuitBreakerApiV1Failures >= 10) {
+    // 10 segundos de circuito aberto para a API v1 para não bloquear requisições
+    circuitBreakerApiV1TrippedUntil = Date.now() + 10000;
   }
 }
 
@@ -734,29 +734,84 @@ export class PNCPClient {
     }
 
     // 2. Fallback resiliente: endpoint oficial do PNCP (/api/pncp/v1)
-    if (isCircuitBreakerApiV1Open()) {
-      return [];
+    const todosItens: Record<string, unknown>[] = [];
+    if (!isCircuitBreakerApiV1Open()) {
+      const urlItens = `${PNCP_API_V1_BASE}/orgaos/${cnpj}/compras/${ano}/${seqCompra}/itens`;
+      let pag = 1;
+
+      while (true) {
+        const dadosPag = await this.getJson(
+          urlItens,
+          { pagina: pag, tamanhoPagina: ITEMS_PAGE_SIZE },
+          true,
+          true
+        );
+        if (!Array.isArray(dadosPag) || dadosPag.length === 0) {
+          break;
+        }
+        todosItens.push(...(dadosPag as Record<string, unknown>[]));
+        if (dadosPag.length < ITEMS_PAGE_SIZE || pag >= 4) {
+          break;
+        }
+        pag++;
+      }
     }
 
-    const urlItens = `${PNCP_API_V1_BASE}/orgaos/${cnpj}/compras/${ano}/${seqCompra}/itens`;
-    const todosItens: Record<string, unknown>[] = [];
-    let pag = 1;
+    // 3. Fallback inteligente quando a API de itens não retorna registros (503, indisponibilidade ou ausência no PNCP)
+    if (todosItens.length === 0) {
+      try {
+        const detCompra = await this.obterDetalheCompra(cnpj, ano, seqCompra);
+        if (detCompra && detCompra.objetoCompra) {
+          const valHom = Number(detCompra.valorTotalHomologado);
+          const valEst = Number(detCompra.valorTotalEstimado);
+          const valFinal =
+            Number.isFinite(valHom) && valHom > 0
+              ? valHom
+              : Number.isFinite(valEst) && valEst > 0
+              ? valEst
+              : null;
 
-    while (true) {
-      const dadosPag = await this.getJson(
-        urlItens,
-        { pagina: pag, tamanhoPagina: ITEMS_PAGE_SIZE },
-        true,
-        true
-      );
-      if (!Array.isArray(dadosPag) || dadosPag.length === 0) {
-        break;
+          const itemSintetico: Record<string, unknown> = {
+            numeroItem: 1,
+            descricao: String(detCompra.objetoCompra || "").trim(),
+            informacaoComplementar: [
+              detCompra.processo ? `Processo: ${detCompra.processo}` : "",
+              detCompra.modalidadeNome ? `Modalidade: ${detCompra.modalidadeNome}` : "",
+              detCompra.linkSistemaOrigem ? `Sistema Origem: ${detCompra.linkSistemaOrigem}` : "",
+            ]
+              .filter(Boolean)
+              .join(" | "),
+            unidadeMedida: "Posto / Mês",
+            quantidade: 1,
+            valorUnitarioEstimado:
+              Number.isFinite(valEst) && valEst > 0 ? valEst : valFinal,
+            temResultado: Boolean(valFinal && valFinal > 0),
+            situacaoCompraItemNome: "Homologado",
+            _ehItemSinteticoAta: true,
+          };
+
+          if (valFinal && valFinal > 0) {
+            const fornecedorNome = detCompra.processo
+              ? `Detentoras da ARP (Processo ${detCompra.processo})`
+              : "Detentoras da ARP (consulte documento oficial)";
+            const resObj = {
+              numeroItem: 1,
+              valorUnitarioHomologado: valFinal,
+              nomeRazaoSocialFornecedor: fornecedorNome,
+              situacaoCompraItemResultadoNome: "Homologado",
+            };
+            itemSintetico._resultadoHomologado = resObj;
+            GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(
+              `${chaveCompra}|1`,
+              [resObj]
+            );
+          }
+
+          todosItens.push(itemSintetico);
+        }
+      } catch {
+        // Ignora falha de detalhe
       }
-      todosItens.push(...(dadosPag as Record<string, unknown>[]));
-      if (dadosPag.length < ITEMS_PAGE_SIZE || pag >= 4) {
-        break;
-      }
-      pag++;
     }
 
     if (this.usarCache && todosItens.length > 0) {

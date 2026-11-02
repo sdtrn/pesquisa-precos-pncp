@@ -17,6 +17,7 @@ import {
   ESCOPO_TODOS,
   ESCOPO_POR_REGIAO,
   STATUS_VIGENTES,
+  DATA_VIGENCIA,
   DATA_ASSINATURA,
   CRITERIO_MENOR_PRECO,
   MODO_NORMALIZACAO_AUTO,
@@ -72,8 +73,8 @@ export default function HomePage() {
   const [modoNormalizacao, setModoNormalizacao] =
     useState<ModoNormalizacaoPreco>(MODO_NORMALIZACAO_AUTO);
   const [statusArp, setStatusArp] = useState<string>(STATUS_VIGENTES);
-  // Pré-selecionado "Data de assinatura da ata" conforme solicitação do usuário
-  const [tipoData, setTipoData] = useState<string>(DATA_ASSINATURA);
+  // Pré-selecionado "Vigência" como padrão conforme solicitação do usuário
+  const [tipoData, setTipoData] = useState<string>(DATA_VIGENCIA);
   const [dataInicial, setDataInicial] = useState<string>("");
   const [dataFinal, setDataFinal] = useState<string>("");
   const [salvarNoHistorico, setSalvarNoHistorico] = useState<boolean>(true);
@@ -171,7 +172,7 @@ export default function HomePage() {
     setRegiaoFiltro("Nordeste");
     setApenasMunicipiosBilionarios(true);
     setStatusArp(STATUS_VIGENTES);
-    setTipoData(DATA_ASSINATURA);
+    setTipoData(DATA_VIGENCIA);
     const { inicio, fim } = getDefaultDateRange();
     setDataInicial(inicio);
     setDataFinal(fim);
@@ -425,7 +426,7 @@ export default function HomePage() {
       setApenasMunicipiosBilionarios(entry.apenasMunicipiosBilionarios);
     }
     setStatusArp(entry.statusAta);
-    setTipoData(entry.resultado.tipo_data_periodo || DATA_ASSINATURA);
+    setTipoData(entry.resultado.tipo_data_periodo || DATA_VIGENCIA);
     if (entry.resultado.data_inicial) {
       setDataInicial(entry.resultado.data_inicial);
     }

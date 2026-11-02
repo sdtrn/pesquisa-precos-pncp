@@ -1261,6 +1261,12 @@ export async function executarPipelinePesquisa(
         }
       }
 
+      const ehItemSintetico = Boolean(itemObj._ehItemSinteticoAta);
+      const numItemExibicao = ehItemSintetico ? "Item Corporativo" : numItemStr;
+      const detalheAderenciaFinal = ehItemSintetico
+        ? `${motivoFinal} | Item corporativo da ARP (detalhamento de postos e aditivos nos documentos oficiais anexos)`
+        : motivoFinal;
+
       itensValidosDestaAta.push({
         descricao_objeto: descItem,
         valor_unitario: valorFinal,
@@ -1280,7 +1286,7 @@ export async function executarPipelinePesquisa(
         municipio_nome: munS || "não informado",
         codigo_ibge: codIbgeS || "não informado",
         fornecedor: fornecedorFmt,
-        numero_item_lote: numItemStr,
+        numero_item_lote: numItemExibicao,
         data_assinatura: formatarDataBr(dtAssFinal),
         vigencia_ata: vigenciaStrFinal,
         data_fim_vigencia: formatarDataBr(dtFimVigFinal),
@@ -1295,13 +1301,14 @@ export async function executarPipelinePesquisa(
         link_download_arp: arqsDestaAta && arqsDestaAta.length > 0 ? arqsDestaAta[0].url : linkPncp,
         arquivos_arp: arqsDestaAta,
         aderencia: aderenciaFinal,
-        detalhe_aderencia: motivoFinal,
+        detalhe_aderencia: detalheAderenciaFinal,
         orgao_atende_validade: atendeValidadeSimNao,
         data_hora_consulta: dataHoraConsultaStr,
         escopo_escolhido: params.escopoOrgaos,
         status_escolhido: params.statusAta,
         periodo_aplicado: periodoAplicadoStr,
         termos_usados: termosUsadosStr,
+        eh_item_sintetico_ata: ehItemSintetico,
       });
     }
 

@@ -188,6 +188,80 @@ function extrairNucleoSubstantivo(textoNorm: string): {
   return { acaoPrincipal, substantivos };
 }
 
+export interface GrupoSinonimosObjeto {
+  id: string;
+  gatilho: RegExp;
+  termosBuscaExpandidos: string[];
+  padraoSinonimos: RegExp;
+}
+
+/**
+ * Grupos de sinônimos automáticos para os objetos mais frequentes em contratações públicas (Lei 14.133/2021).
+ * Ativados por padrão para garantir recall total e evitar que termos com nomenclaturas variantes sejam ignorados.
+ */
+export const GRUPOS_SINONIMOS_AUTOMATICOS: GrupoSinonimosObjeto[] = [
+  {
+    id: "motorista",
+    gatilho: /\b(motoristas?|condutor(?:es)?|manobristas?)\b/i,
+    termosBuscaExpandidos: ["motorista", "condutor"],
+    padraoSinonimos: /\b(motoristas?|condutor(?:es)?|manobristas?|conducao\s+de\s+veiculos?)\b/i,
+  },
+  {
+    id: "vigilancia",
+    gatilho: /\b(vigilancia|vigilantes?|seguranca\s+patrimonial|portaria|porteiros?|vigias?)\b/i,
+    termosBuscaExpandidos: ["vigilancia", "seguranca patrimonial", "vigilante"],
+    padraoSinonimos: /\b(vigilancia|vigilantes?|seguranca|portaria|porteiros?|vigias?|controlador\s+de\s+acesso|ronda)\b/i,
+  },
+  {
+    id: "limpeza",
+    gatilho: /\b(limpeza|conservacao|asseio|higienizacao|faxina|zeladoria|copeiragem)\b/i,
+    termosBuscaExpandidos: ["limpeza", "conservacao predial", "asseio e conservacao"],
+    padraoSinonimos: /\b(limpeza|conservacao|asseio|higienizacao|faxina|servente[s]?|zeladoria|zelador(?:es)?|copeiragem|copeir[oa]s?)\b/i,
+  },
+  {
+    id: "combustivel",
+    gatilho: /\b(combustiv\w*|gasolina|diesel|etanol|abastecimento)\b/i,
+    termosBuscaExpandidos: ["combustivel", "gasolina", "oleo diesel", "etanol"],
+    padraoSinonimos: /\b(combustiv\w*|gasolina|diesel|etanol|alcool|oleo\s+diesel|abastecimento|arla)\b/i,
+  },
+  {
+    id: "alimentacao",
+    gatilho: /\b(alimentac\w*|refeic\w*|marmit\w*|buffet|generos\s+alimenticios|lanches?|coffee\s*break|desjejum)\b/i,
+    termosBuscaExpandidos: ["refeicao", "alimentacao", "buffet", "generos alimenticios"],
+    padraoSinonimos: /\b(alimentac\w*|refeic\w*|marmit\w*|buffet|generos\s+alimenticios|lanches?|coffee\s*break|desjejum|marmitex|almoco|jantar)\b/i,
+  },
+  {
+    id: "papel_a4",
+    gatilho: /\b(papel\s*(?:a4|sulfite|formato\s*a4|oficio)|resmas?)\b/i,
+    termosBuscaExpandidos: ["papel a4", "papel sulfite", "resma"],
+    padraoSinonimos: /\b(papel\s*(?:a4|sulfite|formato\s*a4|oficio)|resmas?|sulfite\s*a4)\b/i,
+  },
+  {
+    id: "impressao",
+    gatilho: /\b(impressao|reprografia|copias?|outsourcing\s+de\s+impressao|locacao\s+de\s+impressora|multifuncional)\b/i,
+    termosBuscaExpandidos: ["impressao", "reprografia", "outsourcing de impressao"],
+    padraoSinonimos: /\b(impressao|reprografia|copias?|outsourcing|multifuncional|locacao\s+de\s+impressora)\b/i,
+  },
+  {
+    id: "mobiliario",
+    gatilho: /\b(mobiliario|moveis\s+para\s+escritorio|cadeiras?|mesas?|armarios?|estantes?|poltronas?)\b/i,
+    termosBuscaExpandidos: ["mobiliario", "cadeiras", "moveis para escritorio"],
+    padraoSinonimos: /\b(mobiliario|moveis|cadeiras?|mesas?|armarios?|estantes?|poltronas?|estacao\s+de\s+trabalho|gaveteiro)\b/i,
+  },
+  {
+    id: "computador",
+    gatilho: /\b(computador\w*|notebook\w*|laptop\w*|desktop\w*|microcomputador\w*)\b/i,
+    termosBuscaExpandidos: ["computador", "notebook", "microcomputador"],
+    padraoSinonimos: /\b(computador\w*|notebook\w*|laptop\w*|desktop\w*|microcomputador\w*|workstation)\b/i,
+  },
+  {
+    id: "medicamentos",
+    gatilho: /\b(medicament\w*|farmac\w*|remedios?|material\s+hospitalar|insumos?\s+hospitalares?)\b/i,
+    termosBuscaExpandidos: ["medicamento", "material hospitalar", "insumos hospitalares"],
+    padraoSinonimos: /\b(medicament\w*|farmac\w*|remedios?|material\s+hospitalar|insumos?\s+hospitalares?|material\s+penso)\b/i,
+  },
+];
+
 /**
  * Gera termos de busca enxutos e específicos para consultar o endpoint `/api/search/` do PNCP.
  * NUNCA gera palavras genéricas isoladas (como 'locacao', 'aquisicao', 'fornecimento', 'servico').
@@ -236,6 +310,18 @@ export function gerarTermosBusca(descricao: string): string[] {
     return ["ar condicionado", "condicionador de ar"];
   }
 
+  // Expansão automática com os grupos de sinônimos mais procurados em compras públicas
+  const termosExpandidosSinonimos: string[] = [];
+  for (const grupo of GRUPOS_SINONIMOS_AUTOMATICOS) {
+    if (grupo.gatilho.test(textoNorm)) {
+      for (const t of grupo.termosBuscaExpandidos) {
+        if (!termosExpandidosSinonimos.includes(t)) {
+          termosExpandidosSinonimos.push(t);
+        }
+      }
+    }
+  }
+
   const { acaoPrincipal, substantivos } = extrairNucleoSubstantivo(textoNorm);
   const termos: string[] = [];
 
@@ -249,10 +335,7 @@ export function gerarTermosBusca(descricao: string): string[] {
         termos.push(termoEsp);
       }
     }
-    return termos;
-  }
-
-  if (substantivos.length > 0) {
+  } else if (substantivos.length > 0) {
     if (substantivos.length >= 2) {
       termos.push(`${substantivos[0]} ${substantivos[1]}`);
       const palavrasAmplas = new Set([
@@ -280,7 +363,14 @@ export function gerarTermosBusca(descricao: string): string[] {
     } else {
       termos.push(substantivos[0]);
     }
-    return termos;
+  }
+
+  // Se houver termos expandidos por sinônimos, une com os termos extraídos sem duplicações
+  const todosTermos = [...termos, ...termosExpandidosSinonimos];
+  const resultadoFinal = Array.from(new Set(todosTermos)).filter(Boolean);
+
+  if (resultadoFinal.length > 0) {
+    return resultadoFinal;
   }
 
   return [textoNorm.slice(0, 40).trim()];
@@ -994,6 +1084,18 @@ function palavraPresenteOuSinonimo(
     return false;
   }
 
+  // Consulta aos grupos de sinônimos automáticos para objetos frequentes da administração pública
+  for (const grupo of GRUPOS_SINONIMOS_AUTOMATICOS) {
+    if (grupo.gatilho.test(palavra)) {
+      if (
+        grupo.padraoSinonimos.test(textoItemNorm) ||
+        grupo.padraoSinonimos.test(textoContextoAtaNorm)
+      ) {
+        return true;
+      }
+    }
+  }
+
   const base = palavra.replace(/s$/, "");
   if (base.length >= 3) {
     return new RegExp(`\\b${escapeRegex(base)}(?:s|es)?\\b`).test(textoItemNorm);
@@ -1118,6 +1220,26 @@ export function avaliarAderenciaItem(
             atendidos,
             ausentes,
             reprovados: ["Produto distinto do objeto pesquisado"],
+          };
+        }
+      }
+
+      if (valorNorm.includes("motorista") || valorNorm.includes("condutor")) {
+        const regexSemMotorista =
+          /\b(?:sem|dispensado|nao\s+inclui|nao\s+incluso|excluso)\s+(?:motoristas?|condutor(?:es)?)\b/i;
+        if (
+          regexSemMotorista.test(textoNorm) &&
+          !/\b(?:com\s+(?:motorista|condutor)|postos?\s+de\s+(?:motorista|condutor)|servicos?\s+de\s+(?:motorista|condutor))\b/i.test(
+            textoNorm
+          )
+        ) {
+          return {
+            aderencia: "C",
+            motivo:
+              "Item refere-se expressamente a contratação sem motorista/condutor (objeto pesquisado requer condutor)",
+            atendidos,
+            ausentes,
+            reprovados: ["Item expressamente sem motorista/condutor"],
           };
         }
       }
@@ -1869,6 +1991,24 @@ export function verificarCompatibilidadePreliminarAta(
         compativel: false,
         motivo:
           "objeto da ata incompatível (comunicação visual/banner, freio automotivo ou locação)",
+      };
+    }
+  }
+
+  // 4. Pesquisa de Serviços de Motorista / Condutor
+  if (valObjNorm.includes("motorista") || valObjNorm.includes("condutor")) {
+    const regexSemMotorista =
+      /\b(?:sem|dispensado|nao\s+inclui|nao\s+incluso|excluso)\s+(?:motoristas?|condutor(?:es)?)\b/i;
+    if (
+      regexSemMotorista.test(textoAta) &&
+      !/\b(?:com\s+(?:motorista|condutor)|postos?\s+de\s+(?:motorista|condutor)|servicos?\s+de\s+(?:motorista|condutor))\b/i.test(
+        textoAta
+      )
+    ) {
+      return {
+        compativel: false,
+        motivo:
+          "ata refere-se expressamente a contratação sem motorista/condutor (objeto pesquisado requer condutor)",
       };
     }
   }

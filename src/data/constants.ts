@@ -78,10 +78,10 @@ export const STATUS_TO_API_PARAM: Record<string, string> = {
   [STATUS_TODOS]: "todos",
 };
 
-// Opções de Data usada no período (Data de assinatura em 1º lugar como padrão)
+// Opções de Data usada no período (Vigência em 1º lugar como padrão)
+export const DATA_VIGENCIA = "Vigência";
 export const DATA_ASSINATURA = "Data de assinatura da ata";
 export const DATA_PUBLICACAO = "Data de publicação no PNCP";
-export const DATA_VIGENCIA = "Vigência";
 
 // Lista oficial das 27 Unidades da Federação (UF)
 export const UFS_BRASIL: Array<{ sigla: string; nome: string }> = [

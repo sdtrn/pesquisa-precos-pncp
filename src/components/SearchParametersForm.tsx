@@ -33,7 +33,7 @@ import { detectarModoNormalizacaoSugerido } from "@/lib/domain/normalizador-prec
 import { HelpTooltip } from "@/components/HelpTooltip";
 
 const OPCOES_STATUS = [STATUS_VIGENTES, STATUS_NAO_VIGENTES, STATUS_TODOS];
-const OPCOES_DATA = [DATA_ASSINATURA, DATA_PUBLICACAO, DATA_VIGENCIA];
+const OPCOES_DATA = [DATA_VIGENCIA, DATA_ASSINATURA, DATA_PUBLICACAO];
 
 const RESUMO_TIPO_DATA: Record<string, string> = {
   [DATA_ASSINATURA]:
@@ -453,7 +453,7 @@ export function SearchParametersForm({
             ))}
           </select>
           <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-tight">
-            {RESUMO_TIPO_DATA[tipoData] || RESUMO_TIPO_DATA[DATA_ASSINATURA]}
+            {RESUMO_TIPO_DATA[tipoData] || RESUMO_TIPO_DATA[DATA_VIGENCIA]}
           </p>
         </div>
 
