@@ -14,6 +14,7 @@ import {
   FileText,
 } from "lucide-react";
 import type { RegistroHistoricoPesquisa } from "@/lib/domain/types";
+import { formatValorOuTaxa } from "@/lib/domain/statistics";
 import { selecionarTop20Menores } from "@/lib/domain/pipeline";
 import { gerarPlanilhaXlsx } from "@/lib/export/exporter-xlsx";
 import { gerarRelatorioPdfA4 } from "@/lib/export/exporter-pdf";
@@ -259,6 +260,20 @@ export function HistoryDrawer({
                   <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono">
                     {entry.periodoAplicado}
                   </span>
+                  {entry.modoNormalizacao && (
+                    <span className="px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900">
+                      Normalização:{" "}
+                      <strong>
+                        {entry.modoNormalizacao === "posto_mes"
+                          ? "Posto/mês"
+                          : entry.modoNormalizacao === "veiculo_mes"
+                          ? "Veículo/mês"
+                          : entry.modoNormalizacao === "auto"
+                          ? "Auto"
+                          : "Desativada"}
+                      </strong>
+                    </span>
+                  )}
                 </div>
 
                 {/* Metrics Summary */}
@@ -273,10 +288,18 @@ export function HistoryDrawer({
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-500 block">
-                      Média Unitária
+                      {entry.criterioClassificacao === "maior_desconto"
+                        ? "Média Desconto (%)"
+                        : entry.resultado.unidade_referencia_padrao &&
+                          entry.resultado.unidade_referencia_padrao !== "R$"
+                        ? `Média Unitária (${entry.resultado.unidade_referencia_padrao})`
+                        : "Média Unitária"}
                     </span>
                     <span className="font-mono font-bold text-[#1B365D] dark:text-[#D4AF37]">
-                      {formatBRL(entry.mediaSelecionados)}
+                      {formatValorOuTaxa(
+                        entry.mediaSelecionados,
+                        entry.criterioClassificacao
+                      )}
                     </span>
                   </div>
                 </div>

@@ -40,6 +40,7 @@ export function criarRegistroHistorico(
     descricaoObjeto: descricaoObjeto.trim() || res.termos_busca.join(", "),
     escopoOrgaos: res.escopo_orgaos,
     criterioClassificacao: res.criterio_classificacao || "menor_preco",
+    modoNormalizacao: res.modo_normalizacao_escolhido || "auto",
     ufSelecionada: res.uf_selecionada || null,
     regiaoSelecionada: res.regiao_selecionada || null,
     apenasMunicipiosBilionarios:

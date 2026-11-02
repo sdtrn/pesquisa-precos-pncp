@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Search,
   Sparkles,
@@ -12,6 +12,7 @@ import {
   RotateCcw,
   Percent,
   DollarSign,
+  Calculator,
 } from "lucide-react";
 import {
   STATUS_VIGENTES,
@@ -24,8 +25,11 @@ import {
   CRITERIO_MENOR_PRECO,
   CRITERIO_MAIOR_DESCONTO,
   OPCOES_CRITERIO,
+  MODO_NORMALIZACAO_AUTO,
+  OPCOES_MODO_NORMALIZACAO,
 } from "@/data/constants";
-import type { CriterioClassificacao } from "@/lib/domain/types";
+import type { CriterioClassificacao, ModoNormalizacaoPreco } from "@/lib/domain/types";
+import { detectarModoNormalizacaoSugerido } from "@/lib/domain/normalizador-precos";
 import { HelpTooltip } from "@/components/HelpTooltip";
 
 const OPCOES_STATUS = [STATUS_VIGENTES, STATUS_NAO_VIGENTES, STATUS_TODOS];
@@ -45,6 +49,8 @@ interface SearchParametersFormProps {
   onChangeDescricao: (val: string) => void;
   criterioClassificacao?: CriterioClassificacao;
   onChangeCriterioClassificacao?: (val: CriterioClassificacao) => void;
+  modoNormalizacao?: ModoNormalizacaoPreco;
+  onChangeModoNormalizacao?: (modo: ModoNormalizacaoPreco) => void;
   statusArp: string;
   onChangeStatusArp: (val: string) => void;
   tipoData: string;
@@ -67,6 +73,8 @@ export function SearchParametersForm({
   onChangeDescricao,
   criterioClassificacao = CRITERIO_MENOR_PRECO,
   onChangeCriterioClassificacao,
+  modoNormalizacao = MODO_NORMALIZACAO_AUTO,
+  onChangeModoNormalizacao,
   statusArp,
   onChangeStatusArp,
   tipoData,
@@ -83,6 +91,9 @@ export function SearchParametersForm({
   hasActiveData = false,
   isSearching,
 }: SearchParametersFormProps) {
+  const modoDetectado = useMemo(() => {
+    return detectarModoNormalizacaoSugerido(descricaoObjeto);
+  }, [descricaoObjeto]);
   const isDateInvalid = Boolean(
     dataInicial && dataFinal && dataInicial > dataFinal
   );
@@ -137,6 +148,13 @@ export function SearchParametersForm({
                   onChangeCriterioClassificacao(preset.criterioSugerido);
                 } else if (!preset.criterioSugerido && onChangeCriterioClassificacao) {
                   onChangeCriterioClassificacao(CRITERIO_MENOR_PRECO);
+                }
+                if (onChangeModoNormalizacao) {
+                  if (preset.modoNormalizacaoSugerido) {
+                    onChangeModoNormalizacao(preset.modoNormalizacaoSugerido);
+                  } else {
+                    onChangeModoNormalizacao(MODO_NORMALIZACAO_AUTO);
+                  }
                 }
               }}
               disabled={isSearching}
@@ -256,6 +274,87 @@ export function SearchParametersForm({
                   <div className="text-[11px] text-slate-500 leading-tight mt-0.5">
                     {opt.descricaoCurta}
                   </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Padronização de Preço Unitário (Lei 14.133/2021) */}
+      <div className="mb-5 p-3 sm:p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+            <Calculator className="w-3.5 h-3.5 text-[#1B365D] dark:text-[#D4AF37]" />
+            <span>Padronização de Preço Unitário (Lei 14.133/2021)</span>
+            <HelpTooltip
+              title="Padronização de Preço Unitário (Lei 14.133/2021)"
+              summary="Permite comparar valores unitários homogêneos (mensal por posto ou veículo) dividindo valores globais ou anuais:"
+              options={[
+                {
+                  label: "⚡ Automático (Detectado)",
+                  description:
+                    "Identifica automaticamente no objeto termos de postos de trabalho (vigilância, portaria, limpeza) ou locação de veículos/máquinas e aplica a normalização mensal por unidade.",
+                },
+                {
+                  label: "🛡️ Mensal por Posto (R$/mês/posto)",
+                  description:
+                    "Calcula o valor unitário mensal por posto de serviço, dividindo pelo quantitativo de postos e vigência em meses.",
+                },
+                {
+                  label: "🚗 Mensal por Veículo (R$/mês/veículo)",
+                  description:
+                    "Calcula o valor unitário mensal por veículo locado, dividindo pela frota e meses contratados.",
+                },
+                {
+                  label: "⏹️ Desativado (Preço Bruto da Ata)",
+                  description:
+                    "Compara diretamente o valor homologado registrado no PNCP sem realizar normalização por unidade ou meses.",
+                },
+              ]}
+            />
+          </div>
+
+          {modoNormalizacao === "auto" && (
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+              <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+              <span>
+                {modoDetectado === "posto_mes"
+                  ? "⚡ Auto (Detectado: Mensal por Posto)"
+                  : modoDetectado === "veiculo_mes"
+                  ? "⚡ Auto (Detectado: Mensal por Veículo)"
+                  : "⚡ Auto (Preço Bruto da Ata)"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+          {OPCOES_MODO_NORMALIZACAO.map((opt) => {
+            const isSelected = modoNormalizacao === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => onChangeModoNormalizacao?.(opt.id)}
+                disabled={isSearching}
+                className={`flex flex-col p-2.5 rounded-lg border text-left transition-all ${
+                  isSelected
+                    ? "bg-white dark:bg-slate-800 border-[#1B365D] dark:border-[#D4AF37] ring-1 ring-[#1B365D] dark:ring-[#D4AF37] shadow-xs"
+                    : "bg-white/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-700"
+                }`}
+              >
+                <div
+                  className={`text-xs font-semibold ${
+                    isSelected
+                      ? "text-slate-900 dark:text-white"
+                      : "text-slate-700 dark:text-slate-300"
+                  }`}
+                >
+                  {opt.nome}
+                </div>
+                <div className="text-[11px] text-slate-500 leading-tight mt-1">
+                  {opt.descricaoCurta}
                 </div>
               </button>
             );

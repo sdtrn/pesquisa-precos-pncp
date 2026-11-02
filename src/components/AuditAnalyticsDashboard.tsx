@@ -12,6 +12,7 @@ import {
   AlertOctagon,
   Search,
   ExternalLink,
+  Calculator,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -305,6 +306,9 @@ export function AuditAnalyticsDashboard({
                       <ScatterIcon className="w-4 h-4 text-[#B59410]" />
                       {criterioClassificacao === "maior_desconto"
                         ? "Gráfico de Dispersão das Taxas de Desconto (%)"
+                        : resultado.unidade_referencia_padrao &&
+                          resultado.unidade_referencia_padrao !== "R$"
+                        ? `Gráfico de Dispersão dos Preços Unitários (${resultado.unidade_referencia_padrao})`
                         : "Gráfico de Dispersão dos Preços Unitários Homologados (R$)"}
                     </h3>
                     <p className="text-xs text-slate-500">
@@ -558,7 +562,12 @@ export function AuditAnalyticsDashboard({
                     <tr>
                       <th className="py-2 px-3">Aderência</th>
                       <th className="py-2 px-3 text-right">
-                        {criterioClassificacao === "maior_desconto" ? "Desconto (%)" : "Valor Unit."}
+                        {criterioClassificacao === "maior_desconto"
+                          ? "Desconto (%)"
+                          : resultado.unidade_referencia_padrao &&
+                            resultado.unidade_referencia_padrao !== "R$"
+                          ? `Valor Unit. (${resultado.unidade_referencia_padrao})`
+                          : "Valor Unit."}
                       </th>
                       <th className="py-2 px-2">Unid.</th>
                       <th className="py-2 px-3">Descrição do Objeto</th>
@@ -586,10 +595,36 @@ export function AuditAnalyticsDashboard({
                           </span>
                         </td>
                         <td className="py-2 px-3 text-right font-mono font-bold whitespace-nowrap">
-                          {formatValorOuTaxa(item.valor_unitario, criterioClassificacao)}
+                          <div className="flex items-center justify-end gap-1.5">
+                            {item.normalizado && (
+                              <span
+                                title={
+                                  item.formula_normalizacao
+                                    ? `Cálculo normalizado (Lei 14.133/2021):\n${item.formula_normalizacao}\nOriginal: ${item.valor_original !== undefined ? `R$ ${item.valor_original.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "não informado"}`
+                                    : `Preço normalizado. Original: R$ ${item.valor_original}`
+                                }
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800 cursor-help"
+                              >
+                                <Calculator className="w-3 h-3 shrink-0" />
+                                <span className="hidden sm:inline">Norm.</span>
+                              </span>
+                            )}
+                            <span>
+                              {formatValorOuTaxa(item.valor_unitario, criterioClassificacao)}
+                            </span>
+                          </div>
                         </td>
                         <td className="py-2 px-2 font-mono">
-                          {item.unidade_fornecimento}
+                          {item.normalizado && item.unidade_referencia ? (
+                            <span
+                              title={`Unidade de referência: ${item.unidade_referencia}`}
+                              className="text-blue-700 dark:text-blue-300 font-semibold cursor-help"
+                            >
+                              {item.unidade_referencia.replace("R$/", "")}
+                            </span>
+                          ) : (
+                            item.unidade_fornecimento || "—"
+                          )}
                         </td>
                         <td className="py-2 px-3 max-w-xs line-clamp-2">
                           {item.descricao_objeto}

@@ -19,10 +19,12 @@ import {
   STATUS_VIGENTES,
   DATA_ASSINATURA,
   CRITERIO_MENOR_PRECO,
+  MODO_NORMALIZACAO_AUTO,
   TOP_N_ITENS_JANELA,
 } from "@/data/constants";
 import type {
   CriterioClassificacao,
+  ModoNormalizacaoPreco,
   RequisitoMinimo,
   ParametrosPipeline,
   ResultadoPesquisa,
@@ -67,6 +69,8 @@ export default function HomePage() {
   const [descricaoObjeto, setDescricaoObjeto] = useState<string>("");
   const [criterioClassificacao, setCriterioClassificacao] =
     useState<CriterioClassificacao>(CRITERIO_MENOR_PRECO);
+  const [modoNormalizacao, setModoNormalizacao] =
+    useState<ModoNormalizacaoPreco>(MODO_NORMALIZACAO_AUTO);
   const [statusArp, setStatusArp] = useState<string>(STATUS_VIGENTES);
   // Pré-selecionado "Data de assinatura da ata" conforme solicitação do usuário
   const [tipoData, setTipoData] = useState<string>(DATA_ASSINATURA);
@@ -158,6 +162,7 @@ export default function HomePage() {
 
     setDescricaoObjeto("");
     setCriterioClassificacao(CRITERIO_MENOR_PRECO);
+    setModoNormalizacao(MODO_NORMALIZACAO_AUTO);
     setTermosBusca([]);
     setRequisitos([]);
     setShowRequirementsPanel(false);
@@ -258,6 +263,7 @@ export default function HomePage() {
       requisitos: reqsParaUsar,
       escopoOrgaos: escopo,
       criterioClassificacao,
+      modoNormalizacao,
       regiaoSelecionada: escopo === ESCOPO_POR_REGIAO ? regiaoFiltro : null,
       apenasMunicipiosBilionarios,
       statusAta: statusArp,
@@ -318,6 +324,9 @@ export default function HomePage() {
               finalResult.criterio_classificacao || criterioClassificacao;
             if (finalResult.criterio_classificacao) {
               setCriterioClassificacao(finalResult.criterio_classificacao);
+            }
+            if (finalResult.modo_normalizacao_escolhido) {
+              setModoNormalizacao(finalResult.modo_normalizacao_escolhido);
             }
             const initialTop20 = selecionarTop20Menores(
               finalResult.itens_candidatos,
@@ -428,6 +437,11 @@ export default function HomePage() {
       entry.resultado.criterio_classificacao ||
       CRITERIO_MENOR_PRECO;
     setCriterioClassificacao(critHist);
+    const modoHist =
+      entry.modoNormalizacao ||
+      entry.resultado.modo_normalizacao_escolhido ||
+      MODO_NORMALIZACAO_AUTO;
+    setModoNormalizacao(modoHist);
     setIncluirClasseB(entry.incluirRevisaoB);
     setResultado(entry.resultado);
 
@@ -518,6 +532,8 @@ export default function HomePage() {
           onChangeDescricao={handleChangeDescricao}
           criterioClassificacao={criterioClassificacao}
           onChangeCriterioClassificacao={setCriterioClassificacao}
+          modoNormalizacao={modoNormalizacao}
+          onChangeModoNormalizacao={setModoNormalizacao}
           statusArp={statusArp}
           onChangeStatusArp={setStatusArp}
           tipoData={tipoData}

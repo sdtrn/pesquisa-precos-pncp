@@ -10,6 +10,7 @@ import {
   ExternalLink,
   AlertTriangle,
   CheckCircle2,
+  Calculator,
 } from "lucide-react";
 import type {
   ItemCandidato,
@@ -66,6 +67,21 @@ export function Top20SelectionModal({
   const outlierKeys = useMemo(() => {
     return identificarOutliersIqr(candidatosTop20, criterioClassificacao);
   }, [candidatosTop20, criterioClassificacao]);
+
+  const unidadeReferenciaAtiva = useMemo(() => {
+    const itemNormalizado = candidatosTop20.find((c) => c.unidade_referencia);
+    return itemNormalizado?.unidade_referencia || "R$";
+  }, [candidatosTop20]);
+
+  const rotuloColunaValor = useMemo(() => {
+    if (criterioClassificacao === "maior_desconto") {
+      return "Taxa de Desconto";
+    }
+    if (unidadeReferenciaAtiva && unidadeReferenciaAtiva !== "R$") {
+      return `Valor Unitário (${unidadeReferenciaAtiva})`;
+    }
+    return "Valor Unitário (R$)";
+  }, [criterioClassificacao, unidadeReferenciaAtiva]);
 
   const ufsDisponiveis = useMemo(() => {
     const set = new Set<string>();
@@ -314,7 +330,7 @@ export function Top20SelectionModal({
                     <th className="py-2.5 px-2 text-center">#</th>
                     <th className="py-2.5 px-2 text-center">Ader.</th>
                     <th className="py-2.5 px-3 text-right">
-                      {criterioClassificacao === "maior_desconto" ? "Taxa de Desconto" : "Valor Unitário"}
+                      {rotuloColunaValor}
                     </th>
                     <th className="py-2.5 px-2 text-center">Unid.</th>
                     <th className="py-2.5 px-2 text-right">Qtd. ARP</th>
@@ -369,6 +385,19 @@ export function Top20SelectionModal({
                         </td>
                         <td className="py-2.5 px-3 text-right font-mono font-bold tabular-nums whitespace-nowrap text-slate-900 dark:text-white">
                           <div className="flex items-center justify-end gap-1.5">
+                            {item.normalizado && (
+                              <span
+                                title={
+                                  item.formula_normalizacao
+                                    ? `Cálculo normalizado (Lei 14.133/2021):\n${item.formula_normalizacao}\nOriginal: ${item.valor_original !== undefined ? formatBRL(item.valor_original) : "não informado"}`
+                                    : `Preço normalizado. Original: ${item.valor_original !== undefined ? formatBRL(item.valor_original) : "não informado"}`
+                                }
+                                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800 cursor-help"
+                              >
+                                <Calculator className="w-3 h-3 shrink-0" />
+                                <span className="hidden sm:inline">Norm.</span>
+                              </span>
+                            )}
                             {isOutlier && (
                               <span
                                 title={
@@ -387,10 +416,25 @@ export function Top20SelectionModal({
                           </div>
                         </td>
                         <td className="py-2.5 px-2 text-center font-mono">
-                          {item.unidade_fornecimento}
+                          {item.normalizado && item.unidade_referencia ? (
+                            <span
+                              title={`Unidade de referência: ${item.unidade_referencia}${item.unidade_original ? ` (Original na ARP: ${item.unidade_original})` : ""}`}
+                              className="text-blue-700 dark:text-blue-300 font-semibold cursor-help"
+                            >
+                              {item.unidade_referencia.replace("R$/", "")}
+                            </span>
+                          ) : (
+                            item.unidade_fornecimento || "—"
+                          )}
                         </td>
                         <td className="py-2.5 px-2 text-right font-mono tabular-nums">
-                          {item.quantitativo_previsto_arp}
+                          {item.quantitativo_previsto_arp === "não informado" ? (
+                            <span className="italic text-slate-400 dark:text-slate-500 text-[10px]">
+                              não informado
+                            </span>
+                          ) : (
+                            item.quantitativo_previsto_arp
+                          )}
                         </td>
                         <td className="py-2.5 px-3 max-w-xs">
                           <div className="font-medium text-slate-900 dark:text-white line-clamp-2">

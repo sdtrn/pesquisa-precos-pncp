@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Loader2,
   AlertTriangle,
+  Calculator,
 } from "lucide-react";
 import type {
   CriterioClassificacao,
@@ -72,6 +73,13 @@ export function ConsolidatedReportPanel({
   const [isExportingPdf, setIsExportingPdf] = useState(false);
 
   const ehDesconto = criterioClassificacao === "maior_desconto";
+
+  const unidadeRefAtiva =
+    resultado.unidade_referencia_padrao ||
+    itensSelecionados.find((i) => i.unidade_referencia)?.unidade_referencia ||
+    "R$";
+  const temUnidadeEspecial =
+    !ehDesconto && Boolean(unidadeRefAtiva && unidadeRefAtiva !== "R$");
 
   const handleDownloadXlsx = async () => {
     try {
@@ -224,7 +232,11 @@ export function ConsolidatedReportPanel({
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 my-5">
           <div className="p-3.5 rounded-xl bg-gradient-to-br from-[#1B365D] to-[#122644] text-white shadow-sm">
             <span className="text-[10px] uppercase tracking-wider text-slate-300 block">
-              {ehDesconto ? "Média das Taxas de Desconto" : "Média Unitária Final"}
+              {ehDesconto
+                ? "Média das Taxas de Desconto"
+                : temUnidadeEspecial
+                ? `Média Unitária Final (${unidadeRefAtiva})`
+                : "Média Unitária Final"}
             </span>
             <span className="font-mono text-lg font-bold text-[#F3E5AB] tabular-nums">
               {formatValorOuTaxa(estatisticas.media, criterioClassificacao)}
@@ -233,7 +245,7 @@ export function ConsolidatedReportPanel({
 
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
             <span className="text-[10px] uppercase tracking-wider text-slate-500 block">
-              Mediana
+              {temUnidadeEspecial ? `Mediana (${unidadeRefAtiva})` : "Mediana"}
             </span>
             <span className="font-mono text-base font-bold text-emerald-700 dark:text-emerald-400 tabular-nums">
               {formatValorOuTaxa(estatisticas.mediana, criterioClassificacao)}
@@ -242,7 +254,11 @@ export function ConsolidatedReportPanel({
 
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
             <span className="text-[10px] uppercase tracking-wider text-slate-500 block">
-              {ehDesconto ? "Menor Taxa" : "Menor Preço"}
+              {ehDesconto
+                ? "Menor Taxa"
+                : temUnidadeEspecial
+                ? `Menor Preço (${unidadeRefAtiva})`
+                : "Menor Preço"}
             </span>
             <span className="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums">
               {formatValorOuTaxa(estatisticas.menor, criterioClassificacao)}
@@ -251,7 +267,11 @@ export function ConsolidatedReportPanel({
 
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
             <span className="text-[10px] uppercase tracking-wider text-slate-500 block">
-              {ehDesconto ? "Maior Taxa" : "Maior Preço"}
+              {ehDesconto
+                ? "Maior Taxa"
+                : temUnidadeEspecial
+                ? `Maior Preço (${unidadeRefAtiva})`
+                : "Maior Preço"}
             </span>
             <span className="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums">
               {formatValorOuTaxa(estatisticas.maior, criterioClassificacao)}
@@ -260,7 +280,7 @@ export function ConsolidatedReportPanel({
 
           <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
             <span className="text-[10px] uppercase tracking-wider text-slate-500 block">
-              Desvio Padrão
+              {temUnidadeEspecial ? `Desvio Padrão (${unidadeRefAtiva})` : "Desvio Padrão"}
             </span>
             <span className="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums">
               {formatValorOuTaxa(estatisticas.desvioPadrao, criterioClassificacao)}
@@ -299,7 +319,11 @@ export function ConsolidatedReportPanel({
                 <tr className="bg-[#1B365D] text-white uppercase text-[11px]">
                   <th className="py-3 px-3">Descrição do objeto</th>
                   <th className="py-3 px-3 text-right">
-                    {ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)"}
+                    {ehDesconto
+                      ? "Taxa de Desconto (%)"
+                      : temUnidadeEspecial
+                      ? `Valor Unitário (${unidadeRefAtiva})`
+                      : "Valor Unitário (R$)"}
                   </th>
                   <th className="py-3 px-3">Nº da ARP / Licitação</th>
                   <th className="py-3 px-2 text-center">Data de Assinatura</th>
@@ -318,7 +342,24 @@ export function ConsolidatedReportPanel({
                       {item.descricao_objeto}
                     </td>
                     <td className="py-2.5 px-3 text-right font-mono font-bold tabular-nums whitespace-nowrap text-slate-900 dark:text-white">
-                      {formatValorOuTaxa(item.valor_unitario, criterioClassificacao)}
+                      <div className="flex items-center justify-end gap-1.5">
+                        {item.normalizado && (
+                          <span
+                            title={
+                              item.formula_normalizacao
+                                ? `Cálculo normalizado (Lei 14.133/2021):\n${item.formula_normalizacao}\nOriginal: ${item.valor_original !== undefined ? `R$ ${item.valor_original.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "não informado"}`
+                                : `Preço normalizado. Original: R$ ${item.valor_original}`
+                            }
+                            className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-200 dark:border-blue-800 cursor-help"
+                          >
+                            <Calculator className="w-3 h-3 shrink-0" />
+                            <span className="hidden sm:inline">Norm.</span>
+                          </span>
+                        )}
+                        <span>
+                          {formatValorOuTaxa(item.valor_unitario, criterioClassificacao)}
+                        </span>
+                      </div>
                     </td>
                     <td className="py-2.5 px-3 font-mono whitespace-nowrap">
                       {item.numero_arp_licitacao}
@@ -380,6 +421,8 @@ export function ConsolidatedReportPanel({
                   <td className="py-3 px-3 font-heading uppercase tracking-wide">
                     {ehDesconto
                       ? "MÉDIA DAS TAXAS DE DESCONTO"
+                      : temUnidadeEspecial
+                      ? `MÉDIA DOS PREÇOS UNITÁRIOS (${unidadeRefAtiva})`
                       : "MÉDIA DOS VALORES UNITÁRIOS"}
                   </td>
                   <td className="py-3 px-3 text-right font-mono text-sm tabular-nums text-[#1B365D] dark:text-[#F3E5AB]">

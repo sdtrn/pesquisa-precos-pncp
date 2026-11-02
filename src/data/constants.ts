@@ -185,6 +185,7 @@ export interface PresetExemplo {
   descricao: string;
   escopoSugerido?: string;
   criterioSugerido?: CriterioClassificacao;
+  modoNormalizacaoSugerido?: ModoNormalizacaoPreco;
 }
 
 export const PRESETS_EXEMPLOS: PresetExemplo[] = [
@@ -195,6 +196,7 @@ export const PRESETS_EXEMPLOS: PresetExemplo[] = [
     descricao: "Locação mensal de veículos tipo hatch",
     escopoSugerido: ESCOPO_VALIDADE,
     criterioSugerido: CRITERIO_MENOR_PRECO,
+    modoNormalizacaoSugerido: MODO_NORMALIZACAO_VEICULO,
   },
   {
     id: "gestao-frota-combustivel",
@@ -203,6 +205,7 @@ export const PRESETS_EXEMPLOS: PresetExemplo[] = [
     descricao: "Gerenciamento de frota com fornecimento de combustível",
     escopoSugerido: ESCOPO_TODOS,
     criterioSugerido: CRITERIO_MAIOR_DESCONTO,
+    modoNormalizacaoSugerido: MODO_NORMALIZACAO_DESATIVADO,
   },
   {
     id: "vigilancia-armada",
@@ -211,6 +214,7 @@ export const PRESETS_EXEMPLOS: PresetExemplo[] = [
     descricao: "Serviço de vigilância armada",
     escopoSugerido: ESCOPO_VALIDADE,
     criterioSugerido: CRITERIO_MENOR_PRECO,
+    modoNormalizacaoSugerido: MODO_NORMALIZACAO_POSTO,
   },
   {
     id: "auxiliar-servicos-gerais",
@@ -219,6 +223,7 @@ export const PRESETS_EXEMPLOS: PresetExemplo[] = [
     descricao: "Auxiliar de serviços gerais",
     escopoSugerido: ESCOPO_VALIDADE,
     criterioSugerido: CRITERIO_MENOR_PRECO,
+    modoNormalizacaoSugerido: MODO_NORMALIZACAO_POSTO,
   },
   {
     id: "prestacao-servico-motorista",
@@ -227,5 +232,6 @@ export const PRESETS_EXEMPLOS: PresetExemplo[] = [
     descricao: "Prestação de serviço de motorista",
     escopoSugerido: ESCOPO_VALIDADE,
     criterioSugerido: CRITERIO_MENOR_PRECO,
+    modoNormalizacaoSugerido: MODO_NORMALIZACAO_POSTO,
   },
 ];
