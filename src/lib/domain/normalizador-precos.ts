@@ -1,10 +1,10 @@
-import type { ModoNormalizacaoPreco } from "./types.ts";
+import type { ModoNormalizacaoPreco } from "@/lib/domain/types";
 import {
   MODO_NORMALIZACAO_AUTO,
   MODO_NORMALIZACAO_POSTO,
   MODO_NORMALIZACAO_VEICULO,
   MODO_NORMALIZACAO_DESATIVADO,
-} from "../../data/constants.ts";
+} from "@/data/constants";
 
 export interface DadosCalculoNormalizacao {
   valorHomologado: number;
