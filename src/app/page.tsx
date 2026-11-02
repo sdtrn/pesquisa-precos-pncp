@@ -28,7 +28,7 @@ import type {
   ResultadoPesquisa,
   RegistroHistoricoPesquisa,
 } from "@/lib/domain/types";
-import { selecionarTop20Menores } from "@/lib/domain/pipeline";
+import { selecionarTop20Menores } from "@/lib/domain/selection";
 import {
   gerarTermosBusca,
   extrairRequisitosMinimos,

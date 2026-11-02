@@ -17,7 +17,16 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: hasLocalDeps,
   },
-  webpack: (config, { webpack }) => {
+  webpack: (config, { isServer, webpack }) => {
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        zlib: false,
+        fs: false,
+        path: false,
+        crypto: false,
+      };
+    }
     if (hasLocalDeps && localAppDataDeps) {
       config.cache = false;
       config.resolve.modules = [

@@ -1,4 +1,4 @@
-import zlib from "node:zlib";
+import zlib from "zlib";
 
 /**
  * Converte sequências hexadecimais em caracteres legíveis.
