@@ -115,7 +115,7 @@ export const UFS_BRASIL: Array<{ sigla: string; nome: string }> = [
 ];
 
 // Critérios de Julgamento / Classificação de ARPs
-import type { CriterioClassificacao } from "@/lib/domain/types";
+import type { CriterioClassificacao, ModoNormalizacaoPreco } from "@/lib/domain/types";
 
 export const CRITERIO_MENOR_PRECO: CriterioClassificacao = "menor_preco";
 export const CRITERIO_MAIOR_DESCONTO: CriterioClassificacao = "maior_desconto";
@@ -139,6 +139,41 @@ export const OPCOES_CRITERIO: Array<{
 
 export const DECLARACAO_INDEPENDENCIA_TEXTO =
   "Ferramenta independente desenvolvida pela iniciativa privada, sem vínculo institucional com o Ministério da Gestão e da Inovação em Serviços Públicos (MGI) ou com o Governo Federal.";
+
+// Modos de Normalização de Preços Unitários (Lei 14.133/2021)
+export const MODO_NORMALIZACAO_AUTO: ModoNormalizacaoPreco = "auto";
+export const MODO_NORMALIZACAO_POSTO: ModoNormalizacaoPreco = "posto_mes";
+export const MODO_NORMALIZACAO_VEICULO: ModoNormalizacaoPreco = "veiculo_mes";
+export const MODO_NORMALIZACAO_DESATIVADO: ModoNormalizacaoPreco = "desativado";
+
+export interface OpcaoModoNormalizacao {
+  id: ModoNormalizacaoPreco;
+  nome: string;
+  descricaoCurta: string;
+}
+
+export const OPCOES_MODO_NORMALIZACAO: OpcaoModoNormalizacao[] = [
+  {
+    id: MODO_NORMALIZACAO_AUTO,
+    nome: "⚡ Automático (Detectado)",
+    descricaoCurta: "Detecta automaticamente a unidade (posto ou veículo) com base no objeto da contratação.",
+  },
+  {
+    id: MODO_NORMALIZACAO_POSTO,
+    nome: "🛡️ Mensal por Posto (R$/mês/posto)",
+    descricaoCurta: "Calcula o valor unitário mensal por posto de serviço (vigilância, limpeza, portaria, etc.).",
+  },
+  {
+    id: MODO_NORMALIZACAO_VEICULO,
+    nome: "🚗 Mensal por Veículo (R$/mês/veículo)",
+    descricaoCurta: "Calcula o valor unitário mensal por veículo ou equipamento locado.",
+  },
+  {
+    id: MODO_NORMALIZACAO_DESATIVADO,
+    nome: "⏹️ Desativado (Preço Bruto da Ata)",
+    descricaoCurta: "Compara diretamente o valor homologado registrado na ARP, sem normalização por unidade/mês.",
+  },
+];
 
 export const TERMO_DE_USO_DISCLAIMER_TEXTO =
   "O sistema extrai dados 'as is' (no estado em que se encontram) da API oficial do governo e não se responsabiliza por instabilidades, omissões ou erros nos dados originais do PNCP, devendo o usuário final validar a ata na fonte oficial.";

@@ -2,6 +2,8 @@ export type OperadorRequisito = "contém" | "=" | ">=" | "<=" | "compatível" | 
 
 export type CriterioClassificacao = "menor_preco" | "maior_desconto";
 
+export type ModoNormalizacaoPreco = "auto" | "posto_mes" | "veiculo_mes" | "desativado";
+
 export interface RequisitoMinimo {
   Atributo: string;
   Operador: OperadorRequisito | string;
@@ -32,6 +34,11 @@ export interface ArquivoArp {
 export interface ItemCandidato {
   descricao_objeto: string;
   valor_unitario: number;
+  valor_original?: number;
+  unidade_original?: string;
+  formula_normalizacao?: string;
+  unidade_referencia?: string;
+  normalizado?: boolean;
   quantitativo_previsto_arp: string;
   quantidade_numerica_str: string;
   unidade_fornecimento: string;
@@ -99,6 +106,7 @@ export interface ParametrosPipeline {
   requisitos: RequisitoMinimo[];
   escopoOrgaos: string;
   criterioClassificacao?: CriterioClassificacao;
+  modoNormalizacao?: ModoNormalizacaoPreco;
   statusAta: string;
   tipoDataPeriodo: string;
   dataInicial?: string | null;
@@ -113,6 +121,9 @@ export interface ResultadoPesquisa {
   momento_consulta: string;
   escopo_orgaos: string;
   criterio_classificacao?: CriterioClassificacao;
+  modo_normalizacao_escolhido?: ModoNormalizacaoPreco;
+  modo_normalizacao_aplicado?: ModoNormalizacaoPreco;
+  unidade_referencia_padrao?: string;
   uf_selecionada?: string | null;
   regiao_selecionada?: string | null;
   apenas_municipios_bilionarios?: boolean;
@@ -155,6 +166,7 @@ export interface RegistroHistoricoPesquisa {
   descricaoObjeto: string;
   escopoOrgaos: string;
   criterioClassificacao?: CriterioClassificacao;
+  modoNormalizacao?: ModoNormalizacaoPreco;
   ufSelecionada?: string | null;
   regiaoSelecionada?: string | null;
   apenasMunicipiosBilionarios?: boolean;
