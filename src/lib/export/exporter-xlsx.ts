@@ -165,7 +165,8 @@ export async function gerarPlanilhaXlsx(
   itensJanelaTop20: ItemCandidato[],
   indicesSelecionados: number[],
   descartados: RegistroDescartado[],
-  criterioClassificacao: CriterioClassificacao = "menor_preco"
+  criterioClassificacao: CriterioClassificacao = "menor_preco",
+  unidadeReferenciaPadrao?: string
 ): Promise<Uint8Array> {
   const ehDesconto = criterioClassificacao === "maior_desconto";
   const wb = new ExcelJS.Workbook();
@@ -280,24 +281,43 @@ export async function gerarPlanilhaXlsx(
     },
   });
 
-  const largurasAba1 = [34, 14, 19, 13, 19, 19];
-  ws1.columns = [
-    { width: largurasAba1[0] },
-    { width: largurasAba1[1] },
-    { width: largurasAba1[2] },
-    { width: largurasAba1[3] },
-    { width: largurasAba1[4] },
-    { width: largurasAba1[5] },
-  ];
+  const unidRefAtiva =
+    unidadeReferenciaPadrao ||
+    itensSelecionados.find((i) => i.unidade_referencia)?.unidade_referencia;
+  const headerPrecoAba1 = ehDesconto
+    ? "Taxa de Desconto (%)"
+    : unidRefAtiva && unidRefAtiva !== "R$"
+    ? `Valor Unitário Normalizado (${unidRefAtiva})`
+    : "Valor Unitário Normalizado (R$)";
 
-  const headersAba1 = [
-    "Descrição do objeto",
-    ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)",
-    "Nº da ARP / Licitação",
-    "Data de Assinatura",
-    "Órgão Gerenciador/UF",
-    "Fornecedor",
-  ];
+  const largurasAba1 = ehDesconto
+    ? [34, 14, 19, 13, 19, 19]
+    : [30, 16, 26, 16, 14, 18, 13, 18, 18];
+
+  const headersAba1 = ehDesconto
+    ? [
+        "Descrição do objeto",
+        headerPrecoAba1,
+        "Nº da ARP / Licitação",
+        "Data de Assinatura",
+        "Órgão Gerenciador/UF",
+        "Fornecedor",
+      ]
+    : [
+        "Descrição do objeto",
+        headerPrecoAba1,
+        "Memória de Cálculo (Lei 14.133/2021)",
+        "Valor Homologado Original (R$)",
+        "Unidade Original ARP",
+        "Nº da ARP / Licitação",
+        "Data de Assinatura",
+        "Órgão Gerenciador/UF",
+        "Fornecedor",
+      ];
+
+  const numColsAba1 = headersAba1.length;
+  ws1.columns = largurasAba1.map((w) => ({ width: w }));
+
   const rowHeader1 = ws1.addRow(headersAba1);
   rowHeader1.height = 26;
   rowHeader1.eachCell((cell) => {
@@ -319,22 +339,50 @@ export async function gerarPlanilhaXlsx(
     const fornTxt = sanitizarCelulaExcel(item.fornecedor);
     const [linkPncp] = obterLinksEvidenciaItem(item);
 
-    const r = ws1.addRow([
-      descTxt,
-      valUnit,
-      arpTxt,
-      dtAssTxt,
-      orgaoTxt,
-      fornTxt,
-    ]);
-    r.height = calcularAlturaLinhaA4([
-      [descTxt, largurasAba1[0]],
-      [arpTxt, largurasAba1[2]],
-      [orgaoTxt, largurasAba1[4]],
-      [fornTxt, largurasAba1[5]],
-    ]);
+    let r: ExcelJS.Row;
+    if (ehDesconto) {
+      r = ws1.addRow([
+        descTxt,
+        valUnit,
+        arpTxt,
+        dtAssTxt,
+        orgaoTxt,
+        fornTxt,
+      ]);
+      r.height = calcularAlturaLinhaA4([
+        [descTxt, largurasAba1[0]],
+        [arpTxt, largurasAba1[2]],
+        [orgaoTxt, largurasAba1[4]],
+        [fornTxt, largurasAba1[5]],
+      ]);
+    } else {
+      const formulaTxt = sanitizarCelulaExcel(item.formula_normalizacao || "-");
+      const valOriginal = Number(item.valor_original ?? item.valor_unitario ?? 0);
+      const unidOrigTxt = sanitizarCelulaExcel(
+        item.unidade_original || item.unidade_fornecimento || "-"
+      );
 
-    for (let colIdx = 1; colIdx <= 6; colIdx++) {
+      r = ws1.addRow([
+        descTxt,
+        valUnit,
+        formulaTxt,
+        valOriginal,
+        unidOrigTxt,
+        arpTxt,
+        dtAssTxt,
+        orgaoTxt,
+        fornTxt,
+      ]);
+      r.height = calcularAlturaLinhaA4([
+        [descTxt, largurasAba1[0]],
+        [formulaTxt, largurasAba1[2]],
+        [arpTxt, largurasAba1[5]],
+        [orgaoTxt, largurasAba1[7]],
+        [fornTxt, largurasAba1[8]],
+      ]);
+    }
+
+    for (let colIdx = 1; colIdx <= numColsAba1; colIdx++) {
       const c = r.getCell(colIdx);
       c.font = fontBodyA4;
       c.border = borderCell;
@@ -344,13 +392,20 @@ export async function gerarPlanilhaXlsx(
       if (colIdx === 2) {
         c.numFmt = formatoValores;
         c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
-      } else if (colIdx === 3) {
+      } else if (!ehDesconto && colIdx === 3) {
+        c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+      } else if (!ehDesconto && colIdx === 4) {
+        c.numFmt = moedaFormat;
+        c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
+      } else if (!ehDesconto && colIdx === 5) {
+        c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+      } else if ((ehDesconto && colIdx === 3) || (!ehDesconto && colIdx === 6)) {
         c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
         if (linkPncp.startsWith("http")) {
           c.value = { text: arpTxt, hyperlink: linkPncp };
           c.font = fontLinkA4;
         }
-      } else if (colIdx === 4) {
+      } else if ((ehDesconto && colIdx === 4) || (!ehDesconto && colIdx === 7)) {
         c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
       } else {
         c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
@@ -359,52 +414,61 @@ export async function gerarPlanilhaXlsx(
     rowNum++;
   });
 
-  // Linha final: MÉDIA DOS VALORES UNITÁRIOS / TAXAS com FÓRMULA =AVERAGE(B2:B{N})
+  // Linhas de síntese: MÉDIA e MEDIANA com FÓRMULAS =AVERAGE(B2:B{N}) e =MEDIAN(B2:B{N})
   const ultimaLinhaDados = Math.max(2, rowNum - 1);
   const formulaMedia =
     itensSelecionados.length > 0
       ? { formula: `AVERAGE(B2:B${ultimaLinhaDados})` }
       : { formula: "0" };
+  const formulaMediana =
+    itensSelecionados.length > 0
+      ? { formula: `MEDIAN(B2:B${ultimaLinhaDados})` }
+      : { formula: "0" };
 
-  const rowMedia = ws1.addRow([
-    ehDesconto ? "MÉDIA DAS TAXAS DE DESCONTO" : "MÉDIA DOS VALORES UNITÁRIOS",
-    formulaMedia,
-    "—",
-    "—",
-    "—",
-    "—",
-  ]);
-  rowMedia.height = 25;
-  for (let colIdx = 1; colIdx <= 6; colIdx++) {
-    const c = rowMedia.getCell(colIdx);
-    c.font = fontBoldA4;
-    c.fill = fillMedia;
-    c.border = borderMedia;
-    if (colIdx === 2) {
-      c.numFmt = formatoValores;
-      c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
-    } else if (colIdx >= 3) {
-      c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
-    } else {
-      c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+  const preencherLinhaResumo = (
+    titulo: string,
+    formulaObj: { formula: string }
+  ) => {
+    const celulas = [titulo, formulaObj, ...Array(numColsAba1 - 2).fill("—")];
+    const rTot = ws1.addRow(celulas);
+    rTot.height = 25;
+    for (let colIdx = 1; colIdx <= numColsAba1; colIdx++) {
+      const c = rTot.getCell(colIdx);
+      c.font = fontBoldA4;
+      c.fill = fillMedia;
+      c.border = borderMedia;
+      if (colIdx === 2) {
+        c.numFmt = formatoValores;
+        c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
+      } else if (colIdx >= 3) {
+        c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+      } else {
+        c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+      }
     }
-  }
+    return rTot;
+  };
+
+  preencherLinhaResumo(
+    ehDesconto ? "MÉDIA DAS TAXAS DE DESCONTO" : "MÉDIA DOS VALORES UNITÁRIOS",
+    formulaMedia
+  );
+  preencherLinhaResumo(
+    ehDesconto ? "MEDIANA DAS TAXAS DE DESCONTO" : "MEDIANA DOS VALORES UNITÁRIOS",
+    formulaMediana
+  );
 
   // Quadro complementar na Aba 1: Links diretos das ARPs selecionadas
   if (itensSelecionados.length > 0) {
     ws1.addRow([]);
     const rowTitEv = ws1.addRow([
       "EVIDÊNCIAS E PAPÉIS DE TRABALHO — LINKS DIRETOS DE ACESSO E DOWNLOAD DAS ARPs SELECIONADAS",
-      "",
-      "",
-      "",
-      "",
-      "",
+      ...Array(numColsAba1 - 1).fill(""),
     ]);
     const titRowNumber = rowTitEv.number;
-    ws1.mergeCells(titRowNumber, 1, titRowNumber, 6);
+    ws1.mergeCells(titRowNumber, 1, titRowNumber, numColsAba1);
     rowTitEv.height = 22;
-    for (let colI = 1; colI <= 6; colI++) {
+    for (let colI = 1; colI <= numColsAba1; colI++) {
       const c = rowTitEv.getCell(colI);
       c.font = fontBoldA4;
       c.fill = fillMedia;
@@ -418,12 +482,12 @@ export async function gerarPlanilhaXlsx(
       "Órgão Gerenciador/UF",
       "Link Direto da ARP no Portal PNCP",
       "Link Direto para Download do PDF (ARP Inicial / Termos Aditivos)",
-      "",
+      ...Array(numColsAba1 - 5).fill(""),
     ]);
     const headEvNum = rowHeadEv.number;
-    ws1.mergeCells(headEvNum, 5, headEvNum, 6);
+    ws1.mergeCells(headEvNum, 5, headEvNum, numColsAba1);
     rowHeadEv.height = 22;
-    for (let colI = 1; colI <= 6; colI++) {
+    for (let colI = 1; colI <= numColsAba1; colI++) {
       const c = rowHeadEv.getCell(colI);
       c.font = fontHeaderA4;
       c.fill = fillSubHeader;
@@ -445,13 +509,13 @@ export async function gerarPlanilhaXlsx(
         orgaoTxt,
         linkPncp,
         linkPdf,
-        "",
+        ...Array(numColsAba1 - 5).fill(""),
       ]);
       const evNum = rEv.number;
-      ws1.mergeCells(evNum, 5, evNum, 6);
+      ws1.mergeCells(evNum, 5, evNum, numColsAba1);
       rEv.height = 22;
 
-      for (let colI = 1; colI <= 6; colI++) {
+      for (let colI = 1; colI <= numColsAba1; colI++) {
         const ce = rEv.getCell(colI);
         ce.font = fontBodyA4;
         ce.border = borderCell;
@@ -526,16 +590,12 @@ export async function gerarPlanilhaXlsx(
     ws1.addRow([]);
     const rowDiscTit = ws1.addRow([
       "DECLARAÇÃO DE INDEPENDÊNCIA INSTITUCIONAL E TERMO DE USO (DISCLAIMER)",
-      "",
-      "",
-      "",
-      "",
-      "",
+      ...Array(numColsAba1 - 1).fill(""),
     ]);
     const discTitNum = rowDiscTit.number;
-    ws1.mergeCells(discTitNum, 1, discTitNum, 6);
+    ws1.mergeCells(discTitNum, 1, discTitNum, numColsAba1);
     rowDiscTit.height = 20;
-    for (let cI = 1; cI <= 6; cI++) {
+    for (let cI = 1; cI <= numColsAba1; cI++) {
       const c = rowDiscTit.getCell(cI);
       c.font = fontBoldA4;
       c.fill = fillSubHeader;
@@ -545,16 +605,12 @@ export async function gerarPlanilhaXlsx(
 
     const rowDisc1 = ws1.addRow([
       DECLARACAO_INDEPENDENCIA_TEXTO,
-      "",
-      "",
-      "",
-      "",
-      "",
+      ...Array(numColsAba1 - 1).fill(""),
     ]);
     const disc1Num = rowDisc1.number;
-    ws1.mergeCells(disc1Num, 1, disc1Num, 6);
+    ws1.mergeCells(disc1Num, 1, disc1Num, numColsAba1);
     rowDisc1.height = 24;
-    for (let cI = 1; cI <= 6; cI++) {
+    for (let cI = 1; cI <= numColsAba1; cI++) {
       const c = rowDisc1.getCell(cI);
       c.font = fontBoldA4;
       c.border = borderCell;
@@ -563,16 +619,12 @@ export async function gerarPlanilhaXlsx(
 
     const rowDisc2 = ws1.addRow([
       TERMO_DE_USO_DISCLAIMER_TEXTO,
-      "",
-      "",
-      "",
-      "",
-      "",
+      ...Array(numColsAba1 - 1).fill(""),
     ]);
     const disc2Num = rowDisc2.number;
-    ws1.mergeCells(disc2Num, 1, disc2Num, 6);
+    ws1.mergeCells(disc2Num, 1, disc2Num, numColsAba1);
     rowDisc2.height = 32;
-    for (let cI = 1; cI <= 6; cI++) {
+    for (let cI = 1; cI <= numColsAba1; cI++) {
       const c = rowDisc2.getCell(cI);
       c.font = fontBodyA4;
       c.border = borderCell;
@@ -593,7 +645,11 @@ export async function gerarPlanilhaXlsx(
   const headersAba2 = [
     "Selecionado (Sim/Não)",
     "Descrição do objeto",
-    ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)",
+    ehDesconto
+      ? "Taxa de Desconto (%)"
+      : unidRefAtiva && unidRefAtiva !== "R$"
+      ? `Valor Unitário (${unidRefAtiva})`
+      : "Valor Unitário (R$)",
     "Quantitativo previsto na ARP",
     "Unidade",
     "Nº do Item/Lote",

@@ -91,6 +91,26 @@ export async function gerarRelatorioPdfA4(
       ? `${res.escopo_orgaos} — UF: ${res.uf_selecionada}`
       : res.escopo_orgaos;
 
+  const unidRefAtiva =
+    res.unidade_referencia_padrao ||
+    itensSelecionados.find((i) => i.unidade_referencia)?.unidade_referencia ||
+    "R$";
+  const modoNorm =
+    res.modo_normalizacao_aplicado || res.modo_normalizacao_escolhido;
+
+  let padronizacaoStr = "Não aplicada / Padrão (R$)";
+  if (ehDesconto) {
+    padronizacaoStr = "Desativada (Critério de Maior Desconto)";
+  } else if (modoNorm === "posto_mes") {
+    padronizacaoStr = `Mensal por Posto (${unidRefAtiva})`;
+  } else if (modoNorm === "veiculo_mes") {
+    padronizacaoStr = `Mensal por Veículo (${unidRefAtiva})`;
+  } else if (unidRefAtiva !== "R$") {
+    padronizacaoStr = `Padronização: ${unidRefAtiva}`;
+  } else if (itensSelecionados.some((i) => i.normalizado)) {
+    padronizacaoStr = `Padronização: ${unidRefAtiva}`;
+  }
+
   autoTable(doc, {
     startY: yPos,
     theme: "grid",
@@ -117,6 +137,7 @@ export async function gerarRelatorioPdfA4(
       ["Escopo dos Órgãos", escopoStr],
       ["Status / Período", `${res.status_ata} | ${res.periodo_aplicado_str}`],
       ["Termos Consultados no PNCP", res.termos_busca.join(", ")],
+      ["Padronização de Preço", padronizacaoStr],
       [
         "Funil de Auditoria",
         `Atas Encontradas: ${res.total_atas_encontradas}  |  No Escopo/Período: ${res.atas_validas_escopo_periodo}  |  Itens Avaliados: ${res.total_itens_avaliados}  |  Descartados: ${res.descartados.length}`,
@@ -192,14 +213,31 @@ export async function gerarRelatorioPdfA4(
   );
   yPos += 2;
 
-  const bodyConsolidado = itensSelecionados.map((it) => [
-    sanitizarCelulaExcel(it.descricao_objeto),
-    formatValorOuTaxa(Number(it.valor_unitario || 0), criterioClassificacao),
-    sanitizarCelulaExcel(it.numero_arp_licitacao),
-    sanitizarCelulaExcel(it.data_assinatura || "não informado"),
-    sanitizarCelulaExcel(it.orgao_gerenciador_uf),
-    sanitizarCelulaExcel(it.fornecedor),
-  ]);
+  const colValorHeader = ehDesconto
+    ? "Taxa de Desconto (%)"
+    : unidRefAtiva !== "R$"
+    ? `Valor Unitário (${unidRefAtiva})`
+    : "Valor Unitário (R$)";
+
+  const bodyConsolidado = itensSelecionados.map((it) => {
+    let desc = sanitizarCelulaExcel(it.descricao_objeto);
+    if (it.formula_normalizacao) {
+      desc += `\n[Memória de Cálculo (Lei 14.133/2021): ${it.formula_normalizacao}]`;
+      if (it.valor_original !== undefined && it.valor_original !== it.valor_unitario) {
+        const valOrigFmt = `R$ ${Number(it.valor_original).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+        desc += ` (Valor original na ARP: ${valOrigFmt})`;
+      }
+    }
+
+    return [
+      desc,
+      formatValorOuTaxa(Number(it.valor_unitario || 0), criterioClassificacao),
+      sanitizarCelulaExcel(it.numero_arp_licitacao),
+      sanitizarCelulaExcel(it.data_assinatura || "não informado"),
+      sanitizarCelulaExcel(it.orgao_gerenciador_uf),
+      sanitizarCelulaExcel(it.fornecedor),
+    ];
+  });
 
   bodyConsolidado.push([
     ehDesconto ? "MÉDIA DAS TAXAS DE DESCONTO" : "MÉDIA DOS VALORES UNITÁRIOS",
@@ -229,7 +267,7 @@ export async function gerarRelatorioPdfA4(
     head: [
       [
         "Descrição do objeto",
-        ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)",
+        colValorHeader,
         "Nº da ARP / Licitação",
         "Data de Assinatura",
         "Órgão Gerenciador/UF",

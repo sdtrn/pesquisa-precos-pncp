@@ -1,5 +1,7 @@
 export class MockJsPDF {
   pages: number = 1;
+  texts: string[] = [];
+  tables: any[] = [];
   internal = {
     pageSize: {
       getWidth: () => 210,
@@ -14,7 +16,13 @@ export class MockJsPDF {
   setTextColor() {}
   setFont() {}
   setFontSize() {}
-  text() {}
+  text(txt: any, ..._args: any[]) {
+    if (Array.isArray(txt)) {
+      this.texts.push(...txt.map(String));
+    } else if (txt !== undefined && txt !== null) {
+      this.texts.push(String(txt));
+    }
+  }
   splitTextToSize(text: string, _maxW?: number) {
     return [text];
   }
@@ -26,7 +34,12 @@ export class MockJsPDF {
     return this.pages;
   }
   output(_type: string) {
-    return Buffer.from("%PDF-1.4 Mock PDF Document");
+    const tableTexts = this.tables.flatMap((t) => [
+      JSON.stringify(t.head || []),
+      JSON.stringify(t.body || []),
+    ]);
+    const content = ["%PDF-1.4 Mock PDF Document", ...this.texts, ...tableTexts].join("\n");
+    return Buffer.from(content);
   }
 }
 

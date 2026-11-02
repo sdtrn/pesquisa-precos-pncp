@@ -18,16 +18,23 @@ export function formatarMoedaBr(valor: number): string {
 }
 
 function escaparCampoCsv(val: string): string {
-  if (val.includes(";") || val.includes('"') || val.includes("\n")) {
-    return `"${val.replace(/"/g, '""')}"`;
+  let s = String(val ?? "");
+  // Proteção contra CSV Injection (=, +, -, @)
+  if (s.startsWith("=") || s.startsWith("+") || s.startsWith("@") || s.startsWith("-")) {
+    if (s !== "-" && s !== "—" && !/^-?\d+(?:[.,]\d+)?$/.test(s)) {
+      s = `'${s}`;
+    }
   }
-  return val;
+  if (s.includes(";") || s.includes('"') || s.includes("\n") || s.includes("\r")) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
 }
 
 /**
  * Gera o conteúdo `.csv` da Tabela Consolidada (codificação UTF-8 com BOM e separador `;`),
- * contendo a coluna de Data de Assinatura, a média dos valores unitários / taxas de desconto
- * e os links diretos das ARPs iniciais e de seus eventuais Termos Aditivos.
+ * contendo as colunas auditáveis de normalização (valor_unitario_normalizado, formula_normalizacao,
+ * valor_original_arp, unidade_original_arp), data de assinatura, média dos valores e links diretos.
  */
 export function gerarCsvConsolidado(
   itensSelecionados: ItemCandidato[],
@@ -38,6 +45,10 @@ export function gerarCsvConsolidado(
   const cabecalho = [
     "Descrição do objeto",
     ehDesconto ? "Taxa de Desconto (%)" : "Valor Unitário (R$)",
+    "valor_unitario_normalizado",
+    "formula_normalizacao",
+    "valor_original_arp",
+    "unidade_original_arp",
     "Nº da ARP / Licitação",
     "Data de Assinatura",
     "Órgão Gerenciador/UF",
@@ -53,6 +64,15 @@ export function gerarCsvConsolidado(
     const val = Number(item.valor_unitario || 0);
     soma += val;
     const valFmt = formatValorOuTaxa(val, criterioClassificacao).replace(/\u00A0/g, " ");
+    const formulaNorm = sanitizarCelulaExcel(item.formula_normalizacao || "-");
+    const valOriginalFmt =
+      item.valor_original != null
+        ? formatValorOuTaxa(Number(item.valor_original), criterioClassificacao).replace(/\u00A0/g, " ")
+        : valFmt;
+    const unidOriginal = sanitizarCelulaExcel(
+      item.unidade_original || item.unidade_fornecimento || "-"
+    );
+
     const ev = descreverArquivosEvidenciaItem(item);
     const linksAditivos =
       ev.termosAditivos.length > 0
@@ -62,6 +82,10 @@ export function gerarCsvConsolidado(
     const row = [
       sanitizarCelulaExcel(item.descricao_objeto),
       valFmt,
+      valFmt,
+      formulaNorm,
+      valOriginalFmt,
+      unidOriginal,
       sanitizarCelulaExcel(item.numero_arp_licitacao),
       sanitizarCelulaExcel(item.data_assinatura || "não informado"),
       sanitizarCelulaExcel(item.orgao_gerenciador_uf),
@@ -79,6 +103,10 @@ export function gerarCsvConsolidado(
     const rowMedia = [
       ehDesconto ? "MÉDIA DAS TAXAS DE DESCONTO" : "MÉDIA DOS VALORES UNITÁRIOS",
       mediaFmt,
+      mediaFmt,
+      "—",
+      "—",
+      "—",
       "—",
       "—",
       "—",
