@@ -14,6 +14,11 @@ import {
   avaliarAderenciaItem,
   verificarCompatibilidadePreliminarAta,
 } from "@/lib/domain/parser-requisitos";
+import {
+  extrairTaxaDescontoDePdf,
+  parseTaxaDesconto,
+} from "@/lib/domain/pdf-parser";
+import type { ArquivoArp } from "@/lib/domain/types";
 import { PNCPClient } from "@/lib/domain/pncp-client";
 import {
   agoraRecifeFormatado,
@@ -768,6 +773,8 @@ export async function executarPipelinePesquisa(
   }
 
   // 5. Consolidação final
+  const cacheTaxaDescontoPorAta = new Map<string, number>();
+  const cacheArquivosPorAta = new Map<string, ArquivoArp[]>();
   const totalAprovadas = atasAprovadasTriagem.length;
   for (let idxCtx = 0; idxCtx < totalAprovadas; idxCtx++) {
     const ctx = atasAprovadasTriagem[idxCtx];
@@ -994,29 +1001,111 @@ export async function executarPipelinePesquisa(
         continue;
       }
 
+      const ehDesconto = params.criterioClassificacao === "maior_desconto";
       let melhorRes: Record<string, unknown> | null = null;
       let menorValRes: number | null = null;
-      let motivoFalhaRes = "preço unitário homologado ausente ou <= 0 (R5)";
+      let taxaDescontoCalculada: number | null = null;
+      let motivoFalhaRes = ehDesconto
+        ? "item sem resultado homologado ativo no PNCP"
+        : "preço unitário homologado ausente ou <= 0 (R5)";
 
-      for (const r of resultados) {
-        const sitResNome = String(
-          r.situacaoCompraItemResultadoNome || ""
-        ).toLowerCase();
-        if (r.dataCancelamento || sitResNome.startsWith("cancel")) {
-          motivoFalhaRes = "resultado homologado cancelado no PNCP";
-          continue;
-        }
-        const valNum = Number(r.valorUnitarioHomologado);
-        if (!Number.isFinite(valNum) || valNum <= 0) {
-          continue;
-        }
-        if (menorValRes === null || valNum < menorValRes) {
-          menorValRes = valNum;
+      if (ehDesconto) {
+        // No critério de Maior Desconto:
+        // Localiza qualquer resultado ativo/homologado
+        for (const r of resultados) {
+          const sitResNome = String(
+            r.situacaoCompraItemResultadoNome || ""
+          ).toLowerCase();
+          if (r.dataCancelamento || sitResNome.startsWith("cancel")) {
+            motivoFalhaRes = "resultado homologado cancelado no PNCP";
+            continue;
+          }
           melhorRes = r;
+          break;
+        }
+
+        if (melhorRes) {
+          const chaveAtaAtual = `${cnpj}|${anoC}|${seqCompra}|${seqAta}`;
+          if (cacheTaxaDescontoPorAta.has(chaveAtaAtual)) {
+            taxaDescontoCalculada = cacheTaxaDescontoPorAta.get(chaveAtaAtual)!;
+          } else {
+            // Camada 1: percentualDesconto vindo direto da API PNCP se preenchido
+            const percApi = Number(melhorRes.percentualDesconto);
+            if (Number.isFinite(percApi) && percApi > 0) {
+              taxaDescontoCalculada = Math.round(percApi * 10000) / 10000;
+            }
+
+            // Camada 2: Metadados textuais da compra/item/ata
+            if (taxaDescontoCalculada === null) {
+              const textosParaBusca = [
+                infCompItem,
+                descItem,
+                detAta ? String(detAta.objetoAta || "") : "",
+                objAtaStr,
+              ].filter(Boolean);
+
+              for (const txt of textosParaBusca) {
+                const matchTexto = parseTaxaDesconto(txt);
+                if (matchTexto) {
+                  taxaDescontoCalculada = matchTexto.taxa;
+                  break;
+                }
+              }
+            }
+
+            // Camada 3: Inspeção do Arquivo PDF da Ata (/arquivos)
+            if (taxaDescontoCalculada === null) {
+              let arqs = cacheArquivosPorAta.get(chaveAtaAtual);
+              if (!arqs) {
+                arqs = await client.obterArquivosAta(cnpj, anoC, seqCompra, seqAta);
+                cacheArquivosPorAta.set(chaveAtaAtual, arqs);
+              }
+
+              const arqPrincipal =
+                arqs.find((a) => /ata|arp/i.test(a.titulo) || /ata/i.test(a.tipo)) ||
+                arqs[0];
+
+              if (arqPrincipal && arqPrincipal.url) {
+                const pdfBuf = await client.baixarArquivoBuffer(arqPrincipal.url);
+                if (pdfBuf) {
+                  const matchPdf = extrairTaxaDescontoDePdf(pdfBuf);
+                  if (matchPdf) {
+                    taxaDescontoCalculada = matchPdf.taxa;
+                  }
+                }
+              }
+            }
+
+            // Camada 4: Fallback padrão para 0.00% conforme regra de negócio
+            if (taxaDescontoCalculada === null) {
+              taxaDescontoCalculada = 0.0;
+            }
+
+            cacheTaxaDescontoPorAta.set(chaveAtaAtual, taxaDescontoCalculada);
+          }
+        }
+      } else {
+        // Critério padrão: Menor Preço
+        for (const r of resultados) {
+          const sitResNome = String(
+            r.situacaoCompraItemResultadoNome || ""
+          ).toLowerCase();
+          if (r.dataCancelamento || sitResNome.startsWith("cancel")) {
+            motivoFalhaRes = "resultado homologado cancelado no PNCP";
+            continue;
+          }
+          const valNum = Number(r.valorUnitarioHomologado);
+          if (!Number.isFinite(valNum) || valNum <= 0) {
+            continue;
+          }
+          if (menorValRes === null || valNum < menorValRes) {
+            menorValRes = valNum;
+            melhorRes = r;
+          }
         }
       }
 
-      if (!melhorRes || menorValRes === null) {
+      if (!melhorRes || (!ehDesconto && menorValRes === null)) {
         descartados.push({
           Nível: "Item",
           "Motivo do Descarte": motivoFalhaRes,
@@ -1118,9 +1207,15 @@ export async function executarPipelinePesquisa(
         null
       );
 
+      const chaveAtaAtual = `${cnpj}|${anoC}|${seqCompra}|${seqAta}`;
+      const arqsDestaAta = cacheArquivosPorAta.get(chaveAtaAtual);
+      const valorFinal = ehDesconto
+        ? (taxaDescontoCalculada ?? 0)
+        : Math.round(menorValRes! * 10000) / 10000;
+
       itensValidosDestaAta.push({
         descricao_objeto: descItem,
-        valor_unitario: Math.round(menorValRes * 10000) / 10000,
+        valor_unitario: valorFinal,
         quantitativo_previsto_arp: quantitativoArpStr,
         quantidade_numerica_str: apenasQtdStr,
         unidade_fornecimento: unMedidaItem || "não informado",
@@ -1144,6 +1239,8 @@ export async function executarPipelinePesquisa(
         seq_compra: seqCompra,
         seq_ata: seqAta,
         link_ata_pncp: linkPncp,
+        link_download_arp: arqsDestaAta && arqsDestaAta.length > 0 ? arqsDestaAta[0].url : linkPncp,
+        arquivos_arp: arqsDestaAta,
         aderencia: aderenciaFinal,
         detalhe_aderencia: motivoFinal,
         orgao_atende_validade: atendeValidadeSimNao,

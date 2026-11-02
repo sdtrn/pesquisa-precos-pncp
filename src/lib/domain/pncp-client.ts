@@ -974,4 +974,51 @@ export class PNCPClient {
       }
     });
   }
+
+  /**
+   * Baixa o conteúdo binário de um arquivo oficial do PNCP (ex: PDF da Ata)
+   * em memória com cabeçalhos de navegador e cache automático.
+   */
+  async baixarArquivoBuffer(url: string, timeoutMs = 25000): Promise<Buffer | null> {
+    if (!url || typeof url !== "string") return null;
+    const cacheKey = `buffer_${url}`;
+    if (this.usarCache) {
+      const cached = getFromCache(cacheKey);
+      if (Buffer.isBuffer(cached)) {
+        return cached;
+      }
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+      const resp = await fetch(url, {
+        method: "GET",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+          Accept: "application/pdf, application/octet-stream, */*",
+          "Accept-Language": "pt-BR,pt;q=0.9",
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!resp.ok) {
+        return null;
+      }
+
+      const arrayBuf = await resp.arrayBuffer();
+      const buf = Buffer.from(arrayBuf);
+      if (this.usarCache && buf.length > 0) {
+        if (buf.length <= 10 * 1024 * 1024) {
+          setInCache(cacheKey, buf);
+        }
+      }
+      return buf;
+    } catch {
+      return null;
+    }
+  }
 }
