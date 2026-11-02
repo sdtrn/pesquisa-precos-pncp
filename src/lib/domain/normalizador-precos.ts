@@ -19,6 +19,7 @@ export interface DadosCalculoNormalizacao {
 export interface ResultadoCalculoNormalizacao {
   valorNormalizado: number;
   valorOriginal: number;
+  unidadeOriginal?: string;
   unidadeReferencia: string;
   formula: string;
   normalizado: boolean;
@@ -369,6 +370,7 @@ export function calcularPrecoNormalizado(
     return {
       valorNormalizado: valorHomologado,
       valorOriginal: valorHomologado,
+      unidadeOriginal: unidadeMedidaItem || "não informado",
       unidadeReferencia: "R$",
       formula: "",
       normalizado: false,
@@ -394,6 +396,7 @@ export function calcularPrecoNormalizado(
     return {
       valorNormalizado: valorHomologado,
       valorOriginal: valorHomologado,
+      unidadeOriginal: unidadeMedidaItem || "não informado",
       unidadeReferencia: unidadeRef,
       formula: "",
       normalizado: false,
@@ -456,6 +459,7 @@ export function calcularPrecoNormalizado(
     return {
       valorNormalizado: valorHomologado,
       valorOriginal: valorHomologado,
+      unidadeOriginal: unidadeMedidaItem || "não informado",
       unidadeReferencia: unidadeRef,
       formula: "",
       normalizado: false,
@@ -484,6 +488,7 @@ export function calcularPrecoNormalizado(
   return {
     valorNormalizado,
     valorOriginal: valorHomologado,
+    unidadeOriginal: unidadeMedidaItem || "não informado",
     unidadeReferencia: unidadeRef,
     formula,
     normalizado: true,

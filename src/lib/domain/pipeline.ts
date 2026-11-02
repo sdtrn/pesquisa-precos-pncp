@@ -18,6 +18,10 @@ import {
   extrairTaxaDescontoDePdf,
   parseTaxaDesconto,
 } from "@/lib/domain/pdf-parser";
+import {
+  calcularPrecoNormalizado,
+  detectarModoNormalizacaoSugerido,
+} from "@/lib/domain/normalizador-precos";
 import { selecionarTop20Menores } from "@/lib/domain/selection";
 import type { ArquivoArp } from "@/lib/domain/types";
 import { PNCPClient } from "@/lib/domain/pncp-client";
@@ -32,6 +36,7 @@ import {
 import type {
   CriterioClassificacao,
   ItemCandidato,
+  ModoNormalizacaoPreco,
   NivelAderencia,
   ParametrosPipeline,
   RegistroDescartado,
@@ -223,6 +228,11 @@ export async function executarPipelinePesquisa(
   const agora = new Date();
   const hojeRecife = hojeRecifeIso(agora);
   const dataHoraConsultaStr = agoraRecifeFormatado(agora);
+
+  const modoNormalizacaoEfetivo: ModoNormalizacaoPreco =
+    !params.modoNormalizacao || params.modoNormalizacao === "auto"
+      ? detectarModoNormalizacaoSugerido(params.descricaoObjeto || "")
+      : params.modoNormalizacao;
 
   const dtIni = params.dataInicial?.trim() || null;
   const dtFim = params.dataFinal?.trim() || null;
@@ -1210,14 +1220,56 @@ export async function executarPipelinePesquisa(
 
       const chaveAtaAtual = `${cnpj}|${anoC}|${seqCompra}|${seqAta}`;
       const arqsDestaAta = cacheArquivosPorAta.get(chaveAtaAtual);
-      const valorFinal = ehDesconto
-        ? (taxaDescontoCalculada ?? 0)
-        : Math.round(menorValRes! * 10000) / 10000;
+
+      let valorFinal: number;
+      let valorOriginal: number | undefined;
+      let unidadeOriginal: string | undefined;
+      let formulaNormalizacao: string | undefined;
+      let unidadeReferencia: string | undefined;
+      let normalizado: boolean | undefined;
+      let quantitativoPrevistoArpFinal = quantitativoArpStr;
+
+      if (ehDesconto) {
+        valorFinal = taxaDescontoCalculada ?? 0;
+      } else {
+        const qtdHom =
+          melhorRes.quantidadeHomologada !== null &&
+          melhorRes.quantidadeHomologada !== undefined &&
+          Number.isFinite(Number(melhorRes.quantidadeHomologada))
+            ? Number(melhorRes.quantidadeHomologada)
+            : undefined;
+
+        const resNorm = calcularPrecoNormalizado({
+          valorHomologado: menorValRes!,
+          quantidadeHomologada: qtdHom,
+          descricaoItem: descItem,
+          informacaoComplementar: infCompItem,
+          unidadeMedidaItem: unMedidaItem,
+          quantidadeItem: qtdItemCompra,
+          modoNormalizacao: modoNormalizacaoEfetivo,
+        });
+
+        valorFinal = Math.round(resNorm.valorNormalizado * 10000) / 10000;
+        valorOriginal = resNorm.valorOriginal;
+        unidadeOriginal = resNorm.unidadeOriginal || unMedidaItem || "não informado";
+        formulaNormalizacao = resNorm.formula;
+        unidadeReferencia = resNorm.unidadeReferencia;
+        normalizado = resNorm.normalizado;
+
+        if (resNorm.quantitativoStatus === "não informado") {
+          quantitativoPrevistoArpFinal = "não informado";
+        }
+      }
 
       itensValidosDestaAta.push({
         descricao_objeto: descItem,
         valor_unitario: valorFinal,
-        quantitativo_previsto_arp: quantitativoArpStr,
+        valor_original: valorOriginal,
+        unidade_original: unidadeOriginal,
+        formula_normalizacao: formulaNormalizacao,
+        unidade_referencia: unidadeReferencia,
+        normalizado: normalizado,
+        quantitativo_previsto_arp: quantitativoPrevistoArpFinal,
         quantidade_numerica_str: apenasQtdStr,
         unidade_fornecimento: unMedidaItem || "não informado",
         numero_arp_licitacao: arpLicitacaoStr,
@@ -1417,6 +1469,14 @@ export async function executarPipelinePesquisa(
     momento_consulta: dataHoraConsultaStr,
     escopo_orgaos: params.escopoOrgaos,
     criterio_classificacao: params.criterioClassificacao || "menor_preco",
+    modo_normalizacao_escolhido: params.modoNormalizacao || "auto",
+    modo_normalizacao_aplicado: modoNormalizacaoEfetivo,
+    unidade_referencia_padrao:
+      modoNormalizacaoEfetivo === "posto_mes"
+        ? "R$/mês/posto"
+        : modoNormalizacaoEfetivo === "veiculo_mes"
+        ? "R$/mês/veículo"
+        : "R$",
     uf_selecionada: params.ufSelecionada || null,
     regiao_selecionada: params.regiaoSelecionada || null,
     apenas_municipios_bilionarios:

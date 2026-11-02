@@ -2,8 +2,9 @@ import { TOP_N_ITENS_JANELA } from "@/data/constants";
 import type { CriterioClassificacao, ItemCandidato, NivelAderencia } from "@/lib/domain/types";
 
 /**
- * Retorna os `limite` (padrão: 20) melhores itens (menor preço ou maior desconto),
+ * Retorna os `limite` (padrão: 20) melhores itens (menor preço normalizado ou maior desconto),
  * garantindo estritamente NO MÁXIMO UM ITEM POR ATA (Regra R6).
+ * Quando o critério é 'menor_preco', ordena de forma crescente pelo menor valor unitário normalizado.
  * Quando o critério é 'maior_desconto', ordena de forma decrescente pela maior taxa.
  */
 export function selecionarTop20Menores(
