@@ -1316,7 +1316,7 @@ export async function executarPipelinePesquisa(
 
     if (itensValidosDestaAta.length === 0) continue;
 
-    // Regra R6: deduplicação e máximo 1 item por ata
+    // Regra R6: deduplicação por chave única (CNPJ + ata + nº do item)
     const ehDescontoR6 = params.criterioClassificacao === "maior_desconto";
     const itensDedupAta: ItemCandidato[] = [];
     const ordenadosAta = [...itensValidosDestaAta].sort((a, b) => {
@@ -1426,8 +1426,8 @@ export async function executarPipelinePesquisa(
     let chaveMot = mot;
     if (mot.startsWith("Aderência C")) {
       chaveMot = "Aderência C (não atende aos requisitos ou outro objeto na ata)";
-    } else if (mot.startsWith("descartado pela Regra R6")) {
-      chaveMot = "Regra R6 (mais de um item na mesma ata)";
+    } else if (mot.includes("Regra R6")) {
+      chaveMot = "Regra R6 (item duplicado por CNPJ, ata e nº do item)";
     }
     resumoDescartes[chaveMot] = (resumoDescartes[chaveMot] || 0) + 1;
   }

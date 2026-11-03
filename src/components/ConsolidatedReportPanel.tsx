@@ -441,7 +441,7 @@ export function ConsolidatedReportPanel({
                     {formatValorOuTaxa(estatisticas.media, criterioClassificacao)}
                   </td>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="py-3 px-3 text-xs text-slate-600 dark:text-slate-300 font-normal"
                   >
                     Fórmula na planilha Excel exportada:{" "}

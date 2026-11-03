@@ -95,3 +95,26 @@ test("selecionarTop20Menores com critério de maior desconto deve permitir múlt
   assert.strictEqual(selecionados[1].numero_item_lote, "1");
   assert.strictEqual(selecionados[1].valor_unitario, 5.5);
 });
+
+test("filtro de busca rápida deve encontrar o item ao digitar '3' ou 'Item 3'", () => {
+  const item = criarItemMock({ numero_item_lote: "3" });
+  const corresponde = (busca: string) => {
+    const q = busca.trim().toLowerCase();
+    if (!q) return true;
+    const numLimpo = q.replace(/^item\s*/i, "").trim();
+    return (
+      item.descricao_objeto.toLowerCase().includes(q) ||
+      item.orgao_gerenciador_uf.toLowerCase().includes(q) ||
+      item.fornecedor.toLowerCase().includes(q) ||
+      item.numero_arp_licitacao.toLowerCase().includes(q) ||
+      item.numero_item_lote.toLowerCase().includes(q) ||
+      `item ${item.numero_item_lote}`.toLowerCase().includes(q) ||
+      (numLimpo.length > 0 && item.numero_item_lote.toLowerCase().includes(numLimpo))
+    );
+  };
+
+  assert.strictEqual(corresponde("3"), true);
+  assert.strictEqual(corresponde("Item 3"), true);
+  assert.strictEqual(corresponde("item 3"), true);
+  assert.strictEqual(corresponde("item 4"), false);
+});

@@ -105,12 +105,15 @@ export function Top20SelectionModal({
       if (max !== null && !Number.isNaN(max) && item.valor_unitario > max)
         return false;
       if (!q) return true;
+      const numLimpo = q.replace(/^item\s*/i, "").trim();
       return (
         item.descricao_objeto.toLowerCase().includes(q) ||
         item.orgao_gerenciador_uf.toLowerCase().includes(q) ||
         item.fornecedor.toLowerCase().includes(q) ||
         item.numero_arp_licitacao.toLowerCase().includes(q) ||
-        item.numero_item_lote.toLowerCase().includes(q)
+        item.numero_item_lote.toLowerCase().includes(q) ||
+        `item ${item.numero_item_lote}`.toLowerCase().includes(q) ||
+        (numLimpo.length > 0 && item.numero_item_lote.toLowerCase().includes(numLimpo))
       );
     });
   }, [candidatosTop20, buscaTexto, filtroUf, filtroEsfera, precoMin, precoMax]);
@@ -119,8 +122,8 @@ export function Top20SelectionModal({
     const precos = candidatosTop20
       .filter((c) => selectedKeys.has(chaveItemUnica(c)))
       .map((c) => c.valor_unitario);
-    return calcularEstatisticasPrecos(precos);
-  }, [candidatosTop20, selectedKeys]);
+    return calcularEstatisticasPrecos(precos, criterioClassificacao);
+  }, [candidatosTop20, selectedKeys, criterioClassificacao]);
 
   if (!isOpen) return null;
 

@@ -24,7 +24,7 @@ describe("Regra R6 (1 item por ata), Sanitização e Estatísticas", () => {
     expect(formatarQuantitativoArp(null, "ROLO")).toEqual(["não informado", "não informado"]);
   });
 
-  it("aplica a Regra R6 mantendo no máximo 1 item por ata ordenado por menor valor unitário", () => {
+  it("admite múltiplos itens de uma mesma ARP no ranking Top 20 ordenados por menor valor unitário", () => {
     const candidatos: Partial<ItemCandidato>[] = [
       { cnpj_orgao: "111", numero_arp_licitacao: "ARP nº 1/2026", numero_item_lote: "1", valor_unitario: 950, aderencia: "A" },
       { cnpj_orgao: "111", numero_arp_licitacao: "ARP nº 1/2026", numero_item_lote: "2", valor_unitario: 890, aderencia: "A" },
