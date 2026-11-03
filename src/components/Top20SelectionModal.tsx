@@ -109,7 +109,8 @@ export function Top20SelectionModal({
         item.descricao_objeto.toLowerCase().includes(q) ||
         item.orgao_gerenciador_uf.toLowerCase().includes(q) ||
         item.fornecedor.toLowerCase().includes(q) ||
-        item.numero_arp_licitacao.toLowerCase().includes(q)
+        item.numero_arp_licitacao.toLowerCase().includes(q) ||
+        item.numero_item_lote.toLowerCase().includes(q)
       );
     });
   }, [candidatosTop20, buscaTexto, filtroUf, filtroEsfera, precoMin, precoMax]);
@@ -167,7 +168,7 @@ export function Top20SelectionModal({
                   : "Seleção Auditável dos 20 Menores Preços Unitários (Regra R6)"}
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#B59410] text-white">
-                Máx. 1 item por ARP
+                Classificação por Item Homologado
               </span>
             </div>
             <p className="text-xs text-slate-200 mt-0.5">
@@ -334,6 +335,7 @@ export function Top20SelectionModal({
                     </th>
                     <th className="py-2.5 px-2 text-center">Unid.</th>
                     <th className="py-2.5 px-2 text-right">Qtd. ARP</th>
+                    <th className="py-2.5 px-2 text-center">Item/Lote</th>
                     <th className="py-2.5 px-3">Descrição do Objeto</th>
                     <th className="py-2.5 px-3">Órgão Gerenciador/UF</th>
                     <th className="py-2.5 px-3">Fornecedor</th>
@@ -436,6 +438,16 @@ export function Top20SelectionModal({
                             item.quantitativo_previsto_arp
                           )}
                         </td>
+                        <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                          <span
+                            className="inline-block px-1.5 py-0.5 rounded font-mono font-semibold text-[11px] bg-slate-100 dark:bg-slate-800 text-[#1B365D] dark:text-[#D4AF37] border border-slate-200 dark:border-slate-700"
+                            title={`Item/Lote da ARP: ${item.numero_item_lote}`}
+                          >
+                            {item.numero_item_lote.toLowerCase().includes("item")
+                              ? item.numero_item_lote
+                              : `Item ${item.numero_item_lote}`}
+                          </span>
+                        </td>
                         <td className="py-2.5 px-3 max-w-xs">
                           <div className="font-medium text-slate-900 dark:text-white line-clamp-2">
                             {item.descricao_objeto}
@@ -454,7 +466,7 @@ export function Top20SelectionModal({
                             {item.esfera} • {item.municipio_nome}
                           </div>
                         </td>
-                        <td className="py-2.5 px-3 max-w-[160px] truncate text-slate-600 dark:text-slate-300">
+                        <td className="py-2.5 px-3 max-w-[160px] truncate text-slate-600 dark:text-slate-300" title={item.fornecedor || "não informado"}>
                           {item.fornecedor || "—"}
                         </td>
                         <td className="py-2.5 px-2 whitespace-nowrap font-mono text-[11px]">
@@ -462,7 +474,7 @@ export function Top20SelectionModal({
                             {item.numero_arp_licitacao}
                           </div>
                           <div className="text-[10px] text-slate-500">
-                            Vig: {item.data_fim_vigencia || "—"}
+                            Item {item.numero_item_lote} • Vig: {item.data_fim_vigencia || "—"}
                           </div>
                         </td>
                         <td
