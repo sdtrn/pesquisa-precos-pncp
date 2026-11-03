@@ -33,12 +33,12 @@ describe("Regra R6 (1 item por ata), Sanitização e Estatísticas", () => {
     ];
 
     const topA = selecionarTop20Menores(candidatos as ItemCandidato[], false, 20);
-    expect(topA).toHaveLength(2);
-    expect(topA.map((x) => x.valor_unitario)).toEqual([890, 910]);
+    expect(topA).toHaveLength(3);
+    expect(topA.map((x) => x.valor_unitario)).toEqual([890, 910, 950]);
 
     const topAB = selecionarTop20Menores(candidatos as ItemCandidato[], true, 20);
-    expect(topAB).toHaveLength(3);
-    expect(topAB.map((x) => x.valor_unitario)).toEqual([750, 890, 910]);
+    expect(topAB).toHaveLength(4);
+    expect(topAB.map((x) => x.valor_unitario)).toEqual([750, 890, 910, 950]);
   });
 
   it("calcula média, mediana, desvio-padrão, CV e identifica outliers IQR corretamente", () => {
@@ -62,3 +62,4 @@ describe("Regra R6 (1 item por ata), Sanitização e Estatísticas", () => {
     expect(outliers.has("0|ARP 0|1")).toBe(false);
   });
 });
+

@@ -1369,53 +1369,11 @@ export async function executarPipelinePesquisa(
       .sort((a, b) => a.valor_unitario - b.valor_unitario);
 
     if (itensA.length > 0) {
-      const melhorA = itensA[0];
-      itensCandidatosAprovados.push(melhorA);
-      for (const descA of itensA.slice(1)) {
-        descartados.push({
-          Nível: "Item",
-          "Motivo do Descarte": `descartado pela Regra R6 (no máximo 1 item por ata; mantido item ${
-            melhorA.numero_item_lote
-          } de menor valor R$ ${melhorA.valor_unitario.toFixed(2)})`,
-          "Nº da ARP / Controle PNCP": descA.numero_arp_licitacao,
-          "Órgão Gerenciador/UF": descA.orgao_gerenciador_uf,
-          Esfera: descA.esfera,
-          Município: descA.municipio_nome,
-          "Nº do Item/Lote": descA.numero_item_lote,
-          "Descrição do Objeto / Item": descA.descricao_objeto,
-          "Valor Unitário (R$)": descA.valor_unitario,
-          Unidade: descA.unidade_fornecimento,
-          "Data de Assinatura": descA.data_assinatura,
-          "Vigência da Ata": descA.vigencia_ata,
-          "Situação da Ata": descA.situacao_ata,
-          "Link no PNCP": descA.link_ata_pncp,
-        });
-      }
+      itensCandidatosAprovados.push(...itensA);
     }
 
     if (itensB.length > 0) {
-      const melhorB = itensB[0];
-      itensCandidatosAprovados.push(melhorB);
-      for (const descB of itensB.slice(1)) {
-        descartados.push({
-          Nível: "Item",
-          "Motivo do Descarte": `descartado pela Regra R6 (no máximo 1 item B por ata; mantido item ${
-            melhorB.numero_item_lote
-          } de menor valor R$ ${melhorB.valor_unitario.toFixed(2)})`,
-          "Nº da ARP / Controle PNCP": descB.numero_arp_licitacao,
-          "Órgão Gerenciador/UF": descB.orgao_gerenciador_uf,
-          Esfera: descB.esfera,
-          Município: descB.municipio_nome,
-          "Nº do Item/Lote": descB.numero_item_lote,
-          "Descrição do Objeto / Item": descB.descricao_objeto,
-          "Valor Unitário (R$)": descB.valor_unitario,
-          Unidade: descB.unidade_fornecimento,
-          "Data de Assinatura": descB.data_assinatura,
-          "Vigência da Ata": descB.vigencia_ata,
-          "Situação da Ata": descB.situacao_ata,
-          "Link no PNCP": descB.link_ata_pncp,
-        });
-      }
+      itensCandidatosAprovados.push(...itensB);
     }
   }
 

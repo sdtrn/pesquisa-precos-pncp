@@ -3,7 +3,8 @@ import type { CriterioClassificacao, ItemCandidato, NivelAderencia } from "@/lib
 
 /**
  * Retorna os `limite` (padrão: 20) melhores itens (menor preço normalizado ou maior desconto),
- * garantindo estritamente NO MÁXIMO UM ITEM POR ATA (Regra R6).
+ * permitindo múltiplos itens homologados de uma mesma ARP com diferentes lotes/itens/fornecedores.
+ * Deduplica apenas itens idênticos pelo conjunto (CNPJ, ARP, Número do Item/Lote).
  * Quando o critério é 'menor_preco', ordena de forma crescente pelo menor valor unitário normalizado.
  * Quando o critério é 'maior_desconto', ordena de forma decrescente pela maior taxa.
  */
@@ -21,25 +22,22 @@ export function selecionarTop20Menores(
   );
 
   const ehDesconto = criterioClassificacao === "maior_desconto";
-  const melhorPorAta = new Map<string, ItemCandidato>();
   const ordenados = [...filtrados].sort((a, b) => {
     return ehDesconto
       ? b.valor_unitario - a.valor_unitario
       : a.valor_unitario - b.valor_unitario;
   });
 
+  const vistos = new Set<string>();
+  const unicos: ItemCandidato[] = [];
+
   for (const it of ordenados) {
-    const chaveAta = `${it.cnpj_orgao}|${it.numero_arp_licitacao}`;
-    if (!melhorPorAta.has(chaveAta)) {
-      melhorPorAta.set(chaveAta, it);
+    const chaveItem = `${it.cnpj_orgao}|${it.numero_arp_licitacao}|${it.numero_item_lote}`;
+    if (!vistos.has(chaveItem)) {
+      vistos.add(chaveItem);
+      unicos.push(it);
     }
   }
 
-  return Array.from(melhorPorAta.values())
-    .sort((a, b) =>
-      ehDesconto
-        ? b.valor_unitario - a.valor_unitario
-        : a.valor_unitario - b.valor_unitario
-    )
-    .slice(0, limite);
+  return unicos.slice(0, limite);
 }

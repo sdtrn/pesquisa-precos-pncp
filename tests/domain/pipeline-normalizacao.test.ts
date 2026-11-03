@@ -491,15 +491,17 @@ test("Task 3: Seleção Top 20 - Ordenação correta por menor valor unitário n
 
   const top = selecionarTop20Menores(candidatos as ItemCandidato[], false, 20);
 
-  // Deve manter no máximo 1 por ata (Regra R6)
-  assert.strictEqual(top.length, 3);
-  // Ordem crescente de valor unitário normalizado: 9.500 < 12.000 < 15.000
+  // Permite múltiplos itens da mesma ata no Top 20 ordenados por menor valor normalizado
+  assert.strictEqual(top.length, 4);
+  // Ordem crescente de valor unitário normalizado: 9.500 < 12.000 < 14.000 < 15.000
   assert.deepStrictEqual(
     top.map((x) => x.valor_unitario),
-    [9500, 12000, 15000]
+    [9500, 12000, 14000, 15000]
   );
   assert.strictEqual(top[0].cnpj_orgao, "222");
   assert.strictEqual(top[1].cnpj_orgao, "111");
-  assert.strictEqual(top[2].cnpj_orgao, "333");
+  assert.strictEqual(top[2].cnpj_orgao, "111");
+  assert.strictEqual(top[3].cnpj_orgao, "333");
 });
+
 

@@ -47,10 +47,10 @@ test("Task 3: Pipeline e estatísticas com suporte a maior taxa de desconto", ()
     20,
     "maior_desconto"
   );
-  assert.strictEqual(topDesconto.length, 3);
+  assert.strictEqual(topDesconto.length, 4);
   assert.deepStrictEqual(
     topDesconto.map((x) => x.valor_unitario),
-    [8.5, 5.0, 3.2]
+    [8.5, 5.2, 5.0, 3.2]
   );
   assert.strictEqual(
     topDesconto[0].cnpj_orgao,
@@ -65,10 +65,10 @@ test("Task 3: Pipeline e estatísticas com suporte a maior taxa de desconto", ()
     20,
     "menor_preco"
   );
-  assert.strictEqual(topPreco.length, 3);
+  assert.strictEqual(topPreco.length, 4);
   assert.deepStrictEqual(
     topPreco.map((x) => x.valor_unitario),
-    [3.2, 5.0, 5.2]
+    [3.2, 5.0, 5.2, 8.5]
   );
 
   // 3. Formatação monetária vs percentual
@@ -83,3 +83,5 @@ test("Task 3: Pipeline e estatísticas com suporte a maior taxa de desconto", ()
   assert.strictEqual(statsDesconto.maior, 6.0);
   assert.strictEqual(statsDesconto.media, 3.0);
 });
+
+

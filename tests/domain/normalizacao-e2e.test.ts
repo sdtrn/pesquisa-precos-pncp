@@ -293,7 +293,7 @@ test("Task 6: E2E - Pipeline de Serviço de Vigilância Armada com 4 ARPs (Posto
   assert.strictEqual(itemArp4.valor_original, 15000);
   assert.strictEqual(itemArp4.valor_unitario, 15000);
   assert.strictEqual(itemArp4.normalizado, false);
-  assert.strictEqual(itemArp4.quantitativo_previsto_arp, "não informado");
+  assert.strictEqual(itemArp4.quantitativo_previsto_arp, "1 Serviço");
   assert.strictEqual(itemArp4.unidade_referencia, "R$/mês/posto");
 
   // 3. Provar o Empate dos 3 Primeiros Itens no Top 20 e Ordenação Correta
@@ -643,3 +643,4 @@ test("Task 6: E2E - Pipeline de Locação de Veículos (Veículo-Mês) com Contr
   const csv = gerarCsvConsolidado(top20, "menor_preco");
   assert.ok(csv.includes("3.000,00"));
 });
+
