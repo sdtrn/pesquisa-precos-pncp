@@ -331,7 +331,14 @@ export async function gerarPlanilhaXlsx(
   itensSelecionados.forEach((item, idx) => {
     const descTxt = sanitizarCelulaExcel(item.descricao_objeto);
     const valUnit = Number(item.valor_unitario || 0);
-    const arpTxt = sanitizarCelulaExcel(item.numero_arp_licitacao);
+    const numItemStr = item.numero_item_lote
+      ? item.numero_item_lote.toLowerCase().includes("item")
+        ? item.numero_item_lote
+        : `Item ${item.numero_item_lote}`
+      : "";
+    const arpTxt = numItemStr
+      ? `${sanitizarCelulaExcel(item.numero_arp_licitacao)} (${numItemStr})`
+      : sanitizarCelulaExcel(item.numero_arp_licitacao);
     const dtAssTxt = sanitizarCelulaExcel(
       item.data_assinatura || "não informado"
     );
@@ -555,7 +562,14 @@ export async function gerarPlanilhaXlsx(
     };
 
     itensSelecionados.forEach((item, idxE) => {
-      const arpTxt = sanitizarCelulaExcel(item.numero_arp_licitacao);
+      const numItemStr = item.numero_item_lote
+      ? item.numero_item_lote.toLowerCase().includes("item")
+        ? item.numero_item_lote
+        : `Item ${item.numero_item_lote}`
+      : "";
+    const arpTxt = numItemStr
+      ? `${sanitizarCelulaExcel(item.numero_arp_licitacao)} (${numItemStr})`
+      : sanitizarCelulaExcel(item.numero_arp_licitacao);
       const dtAssTxt = sanitizarCelulaExcel(
         item.data_assinatura || "não informado"
       );

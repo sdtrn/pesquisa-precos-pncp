@@ -229,10 +229,19 @@ export async function gerarRelatorioPdfA4(
       }
     }
 
+    const numItemStr = it.numero_item_lote
+      ? it.numero_item_lote.toLowerCase().includes("item")
+        ? it.numero_item_lote
+        : `Item ${it.numero_item_lote}`
+      : "";
+    const arpFmt = numItemStr
+      ? `${sanitizarCelulaExcel(it.numero_arp_licitacao)}\n(${numItemStr})`
+      : sanitizarCelulaExcel(it.numero_arp_licitacao);
+
     return [
       desc,
       formatValorOuTaxa(Number(it.valor_unitario || 0), criterioClassificacao),
-      sanitizarCelulaExcel(it.numero_arp_licitacao),
+      arpFmt,
       sanitizarCelulaExcel(it.data_assinatura || "não informado"),
       sanitizarCelulaExcel(it.orgao_gerenciador_uf),
       sanitizarCelulaExcel(it.fornecedor),
@@ -318,7 +327,13 @@ export async function gerarRelatorioPdfA4(
   const bodyEvidencias: string[][] = [];
   itensSelecionados.forEach((it) => {
     const ev = descreverArquivosEvidenciaItem(it);
-    const arpTxt = sanitizarCelulaExcel(it.numero_arp_licitacao);
+    const numItemStr = it.numero_item_lote
+      ? it.numero_item_lote.toLowerCase().includes("item")
+        ? it.numero_item_lote
+        : `Item ${it.numero_item_lote}`
+      : "";
+    const arpBase = sanitizarCelulaExcel(it.numero_arp_licitacao);
+    const arpTxt = numItemStr ? `${arpBase} (${numItemStr})` : arpBase;
     const orgaoTxt = sanitizarCelulaExcel(it.orgao_gerenciador_uf);
     const rotuloInicial =
       ev.termosAditivos.length > 0 ? `${arpTxt} (ARP Inicial)` : arpTxt;

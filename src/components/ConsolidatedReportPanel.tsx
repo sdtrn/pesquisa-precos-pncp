@@ -326,6 +326,7 @@ export function ConsolidatedReportPanel({
                       ? `Valor Unitário (${unidadeRefAtiva})`
                       : "Valor Unitário (R$)"}
                   </th>
+                  <th className="py-3 px-2 text-center">Item/Lote</th>
                   <th className="py-3 px-3">Nº da ARP / Licitação</th>
                   <th className="py-3 px-2 text-center">Data de Assinatura</th>
                   <th className="py-3 px-3">Órgão Gerenciador/UF</th>
@@ -362,8 +363,18 @@ export function ConsolidatedReportPanel({
                         </span>
                       </div>
                     </td>
+                    <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                      <span className="inline-block px-1.5 py-0.5 rounded font-mono font-semibold text-[11px] bg-slate-100 dark:bg-slate-800 text-[#1B365D] dark:text-[#D4AF37] border border-slate-300 dark:border-slate-700">
+                        {item.numero_item_lote.toLowerCase().includes("item")
+                          ? item.numero_item_lote
+                          : `Item ${item.numero_item_lote}`}
+                      </span>
+                    </td>
                     <td className="py-2.5 px-3 font-mono whitespace-nowrap">
-                      {item.numero_arp_licitacao}
+                      <div className="font-semibold">{item.numero_arp_licitacao}</div>
+                      <div className="text-[10px] text-slate-500 font-sans">
+                        Item: {item.numero_item_lote}
+                      </div>
                     </td>
                     <td className="py-2.5 px-2 text-center font-mono text-[11px] whitespace-nowrap">
                       {item.data_assinatura || "—"}
