@@ -1261,10 +1261,6 @@ export async function executarPipelinePesquisa(
         formulaNormalizacao = resNorm.formula;
         unidadeReferencia = resNorm.unidadeReferencia;
         normalizado = resNorm.normalizado;
-
-        if (resNorm.quantitativoStatus === "não informado") {
-          quantitativoPrevistoArpFinal = "não informado";
-        }
       }
 
       const ehItemSintetico = Boolean(itemObj._ehItemSinteticoAta);

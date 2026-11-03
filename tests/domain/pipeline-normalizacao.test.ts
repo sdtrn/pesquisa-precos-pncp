@@ -224,8 +224,8 @@ test("Task 3: Pipeline - Normalização de preços unitários (postos e veículo
   assert.strictEqual(itemSemQuant.normalizado, false);
   assert.strictEqual(
     itemSemQuant.quantitativo_previsto_arp,
-    "não informado",
-    "Item sem quantitativo deve ser marcado com 'não informado'"
+    "1 Unidade",
+    "Quantitativo oficial da ARP no PNCP (1 Unidade) deve ser preservado mesmo quando não há divisão por postos"
   );
 
   // 3. Verificação do Ranqueamento no Top 20
