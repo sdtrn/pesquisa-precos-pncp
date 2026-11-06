@@ -19,6 +19,16 @@ import type {
   ResultadoPesquisa,
 } from "@/lib/domain/types";
 
+export const TABELA_CONSOLIDADA_COLUMN_STYLES = {
+  0: { cellWidth: 50 },
+  1: { cellWidth: 23, halign: "right", fontStyle: "bold" },
+  2: { cellWidth: 26, halign: "center" },
+  3: { cellWidth: 15, halign: "center" },
+  4: { cellWidth: 18, halign: "center" },
+  5: { cellWidth: 27 },
+  6: { cellWidth: 27 },
+} as const;
+
 /**
  * Gera um Relatório Técnico Executivo em PDF (Folha A4 Retrato) pronto para juntada em
  * Processo Administrativo de Contratação (Lei nº 14.133/2021).
@@ -242,6 +252,7 @@ export async function gerarRelatorioPdfA4(
       desc,
       formatValorOuTaxa(Number(it.valor_unitario || 0), criterioClassificacao),
       arpFmt,
+      sanitizarCelulaExcel(it.possibilidade_adesao || "Não informado"),
       sanitizarCelulaExcel(it.data_assinatura || "não informado"),
       sanitizarCelulaExcel(it.orgao_gerenciador_uf),
       sanitizarCelulaExcel(it.fornecedor),
@@ -251,6 +262,7 @@ export async function gerarRelatorioPdfA4(
   bodyConsolidado.push([
     ehDesconto ? "MÉDIA DAS TAXAS DE DESCONTO" : "MÉDIA DOS VALORES UNITÁRIOS",
     formatValorOuTaxa(stats.media, criterioClassificacao),
+    "—",
     "—",
     "—",
     "—",
@@ -278,20 +290,14 @@ export async function gerarRelatorioPdfA4(
         "Descrição do objeto",
         colValorHeader,
         "Nº da ARP / Licitação",
+        "Adesão",
         "Data de Assinatura",
         "Órgão Gerenciador/UF",
         "Fornecedor",
       ],
     ],
     body: bodyConsolidado,
-    columnStyles: {
-      0: { cellWidth: 56 },
-      1: { cellWidth: 25, halign: "right", fontStyle: "bold" },
-      2: { cellWidth: 30, halign: "center" },
-      3: { cellWidth: 20, halign: "center" },
-      4: { cellWidth: 28 },
-      5: { cellWidth: 27 },
-    },
+    columnStyles: TABELA_CONSOLIDADA_COLUMN_STYLES,
     didParseCell: (data) => {
       if (
         data.section === "body" &&
