@@ -19,6 +19,10 @@ import {
   parseTaxaDesconto,
 } from "@/lib/domain/pdf-parser";
 import {
+  formatarDocumentoIdentificacao,
+  formatarFornecedorComDocumento,
+} from "@/lib/domain/formatters";
+import {
   calcularPrecoNormalizado,
   detectarModoNormalizacaoSugerido,
 } from "@/lib/domain/normalizador-precos";
@@ -111,6 +115,24 @@ export function formatarQuantitativoArp(
     return [`${qtdStr} ${unStr}`, qtdStr];
   }
   return [qtdStr, qtdStr];
+}
+
+/**
+ * Normaliza o valor de adesão do PNCP para 'Sim' | 'Não' | 'Não informado'.
+ */
+export function normalizarPossibilidadeAdesao(
+  valor: unknown
+): "Sim" | "Não" | "Não informado" {
+  if (valor === true) return "Sim";
+  if (valor === false) return "Não";
+  if (typeof valor === "string") {
+    const s = valor.trim().toLowerCase();
+    if (s === "sim" || s === "true" || s === "s" || s === "1") return "Sim";
+    if (s === "não" || s === "nao" || s === "false" || s === "n" || s === "0") return "Não";
+  }
+  if (valor === 1) return "Sim";
+  if (valor === 0) return "Não";
+  return "Não informado";
 }
 
 export function montarIdentificacaoArpLicitacao(
@@ -1214,9 +1236,29 @@ export async function executarPipelinePesquisa(
       ).trim();
       const fornecedorNi = String(melhorRes.niFornecedor || "").trim();
       const fornecedorFmt =
-        fornecedorNome && fornecedorNi
-          ? `${fornecedorNome} (${fornecedorNi})`
-          : fornecedorNome || fornecedorNi || "não informado";
+        formatarFornecedorComDocumento(fornecedorNome, fornecedorNi) || "não informado";
+      const fornecedorCnpjFormatado = fornecedorNi
+        ? formatarDocumentoIdentificacao(fornecedorNi).numeroFormatado || undefined
+        : undefined;
+
+      const rawAdesao =
+        detAta &&
+        detAta.possibilidadeAdesao !== undefined &&
+        detAta.possibilidadeAdesao !== null &&
+        detAta.possibilidadeAdesao !== ""
+          ? detAta.possibilidadeAdesao
+          : ataS?.permite_adesao !== undefined &&
+            ataS?.permite_adesao !== null &&
+            ataS?.permite_adesao !== ""
+          ? ataS.permite_adesao
+          : (detAta?.permiteAdesao ?? detAta?.permite_adesao ?? ataS?.possibilidadeAdesao);
+
+      const possibilidadeAdesaoFinal = normalizarPossibilidadeAdesao(rawAdesao);
+
+      const dataInicioVigenciaFinal =
+        dtIniVigFinal && formatarDataBr(dtIniVigFinal) !== "não informado"
+          ? formatarDataBr(dtIniVigFinal)
+          : undefined;
 
       const [arpLicitacaoStr, idAtaR6] = montarIdentificacaoArpLicitacao(
         ataS,
@@ -1288,11 +1330,15 @@ export async function executarPipelinePesquisa(
         municipio_nome: munS || "não informado",
         codigo_ibge: codIbgeS || "não informado",
         fornecedor: fornecedorFmt,
+        fornecedor_cnpj: fornecedorCnpjFormatado,
         numero_item_lote: numItemExibicao,
         data_assinatura: formatarDataBr(dtAssFinal),
         vigencia_ata: vigenciaStrFinal,
+        data_inicio_vigencia: dataInicioVigenciaFinal,
         data_fim_vigencia: formatarDataBr(dtFimVigFinal),
         situacao_ata: situacaoFinal,
+        possibilidade_adesao: possibilidadeAdesaoFinal,
+        especificacao_complementar: infCompItem || undefined,
         esfera: esferaNorm,
         tipo_orgao: tipoOrgaoStr,
         cnpj_orgao: cnpj,
