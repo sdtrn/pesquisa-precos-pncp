@@ -82,7 +82,12 @@ export function formatarFornecedorComDocumento(
     return nomeLimpo;
   }
 
-  if (nomeLimpo && nomeLimpo.includes(doc.numeroFormatado)) {
+  const digitos = (ni || "").replace(/\D/g, "");
+  if (
+    nomeLimpo &&
+    (nomeLimpo.includes(doc.numeroFormatado) ||
+      (digitos.length >= 11 && nomeLimpo.includes(digitos)))
+  ) {
     return nomeLimpo;
   }
 
