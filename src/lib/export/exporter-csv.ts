@@ -31,10 +31,29 @@ function escaparCampoCsv(val: string): string {
   return s;
 }
 
+export const HEADERS_CSV = [
+  "Descrição do objeto",
+  "Valor Unitário (R$)",
+  "Quantitativo previsto na ARP",
+  "valor_unitario_normalizado",
+  "formula_normalizacao",
+  "valor_original_arp",
+  "unidade_original_arp",
+  "Nº do Item/Lote",
+  "Nº da ARP / Licitação",
+  "Possibilidade de Adesão",
+  "Data de Assinatura",
+  "Órgão Gerenciador/UF",
+  "Fornecedor",
+  "Link Direto da ARP no Portal PNCP",
+  "Link Direto Download PDF da ARP Inicial",
+  "Links Diretos dos Termos Aditivos da ARP",
+];
+
 /**
  * Gera o conteúdo `.csv` da Tabela Consolidada (codificação UTF-8 com BOM e separador `;`),
  * contendo as colunas auditáveis de normalização (valor_unitario_normalizado, formula_normalizacao,
- * valor_original_arp, unidade_original_arp), data de assinatura, média dos valores e links diretos.
+ * valor_original_arp, unidade_original_arp), possibilidade de adesão, data de assinatura, média dos valores e links diretos.
  */
 export function gerarCsvConsolidado(
   itensSelecionados: ItemCandidato[],
@@ -52,6 +71,7 @@ export function gerarCsvConsolidado(
     "unidade_original_arp",
     "Nº do Item/Lote",
     "Nº da ARP / Licitação",
+    "Possibilidade de Adesão",
     "Data de Assinatura",
     "Órgão Gerenciador/UF",
     "Fornecedor",
@@ -91,6 +111,7 @@ export function gerarCsvConsolidado(
       unidOriginal,
       sanitizarCelulaExcel(item.numero_item_lote || "-"),
       sanitizarCelulaExcel(item.numero_arp_licitacao),
+      sanitizarCelulaExcel(item.possibilidade_adesao || "Não informado"),
       sanitizarCelulaExcel(item.data_assinatura || "não informado"),
       sanitizarCelulaExcel(item.orgao_gerenciador_uf),
       sanitizarCelulaExcel(item.fornecedor),
@@ -109,6 +130,7 @@ export function gerarCsvConsolidado(
       mediaFmt,
       "—",
       mediaFmt,
+      "—",
       "—",
       "—",
       "—",

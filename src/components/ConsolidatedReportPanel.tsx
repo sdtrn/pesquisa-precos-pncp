@@ -327,6 +327,7 @@ export function ConsolidatedReportPanel({
                       : "Valor Unitário (R$)"}
                   </th>
                   <th className="py-3 px-2 text-center">Item/Lote</th>
+                  <th className="py-3 px-2 text-center">Adesão</th>
                   <th className="py-3 px-3">Nº da ARP / Licitação</th>
                   <th className="py-3 px-2 text-center">Data de Assinatura</th>
                   <th className="py-3 px-3">Órgão Gerenciador/UF</th>
@@ -370,6 +371,20 @@ export function ConsolidatedReportPanel({
                           : `Item ${item.numero_item_lote}`}
                       </span>
                     </td>
+                    <td className="py-2.5 px-2 text-center whitespace-nowrap">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded font-mono font-bold text-[11px] ${
+                          item.possibilidade_adesao === "Sim"
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                            : item.possibilidade_adesao === "Não"
+                            ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700"
+                            : "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-700"
+                        }`}
+                        title={`Possibilidade de Adesão (carona PNCP): ${item.possibilidade_adesao || "Não informado"}`}
+                      >
+                        {item.possibilidade_adesao || "Não inf."}
+                      </span>
+                    </td>
                     <td className="py-2.5 px-3 font-mono whitespace-nowrap">
                       <div className="font-semibold">{item.numero_arp_licitacao}</div>
                       <div className="text-[10px] text-slate-500 font-sans">
@@ -387,7 +402,10 @@ export function ConsolidatedReportPanel({
                         {item.esfera} • Vig: {item.data_fim_vigencia}
                       </div>
                     </td>
-                    <td className="py-2.5 px-3 max-w-[180px] truncate text-slate-700 dark:text-slate-300">
+                    <td
+                      className="py-2.5 px-3 max-w-[200px] truncate text-slate-700 dark:text-slate-300"
+                      title={item.fornecedor}
+                    >
                       {item.fornecedor}
                     </td>
                     <td className="py-2.5 px-2 text-center">
@@ -441,7 +459,7 @@ export function ConsolidatedReportPanel({
                     {formatValorOuTaxa(estatisticas.media, criterioClassificacao)}
                   </td>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="py-3 px-3 text-xs text-slate-600 dark:text-slate-300 font-normal"
                   >
                     Fórmula na planilha Excel exportada:{" "}
