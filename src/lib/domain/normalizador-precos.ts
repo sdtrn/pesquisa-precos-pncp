@@ -6,6 +6,12 @@ import {
   MODO_NORMALIZACAO_DESATIVADO,
 } from "@/data/constants";
 
+export {
+  formatarDocumentoIdentificacao,
+  formatarFornecedorComDocumento,
+} from "@/lib/domain/formatters";
+export type { DocumentoIdentificacaoFormatado, TipoDocumentoIdentificacao } from "@/lib/domain/formatters";
+
 export interface DadosCalculoNormalizacao {
   valorHomologado: number;
   quantidadeHomologada?: number;

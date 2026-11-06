@@ -50,11 +50,15 @@ export interface ItemCandidato {
   municipio_nome: string;
   codigo_ibge: string;
   fornecedor: string;
+  fornecedor_cnpj?: string;
   numero_item_lote: string;
   data_assinatura: string;
   vigencia_ata: string;
+  data_inicio_vigencia?: string;
   data_fim_vigencia: string;
   situacao_ata: string;
+  possibilidade_adesao?: "Sim" | "Não" | "Não informado";
+  especificacao_complementar?: string;
   esfera: string;
   tipo_orgao: string;
   cnpj_orgao: string;
