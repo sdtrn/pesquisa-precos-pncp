@@ -78,11 +78,11 @@ test("Exportadores devem identificar claramente Item/Lote e Fornecedor para múl
 
   const ws1 = wb.getWorksheet("Planilha_Consolidada");
   assert.ok(ws1, "Aba Planilha_Consolidada deve existir");
-  // Linha 2 e 3 devem identificar o item na ARP (Coluna F: Nº da ARP / Licitação)
-  const valF2: any = ws1.getCell("F2").value;
-  const valF3: any = ws1.getCell("F3").value;
-  const textArp1 = typeof valF2 === "object" && valF2 !== null ? valF2.text : String(valF2);
-  const textArp2 = typeof valF3 === "object" && valF3 !== null ? valF3.text : String(valF3);
+  // Linha 2 e 3 devem identificar o item na ARP (Coluna C: Nº da ARP / Licitação em cesta sem padronização)
+  const valC2: any = ws1.getCell("C2").value;
+  const valC3: any = ws1.getCell("C3").value;
+  const textArp1 = typeof valC2 === "object" && valC2 !== null ? valC2.text : String(valC2);
+  const textArp2 = typeof valC3 === "object" && valC3 !== null ? valC3.text : String(valC3);
   assert.ok(textArp1.includes("Item 1"), "Aba 1 deve conter Item 1 na identificação da ARP");
   assert.ok(textArp2.includes("Item 2"), "Aba 1 deve conter Item 2 na identificação da ARP");
 

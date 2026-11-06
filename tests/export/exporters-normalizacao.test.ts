@@ -116,8 +116,12 @@ describe("Exportadores com Normalização de Preços Unitários (Lei nº 14.133/
       `Cabeçalho de valor homologado original ausente: ${row1Values.join(", ")}`
     );
     assert.ok(
-      row1Values.some((h) => h.includes("Unidade Original ARP")),
-      `Cabeçalho de unidade original ARP ausente: ${row1Values.join(", ")}`
+      row1Values.some((h) => h.includes("Possibilidade de Adesão")),
+      `Cabeçalho de possibilidade de adesão ausente: ${row1Values.join(", ")}`
+    );
+    assert.ok(
+      !row1Values.some((h) => h.includes("Unidade Original ARP")),
+      `Cabeçalho de unidade original ARP não deve estar presente na Aba 1: ${row1Values.join(", ")}`
     );
 
     // 2. Linha de dados (Linha 2)
@@ -130,11 +134,15 @@ describe("Exportadores com Normalização de Preços Unitários (Lei nº 14.133/
     );
     // Coluna 4: valor homologado original (36000)
     assert.equal(Number(ws1.getCell("D2").value), 36000);
-    // Coluna 5: unidade original ARP ("Lote com 3 postos")
+    // Coluna 5: Nº da ARP / Licitação
+    const valE2 = ws1.getCell("E2").value;
+    const textArp = typeof valE2 === "object" && valE2 !== null ? (valE2 as any).text : String(valE2);
     assert.ok(
-      String(ws1.getCell("E2").value).includes("Lote"),
-      "Unidade original deve constar na célula E2"
+      textArp.includes("15/2026"),
+      "Nº da ARP deve constar na célula E2"
     );
+    // Coluna 6: Possibilidade de Adesão
+    assert.equal(ws1.getCell("F2").value, "Não informado");
 
     // 3. Fórmulas de resumo apontando para coluna B (valor normalizado)
     assert.equal(ws1.getCell("A3").value, "MÉDIA DOS VALORES UNITÁRIOS");

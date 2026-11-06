@@ -281,6 +281,10 @@ export async function gerarPlanilhaXlsx(
     },
   });
 
+  const temPadronizacao = itensSelecionados.some(
+    (i) => i.normalizado || Boolean(i.formula_normalizacao)
+  );
+
   const unidRefAtiva =
     unidadeReferenciaPadrao ||
     itensSelecionados.find((i) => i.unidade_referencia)?.unidade_referencia;
@@ -290,30 +294,45 @@ export async function gerarPlanilhaXlsx(
     ? `Valor Unitário Normalizado (${unidRefAtiva})`
     : "Valor Unitário Normalizado (R$)";
 
-  const largurasAba1 = ehDesconto
-    ? [34, 14, 19, 13, 19, 19]
-    : [30, 16, 26, 16, 14, 18, 13, 18, 18];
+  let largurasAba1: number[];
+  let headersAba1: string[];
 
-  const headersAba1 = ehDesconto
-    ? [
-        "Descrição do objeto",
-        headerPrecoAba1,
-        "Nº da ARP / Licitação",
-        "Data de Assinatura",
-        "Órgão Gerenciador/UF",
-        "Fornecedor",
-      ]
-    : [
-        "Descrição do objeto",
-        headerPrecoAba1,
-        "Memória de Cálculo (Lei 14.133/2021)",
-        "Valor Homologado Original (R$)",
-        "Unidade Original ARP",
-        "Nº da ARP / Licitação",
-        "Data de Assinatura",
-        "Órgão Gerenciador/UF",
-        "Fornecedor",
-      ];
+  if (ehDesconto) {
+    largurasAba1 = [34, 14, 19, 15, 13, 19, 24];
+    headersAba1 = [
+      "Descrição do objeto",
+      "Taxa de Desconto (%)",
+      "Nº da ARP / Licitação",
+      "Possibilidade de Adesão",
+      "Data de Assinatura",
+      "Órgão Gerenciador/UF",
+      "Fornecedor",
+    ];
+  } else if (temPadronizacao) {
+    largurasAba1 = [30, 16, 26, 16, 18, 15, 13, 18, 24];
+    headersAba1 = [
+      "Descrição do objeto",
+      headerPrecoAba1,
+      "Memória de Cálculo (Lei 14.133/2021)",
+      "Valor Homologado Original (R$)",
+      "Nº da ARP / Licitação",
+      "Possibilidade de Adesão",
+      "Data de Assinatura",
+      "Órgão Gerenciador/UF",
+      "Fornecedor",
+    ];
+  } else {
+    largurasAba1 = [34, 16, 19, 15, 13, 19, 24];
+    headersAba1 = [
+      "Descrição do objeto",
+      "Valor Unitário (R$)",
+      "Nº da ARP / Licitação",
+      "Possibilidade de Adesão",
+      "Data de Assinatura",
+      "Órgão Gerenciador/UF",
+      "Fornecedor",
+    ];
+  }
 
   const numColsAba1 = headersAba1.length;
   ws1.columns = largurasAba1.map((w) => ({ width: w }));
@@ -339,6 +358,9 @@ export async function gerarPlanilhaXlsx(
     const arpTxt = numItemStr
       ? `${sanitizarCelulaExcel(item.numero_arp_licitacao)} (${numItemStr})`
       : sanitizarCelulaExcel(item.numero_arp_licitacao);
+    const adesaoTxt = sanitizarCelulaExcel(
+      item.possibilidade_adesao || "Não informado"
+    );
     const dtAssTxt = sanitizarCelulaExcel(
       item.data_assinatura || "não informado"
     );
@@ -347,11 +369,12 @@ export async function gerarPlanilhaXlsx(
     const [linkPncp] = obterLinksEvidenciaItem(item);
 
     let r: ExcelJS.Row;
-    if (ehDesconto) {
+    if (ehDesconto || !temPadronizacao) {
       r = ws1.addRow([
         descTxt,
         valUnit,
         arpTxt,
+        adesaoTxt,
         dtAssTxt,
         orgaoTxt,
         fornTxt,
@@ -359,23 +382,20 @@ export async function gerarPlanilhaXlsx(
       r.height = calcularAlturaLinhaA4([
         [descTxt, largurasAba1[0]],
         [arpTxt, largurasAba1[2]],
-        [orgaoTxt, largurasAba1[4]],
-        [fornTxt, largurasAba1[5]],
+        [orgaoTxt, largurasAba1[5]],
+        [fornTxt, largurasAba1[6]],
       ]);
     } else {
       const formulaTxt = sanitizarCelulaExcel(item.formula_normalizacao || "-");
       const valOriginal = Number(item.valor_original ?? item.valor_unitario ?? 0);
-      const unidOrigTxt = sanitizarCelulaExcel(
-        item.unidade_original || item.unidade_fornecimento || "-"
-      );
 
       r = ws1.addRow([
         descTxt,
         valUnit,
         formulaTxt,
         valOriginal,
-        unidOrigTxt,
         arpTxt,
+        adesaoTxt,
         dtAssTxt,
         orgaoTxt,
         fornTxt,
@@ -383,7 +403,7 @@ export async function gerarPlanilhaXlsx(
       r.height = calcularAlturaLinhaA4([
         [descTxt, largurasAba1[0]],
         [formulaTxt, largurasAba1[2]],
-        [arpTxt, largurasAba1[5]],
+        [arpTxt, largurasAba1[4]],
         [orgaoTxt, largurasAba1[7]],
         [fornTxt, largurasAba1[8]],
       ]);
@@ -399,23 +419,35 @@ export async function gerarPlanilhaXlsx(
       if (colIdx === 2) {
         c.numFmt = formatoValores;
         c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
-      } else if (!ehDesconto && colIdx === 3) {
-        c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
-      } else if (!ehDesconto && colIdx === 4) {
-        c.numFmt = moedaFormat;
-        c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
-      } else if (!ehDesconto && colIdx === 5) {
-        c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
-      } else if ((ehDesconto && colIdx === 3) || (!ehDesconto && colIdx === 6)) {
-        c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
-        if (linkPncp.startsWith("http")) {
-          c.value = { text: arpTxt, hyperlink: linkPncp };
-          c.font = fontLinkA4;
+      } else if (!ehDesconto && temPadronizacao) {
+        if (colIdx === 3) {
+          c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+        } else if (colIdx === 4) {
+          c.numFmt = moedaFormat;
+          c.alignment = { horizontal: "right", vertical: "middle", wrapText: false };
+        } else if (colIdx === 5) {
+          c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+          if (linkPncp.startsWith("http")) {
+            c.value = { text: arpTxt, hyperlink: linkPncp };
+            c.font = fontLinkA4;
+          }
+        } else if (colIdx === 6 || colIdx === 7) {
+          c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+        } else {
+          c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
         }
-      } else if ((ehDesconto && colIdx === 4) || (!ehDesconto && colIdx === 7)) {
-        c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
       } else {
-        c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+        if (colIdx === 3) {
+          c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+          if (linkPncp.startsWith("http")) {
+            c.value = { text: arpTxt, hyperlink: linkPncp };
+            c.font = fontLinkA4;
+          }
+        } else if (colIdx === 4 || colIdx === 5) {
+          c.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+        } else {
+          c.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+        }
       }
     }
     rowNum++;
