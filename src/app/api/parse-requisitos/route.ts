@@ -1,16 +1,18 @@
-import { NextResponse } from "next/server";
 import {
   extrairRequisitosMinimos,
   gerarTermosBusca,
 } from "@/lib/domain/parser-requisitos";
+import { exigirAutenticado, AuthError } from "@/lib/server/auth";
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<Response> {
   try {
-    const body = await req.json();
+    await exigirAutenticado(req);
+
+    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
     const descricao = String(body?.descricao || "").trim();
 
     if (!descricao) {
-      return NextResponse.json(
+      return Response.json(
         { error: "A descrição do objeto não pode estar vazia." },
         { status: 400 }
       );
@@ -19,12 +21,15 @@ export async function POST(req: Request) {
     const termos = gerarTermosBusca(descricao);
     const requisitos = extrairRequisitosMinimos(descricao);
 
-    return NextResponse.json({
+    return Response.json({
       termos,
       requisitos,
     });
   } catch (err) {
-    return NextResponse.json(
+    if (err instanceof AuthError) {
+      return Response.json({ error: err.message }, { status: err.status });
+    }
+    return Response.json(
       { error: `Erro ao extrair requisitos: ${String(err)}` },
       { status: 500 }
     );
