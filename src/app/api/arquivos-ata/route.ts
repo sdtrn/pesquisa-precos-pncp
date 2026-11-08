@@ -1,12 +1,23 @@
 import { PNCPClient } from "@/lib/domain/pncp-client";
 import type { ItemCandidato } from "@/lib/domain/types";
-import { exigirAutenticado, AuthError } from "@/lib/server/auth";
+import {
+  extrairTokenDosCookies,
+  verificarTokenSessao,
+} from "@/lib/server/session-edge";
 
 export async function POST(req: Request): Promise<Response> {
   try {
-    await exigirAutenticado(req);
+    const cookieHeader = req.headers.get("cookie");
+    const token = extrairTokenDosCookies(cookieHeader);
+    const sessao = token ? await verificarTokenSessao(token) : null;
+    if (!sessao) {
+      return Response.json(
+        { error: "Sessão expirada ou não autenticada." },
+        { status: 401 }
+      );
+    }
 
-    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const body = await req.json();
     const itens = Array.isArray(body?.itens)
       ? (body.itens as ItemCandidato[])
       : [];
@@ -20,9 +31,6 @@ export async function POST(req: Request): Promise<Response> {
 
     return Response.json({ itens });
   } catch (err) {
-    if (err instanceof AuthError) {
-      return Response.json({ error: err.message }, { status: err.status });
-    }
     return Response.json(
       { error: `Erro ao consultar arquivos da ata: ${String(err)}` },
       { status: 500 }

@@ -1,25 +1,24 @@
 import { executarPipelinePesquisa, selecionarTop20Menores } from "@/lib/domain/pipeline";
 import { calcularEstatisticasPrecos } from "@/lib/domain/statistics";
+import { TOP_N_ITENS_JANELA } from "@/data/constants";
 import type { ParametrosPipeline } from "@/lib/domain/types";
 import {
-  exigirAutenticado,
-  AuthError,
-  extrairMetadadosRequisicao,
-} from "@/lib/server/auth";
+  extrairTokenDosCookies,
+  verificarTokenSessao,
+} from "@/lib/server/session-edge";
+import { extrairMetadadosRequisicao } from "@/lib/server/auth";
 import { registrarAuditoriaPesquisa } from "@/lib/server/db";
 
 export const maxDuration = 300; // Fluid Compute Node.js 24 LTS default 300s
 
 export async function POST(req: Request): Promise<Response> {
-  let usuario;
-  try {
-    usuario = await exigirAutenticado(req);
-  } catch (err) {
-    if (err instanceof AuthError) {
-      return Response.json({ error: err.message }, { status: err.status });
-    }
+  // Validação instantânea em memória (0ms, sem roundtrip ao banco antes da pesquisa)
+  const cookieHeader = req.headers.get("cookie");
+  const token = extrairTokenDosCookies(cookieHeader);
+  const sessao = token ? await verificarTokenSessao(token) : null;
+  if (!sessao) {
     return Response.json(
-      { error: "Acesso não autorizado." },
+      { error: "Sessão expirada ou não autenticada. Faça login para continuar." },
       { status: 401 }
     );
   }
@@ -78,21 +77,35 @@ export async function POST(req: Request): Promise<Response> {
           }
         );
 
+        // Envia o resultado imediatamente ao navegador (exatamente como antes)
+        sendEvent({
+          type: "result",
+          data: resultado,
+        });
+
+        // Grava a auditoria de forma não-bloqueante em background
         const duracaoSegundos =
           Math.round((performance.now() - inicio) / 100) / 10;
+        const crit =
+          resultado.criterio_classificacao ||
+          params.criterioClassificacao ||
+          "menor_preco";
         const top20 = selecionarTop20Menores(
           resultado.itens_candidatos || [],
-          false
+          false,
+          TOP_N_ITENS_JANELA,
+          crit
         );
         const stats = calcularEstatisticasPrecos(
-          top20.map((i) => i.valor_unitario)
+          top20.map((i) => i.valor_unitario),
+          crit
         );
 
         await registrarAuditoriaPesquisa({
-          usuario_id: usuario.id,
-          usuario_nome: usuario.nome,
-          usuario_email: usuario.email,
-          usuario_perfil: usuario.perfil,
+          usuario_id: sessao.uid,
+          usuario_nome: sessao.nome,
+          usuario_email: sessao.email,
+          usuario_perfil: sessao.perfil,
           descricao_objeto:
             params.descricaoObjeto?.trim() ||
             (params.termosBusca || []).join(", "),
@@ -107,8 +120,11 @@ export async function POST(req: Request): Promise<Response> {
             params.dataInicial && params.dataFinal
               ? `${params.dataInicial} até ${params.dataFinal}`
               : null,
-          criterio_classificacao: params.criterioClassificacao ?? null,
-          modo_normalizacao: params.modoNormalizacao ?? null,
+          criterio_classificacao: crit,
+          modo_normalizacao:
+            resultado.modo_normalizacao_aplicado ??
+            params.modoNormalizacao ??
+            null,
           total_atas_varridas: resultado.total_atas_encontradas ?? 0,
           total_encontrados: resultado.total_itens_avaliados ?? 0,
           total_selecionados: (resultado.itens_candidatos || []).length,
@@ -120,25 +136,25 @@ export async function POST(req: Request): Promise<Response> {
           user_agent: meta.userAgent,
           status: "sucesso",
           erro_mensagem: null,
-        });
-
-        sendEvent({
-          type: "result",
-          data: resultado,
-        });
+        }).catch(() => {});
       } catch (err) {
-        const duracaoSegundos =
-          Math.round((performance.now() - inicio) / 100) / 10;
         const erroMsg =
           err instanceof Error
             ? err.message
             : `Falha inesperada na consulta ao PNCP: ${String(err)}`;
 
+        sendEvent({
+          type: "error",
+          error: erroMsg,
+        });
+
+        const duracaoSegundos =
+          Math.round((performance.now() - inicio) / 100) / 10;
         await registrarAuditoriaPesquisa({
-          usuario_id: usuario.id,
-          usuario_nome: usuario.nome,
-          usuario_email: usuario.email,
-          usuario_perfil: usuario.perfil,
+          usuario_id: sessao.uid,
+          usuario_nome: sessao.nome,
+          usuario_email: sessao.email,
+          usuario_perfil: sessao.perfil,
           descricao_objeto:
             params.descricaoObjeto?.trim() ||
             (params.termosBusca || []).join(", "),
@@ -166,12 +182,7 @@ export async function POST(req: Request): Promise<Response> {
           user_agent: meta.userAgent,
           status: "erro",
           erro_mensagem: erroMsg,
-        });
-
-        sendEvent({
-          type: "error",
-          error: erroMsg,
-        });
+        }).catch(() => {});
       } finally {
         try {
           controller.close();

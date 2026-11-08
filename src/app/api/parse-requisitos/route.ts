@@ -2,13 +2,24 @@ import {
   extrairRequisitosMinimos,
   gerarTermosBusca,
 } from "@/lib/domain/parser-requisitos";
-import { exigirAutenticado, AuthError } from "@/lib/server/auth";
+import {
+  extrairTokenDosCookies,
+  verificarTokenSessao,
+} from "@/lib/server/session-edge";
 
 export async function POST(req: Request): Promise<Response> {
   try {
-    await exigirAutenticado(req);
+    const cookieHeader = req.headers.get("cookie");
+    const token = extrairTokenDosCookies(cookieHeader);
+    const sessao = token ? await verificarTokenSessao(token) : null;
+    if (!sessao) {
+      return Response.json(
+        { error: "Sessão expirada ou não autenticada." },
+        { status: 401 }
+      );
+    }
 
-    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const body = await req.json();
     const descricao = String(body?.descricao || "").trim();
 
     if (!descricao) {
@@ -26,9 +37,6 @@ export async function POST(req: Request): Promise<Response> {
       requisitos,
     });
   } catch (err) {
-    if (err instanceof AuthError) {
-      return Response.json({ error: err.message }, { status: err.status });
-    }
     return Response.json(
       { error: `Erro ao extrair requisitos: ${String(err)}` },
       { status: 500 }
