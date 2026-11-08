@@ -4,6 +4,7 @@ import {
   ESCOPO_POR_REGIAO,
   ESCOPO_TODOS,
   ESCOPO_VALIDADE,
+  MAPA_REGIAO_UFS,
   TOP_N_ITENS_JANELA,
 } from "@/data/constants";
 import {
@@ -27,7 +28,7 @@ import {
   detectarModoNormalizacaoSugerido,
 } from "@/lib/domain/normalizador-precos";
 import { selecionarTop20Menores } from "@/lib/domain/selection";
-import type { ArquivoArp } from "@/lib/domain/types";
+import type { ArquivoArp, ConferenciaStatusApi } from "@/lib/domain/types";
 import { PNCPClient } from "@/lib/domain/pncp-client";
 import {
   agoraRecifeFormatado,
@@ -237,6 +238,83 @@ interface AtaAprovadaTriagem {
 }
 
 /**
+ * Infere rapidamente a esfera governamental (F, E, D, M) tratando corretamente
+ * Consórcios Públicos Intermunicipais e Interestaduais onde o PNCP envia esfera_id = "N" ("Não se aplica").
+ */
+export function inferirEsferaRapida(
+  esferaId: string,
+  orgaoNome: string,
+  unidadeNome: string,
+  ufSigla = ""
+): string {
+  const esferaAtual = String(esferaId || "").trim().toUpperCase();
+  // CRÍTICO: "N" ("Não se aplica") é retornado pelo PNCP para Consórcios Públicos.
+  // Só retornar imediatamente se já for uma das 4 esferas válidas (F, E, D, M).
+  if (esferaAtual && ["F", "E", "D", "M"].includes(esferaAtual)) {
+    return esferaAtual;
+  }
+
+  const texto = `${orgaoNome || ""} ${unidadeNome || ""}`
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!texto) return "";
+
+  const termosEstaduais = [
+    "estado de ",
+    "estado do ",
+    "estadual",
+    "governo do estado",
+    "secretaria de estado",
+    "tribunal de justica",
+    "assembleia legislativa",
+    "policia militar do estado",
+    "consorcio interestadual",
+  ];
+  if (termosEstaduais.some((t) => texto.includes(t))) return "E";
+
+  const termosMunicipais = [
+    "municipio",
+    "prefeitura",
+    "camara municipal",
+    "fundo municipal",
+    "secretaria municipal",
+    "autarquia municipal",
+    "fundacao municipal",
+    "consorcio publico",
+    "consorcio intermunicipal",
+    "consorcio multifinalitario",
+    "cim ",
+    "cis ",
+  ];
+  if (termosMunicipais.some((t) => texto.includes(t))) return "M";
+
+  const termosFederais = [
+    "federal",
+    "ministerio ",
+    "universidade federal",
+    "instituto federal",
+    "comando da ",
+    "comando do ",
+    "justica federal",
+    "tribunal regional federal",
+    "uniao",
+  ];
+  if (termosFederais.some((t) => texto.includes(t))) return "F";
+
+  if (ufSigla.trim().toUpperCase() === "DF" && texto.includes("distrito federal")) {
+    return "D";
+  }
+
+  // Se veio "N" e é um consórcio não interestadual, assumir Municipal ("M")
+  if (esferaAtual === "N" && texto.includes("consorcio")) return "M";
+
+  return "";
+}
+
+/**
  * Executa todo o pipeline auditável de pesquisa de preços em Atas do PNCP (Regras R1 a R7).
  */
 export async function executarPipelinePesquisa(
@@ -266,16 +344,89 @@ export async function executarPipelinePesquisa(
   const termosUsadosStr = params.termosBusca.join(", ");
   const client = new PNCPClient(params.usarCache ?? true);
 
-  let ufFiltroApi: string | null = null;
-  if (params.escopoOrgaos === ESCOPO_POR_ESTADO && params.ufSelecionada) {
-    ufFiltroApi = params.ufSelecionada.trim().toUpperCase();
-  } else if (params.escopoOrgaos === ESCOPO_PE_RECIFE) {
-    ufFiltroApi = "PE";
-  }
+  let atasBrutas: Record<string, unknown>[] = [];
+  let conferenciasStatusApi: ConferenciaStatusApi[] = [];
 
-  // 1. Busca paginada de todas as atas no PNCP
-  const { atas: atasBrutas, conferenciasStatus: conferenciasStatusApi } =
-    await client.buscarTodasAtasPorTermos({
+  const regiaoKey = String(params.regiaoSelecionada || params.ufSelecionada || "Nordeste")
+    .trim()
+    .toUpperCase();
+  const ufsDaRegiao =
+    params.escopoOrgaos === ESCOPO_POR_REGIAO &&
+    (!params.ufSelecionada || MAPA_REGIAO_UFS[params.ufSelecionada.trim().toUpperCase()])
+      ? MAPA_REGIAO_UFS[regiaoKey] || null
+      : null;
+
+  if (params.escopoOrgaos === ESCOPO_POR_REGIAO && ufsDaRegiao && ufsDaRegiao.length > 0) {
+    // Busca direcionada por cada UF da região selecionada para não perder atas no limite global
+    const vistas = new Set<string>();
+    const confPorTermo = new Map<string, { vigentes: number; nao_vigentes: number; todos: number }>();
+
+    for (let i = 0; i < ufsDaRegiao.length; i += 3) {
+      const loteUfs = ufsDaRegiao.slice(i, i + 3);
+      const resultadosLote = await Promise.all(
+        loteUfs.map((ufRegiao) =>
+          client.buscarTodasAtasPorTermos({
+            termos: params.termosBusca,
+            statusUi: params.statusAta,
+            tipoData: params.tipoDataPeriodo,
+            dataInicial: dtIni,
+            dataFinal: dtFim,
+            progressoCb: (msg, frac) =>
+              progressoCb?.(
+                `[${ufRegiao}] ${msg}`,
+                0.02 + 0.18 * ((i + frac) / Math.max(1, ufsDaRegiao.length))
+              ),
+            ufFiltro: ufRegiao,
+          })
+        )
+      );
+
+      for (const resUf of resultadosLote) {
+        for (const ata of resUf.atas) {
+          const chave =
+            String(ata.numero_controle_pncp || "").trim() ||
+            String(ata.item_url || "").trim() ||
+            String(ata.id || "").trim();
+          if (chave && !vistas.has(chave)) {
+            vistas.add(chave);
+            atasBrutas.push(ata);
+          }
+        }
+        for (const c of resUf.conferenciasStatus) {
+          const atual = confPorTermo.get(c.termo) || { vigentes: 0, nao_vigentes: 0, todos: 0 };
+          atual.vigentes += c.vigentes;
+          atual.nao_vigentes += c.nao_vigentes;
+          atual.todos += c.todos;
+          confPorTermo.set(c.termo, atual);
+        }
+      }
+    }
+
+    conferenciasStatusApi = Array.from(confPorTermo.entries()).map(([termo, tot]) => {
+      const soma = tot.vigentes + tot.nao_vigentes;
+      return {
+        termo,
+        vigentes: tot.vigentes,
+        nao_vigentes: tot.nao_vigentes,
+        soma_vigentes_mais_nao_vigentes: soma,
+        todos: tot.todos,
+        equacao_valida: tot.todos === soma,
+      };
+    });
+  } else {
+    let ufFiltroApi: string | null = null;
+    if (
+      (params.escopoOrgaos === ESCOPO_POR_ESTADO || params.escopoOrgaos === ESCOPO_POR_REGIAO) &&
+      params.ufSelecionada &&
+      params.ufSelecionada.trim().length === 2
+    ) {
+      ufFiltroApi = params.ufSelecionada.trim().toUpperCase();
+    } else if (params.escopoOrgaos === ESCOPO_PE_RECIFE) {
+      ufFiltroApi = "PE";
+    }
+
+    // 1. Busca paginada de todas as atas no PNCP
+    const resBusca = await client.buscarTodasAtasPorTermos({
       termos: params.termosBusca,
       statusUi: params.statusAta,
       tipoData: params.tipoDataPeriodo,
@@ -284,6 +435,9 @@ export async function executarPipelinePesquisa(
       progressoCb: (msg, frac) => progressoCb?.(msg, frac),
       ufFiltro: ufFiltroApi,
     });
+    atasBrutas = resBusca.atas;
+    conferenciasStatusApi = resBusca.conferenciasStatus;
+  }
 
   const descartados: RegistroDescartado[] = [];
   const itensCandidatosAprovados: ItemCandidato[] = [];
@@ -298,51 +452,6 @@ export async function executarPipelinePesquisa(
     params.apenasMunicipiosBilionarios !== undefined
       ? Boolean(params.apenasMunicipiosBilionarios)
       : true;
-
-  const inferirEsferaRapida = (
-    esferaAtual: string,
-    orgaoNome: string,
-    unidadeNome: string,
-    ufSigla: string
-  ): string => {
-    if (esferaAtual) return esferaAtual;
-    const txt = `${orgaoNome} ${unidadeNome}`.toUpperCase();
-    if (
-      txt.includes("MUNICIPIO") ||
-      txt.includes("MUNICÍPIO") ||
-      txt.includes("PREFEITURA") ||
-      txt.includes("CAMARA MUNICIPAL") ||
-      txt.includes("CÂMARA MUNICIPAL") ||
-      txt.includes("FUNDO MUNICIPAL") ||
-      txt.includes("SECRETARIA MUNICIPAL")
-    ) {
-      return "M";
-    }
-    if (
-      txt.includes("FEDERAL") ||
-      txt.includes("MINISTERIO") ||
-      txt.includes("MINISTÉRIO") ||
-      txt.includes("COMANDO DA") ||
-      txt.includes("COMANDO DO") ||
-      txt.includes("UNIAO") ||
-      txt.includes("UNIÃO")
-    ) {
-      return "F";
-    }
-    if (ufSigla === "DF" && txt.includes("DISTRITO FEDERAL")) {
-      return "D";
-    }
-    if (
-      txt.includes("ESTADO ") ||
-      txt.includes("ESTADUAL") ||
-      txt.includes("GOVERNO DO ESTADO") ||
-      txt.includes("TRIBUNAL DE JUSTICA") ||
-      txt.includes("TRIBUNAL DE JUSTIÇA")
-    ) {
-      return "E";
-    }
-    return "";
-  };
 
   // 2. Triagem Local (Período em America/Recife + Compatibilidade Preliminar + Escopo R1/R2/R7)
   const atasAprovadasTriagem: AtaAprovadaTriagem[] = [];
@@ -499,14 +608,17 @@ export async function executarPipelinePesquisa(
       if (detAtaPre) {
         const orgEnt = (detAtaPre.orgaoEntidade as Record<string, unknown>) || {};
         const unOrg = (detAtaPre.unidadeOrgao as Record<string, unknown>) || {};
-        esferaIdS = String(orgEnt.esferaId || esferaIdS)
-          .trim()
-          .toUpperCase();
         munS = String(unOrg.municipioNome || munS).trim();
         codIbgeS = String(unOrg.codigoIbge || codIbgeS).trim();
         ufS = String(unOrg.ufSigla || ufS)
           .trim()
           .toUpperCase();
+        esferaIdS = inferirEsferaRapida(
+          String(orgEnt.esferaId || esferaIdS),
+          orgaoNome,
+          unidadeNome,
+          ufS
+        );
         orgaoUfStr = ufS ? `${orgaoNome}/${ufS}` : orgaoNome;
       }
     }

@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import {
+  CACHE_TTL_MS,
   DADOS_ABERTOS_BASE,
   DATA_ASSINATURA,
   DATA_PUBLICACAO,
@@ -12,6 +13,7 @@ import {
   PNCP_CONSULTA_V1_BASE,
   PNCP_SEARCH_URL,
   REQUEST_TIMEOUT_MS,
+  RETRY_BACKOFF_MS,
   SEARCH_PAGE_SIZE,
   STATUS_NAO_VIGENTES,
   STATUS_TODOS,
@@ -23,10 +25,10 @@ import type { ArquivoArp, ConferenciaStatusApi, ItemCandidato } from "@/lib/doma
 // Cache global em memória reutilizado entre invocações na instância Fluid Compute da Vercel
 const GLOBAL_MEM_CACHE = new Map<string, { data: unknown; ts: number }>();
 const MAX_CACHE_ENTRIES = 6000;
-const CACHE_TTL_MS = 1000 * 60 * 60 * 6; // 6 horas
 
 // Cache em memória de resultados homologados (preços e fornecedores)
 const GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE = new Map<string, Record<string, unknown>[]>();
+const GLOBAL_RESULTADOS_DA_COMPRAS_CONSULTADAS = new Set<string>();
 
 // Circuit Breaker para evitar travamento da pipeline quando a API v1 do PNCP estiver em 503
 let circuitBreakerApiV1Failures = 0;
@@ -42,9 +44,9 @@ function recordApiV1Success(): void {
 
 function recordApiV1Failure(): void {
   circuitBreakerApiV1Failures++;
-  if (circuitBreakerApiV1Failures >= 10) {
-    // 10 segundos de circuito aberto para a API v1 para não bloquear requisições
-    circuitBreakerApiV1TrippedUntil = Date.now() + 10000;
+  if (circuitBreakerApiV1Failures >= 25) {
+    // Limiar elevado para 25 falhas consecutivas pós-retry (8 segundos de circuito aberto)
+    circuitBreakerApiV1TrippedUntil = Date.now() + 8000;
   }
 }
 
@@ -120,8 +122,9 @@ export class PNCPClient {
       }
     }
 
-    // Se o circuit breaker da API v1 estiver aberto e for uma chamada tolerante a falha, encerra em 0ms
-    if (ignorar404 && url.includes(PNCP_API_V1_BASE) && isCircuitBreakerApiV1Open()) {
+    const isApiV1 = url.includes(PNCP_API_V1_BASE);
+    // Nunca cachear retorno nulo quando o Circuit Breaker estiver aberto
+    if (isApiV1 && isCircuitBreakerApiV1Open()) {
       return null;
     }
 
@@ -153,75 +156,76 @@ export class PNCPClient {
         });
         clearTimeout(timeoutId);
 
-        if ([400, 404, 500, 502, 503, 504].includes(resp.status) && ignorar404) {
-          if (fullUrl.includes(PNCP_API_V1_BASE) && resp.status >= 500) {
-            recordApiV1Failure();
+        if (resp.status === 200) {
+          if (isApiV1) recordApiV1Success();
+          const text = await resp.text();
+          if (!text || !text.trim()) {
+            if (this.usarCache && usarCacheNestaChamada) {
+              setInCache(cacheKey, []);
+            }
+            return null;
           }
+          const dados = JSON.parse(text);
           if (this.usarCache && usarCacheNestaChamada) {
-            setInCache(cacheKey, []);
+            setInCache(cacheKey, dados);
           }
-          return null;
+          return dados;
         }
 
         if (resp.status === 204) {
+          // HTTP 204 No Content: página vazia legítima no PNCP
+          if (isApiV1) recordApiV1Success();
           if (this.usarCache && usarCacheNestaChamada) {
             setInCache(cacheKey, []);
           }
           return null;
         }
 
-        if (resp.status === 429) {
-          await sleep(600 * tentativa);
-          continue;
-        }
-
-        if (!resp.ok) {
-          if (fullUrl.includes(PNCP_API_V1_BASE) && resp.status >= 500) {
-            recordApiV1Failure();
-          }
-          throw new Error(`HTTP ${resp.status} em ${fullUrl}`);
-        }
-
-        if (fullUrl.includes(PNCP_API_V1_BASE)) {
-          recordApiV1Success();
-        }
-
-        const text = await resp.text();
-        if (!text || !text.trim()) {
+        if (resp.status === 404 && ignorar404) {
+          // Apenas 404 real significa que o recurso não existe e pode ir para o cache
+          if (isApiV1) recordApiV1Success();
           if (this.usarCache && usarCacheNestaChamada) {
             setInCache(cacheKey, []);
           }
           return null;
         }
 
-        const dados = JSON.parse(text);
-        if (this.usarCache && usarCacheNestaChamada) {
-          setInCache(cacheKey, dados);
+        if ([408, 429, 500, 502, 503, 504].includes(resp.status)) {
+          if (tentativa <= MAX_RETRIES) {
+            const waitMs = RETRY_BACKOFF_MS * Math.pow(2, tentativa - 1);
+            await sleep(waitMs);
+            continue;
+          }
+          if (isApiV1) recordApiV1Failure();
+          // CRÍTICO: NÃO chamar setInCache(cacheKey, []) em falha de servidor/rate-limit!
+          if (ignorar404) return null;
         }
-        return dados;
+
+        if (ignorar404) {
+          return null;
+        }
+
+        throw new Error(`HTTP ${resp.status} em ${fullUrl}`);
       } catch (err) {
         clearTimeout(timeoutId);
         ultimoErro = err;
-        if (fullUrl.includes(PNCP_API_V1_BASE)) {
-          recordApiV1Failure();
-        }
-        // Se for requisição secundária (ignorar404) e deu timeout ou falha de rede, não insiste para não travar
-        if (ignorar404) {
-          if (this.usarCache && usarCacheNestaChamada) {
-            setInCache(cacheKey, []);
-          }
-          return null;
-        }
+
+        // CRÍTICO: Fazer retry ANTES de verificar ignorar404!
         if (tentativa <= MAX_RETRIES) {
-          await sleep(200 * tentativa);
+          const waitMs = RETRY_BACKOFF_MS * Math.pow(2, tentativa - 1);
+          await sleep(waitMs);
+          continue;
+        }
+
+        if (isApiV1) recordApiV1Failure();
+        // CRÍTICO: Nunca cachear [] quando ocorrer AbortError (timeout) ou erro de rede!
+        if (ignorar404) {
+          return null;
         }
       }
     }
 
     if (ignorar404) {
-      if (this.usarCache && usarCacheNestaChamada) {
-        setInCache(cacheKey, []);
-      }
       return null;
     }
 
@@ -646,7 +650,14 @@ export class PNCPClient {
     ano: string,
     seqCompra: string
   ): Promise<Record<string, unknown>[]> {
-    const chaveCompra = `${cnpj}|${ano}|${seqCompra}`;
+    const cnpjLimpo = String(cnpj || "").replace(/\D/g, "").trim();
+    const anoLimpo = String(ano || "").replace(/\D/g, "").trim();
+    const seqLimpo = String(seqCompra || "").replace(/\D/g, "").replace(/^0+/, "") || "0";
+    if (!cnpjLimpo || !anoLimpo || !seqLimpo || seqLimpo === "0") {
+      return [];
+    }
+
+    const chaveCompra = `${cnpjLimpo}|${anoLimpo}|${seqLimpo}`;
     if (this.usarCache) {
       const cached = getFromCache(`itens_compra_${chaveCompra}`);
       if (Array.isArray(cached) && cached.length > 0) {
@@ -654,67 +665,101 @@ export class PNCPClient {
       }
     }
 
-    // 1. Tenta primeiramente via Dados Abertos (Compras.gov.br) — ultra rápido (~40ms)
+    // 1. Tenta primeiramente via Dados Abertos (Compras.gov.br) com paginação completa
     try {
-      const seqFormatado = String(seqCompra).padStart(6, "0");
-      const codigoCompra = `${cnpj}-1-${seqFormatado}/${ano}`;
-      const urlDadosAbertos = `${DADOS_ABERTOS_BASE}/modulo-contratacoes/2.1_consultarItensContratacoes_PNCP_14133_Id?tipo=numeroControlePNCPCompra&codigo=${encodeURIComponent(
-        codigoCompra
-      )}`;
+      const seqFormatado = seqLimpo.padStart(6, "0");
+      const codigoCompra = `${cnpjLimpo}-1-${seqFormatado}/${anoLimpo}`;
+      const urlFast = `${DADOS_ABERTOS_BASE}/modulo-contratacoes/2.1_consultarItensContratacoes_PNCP_14133_Id`;
+      const itensFast: Record<string, unknown>[] = [];
+      let pagFast = 1;
 
-      const dadosDA = (await this.getJson(
-        urlDadosAbertos,
-        undefined,
-        true,
-        true
-      )) as Record<string, unknown> | null;
+      while (pagFast <= 20) {
+        const respFast = (await this.getJson(
+          urlFast,
+          {
+            tipo: "numeroControlePNCPCompra",
+            codigo: codigoCompra,
+            pagina: pagFast,
+            tamanhoPagina: 500,
+          },
+          this.usarCache,
+          true
+        )) as Record<string, unknown> | null;
 
-      if (
-        dadosDA &&
-        typeof dadosDA === "object" &&
-        Array.isArray(dadosDA.resultado) &&
-        dadosDA.resultado.length > 0
-      ) {
+        if (!respFast || typeof respFast !== "object") break;
+        const resultadoArr = Array.isArray(respFast.resultado)
+          ? (respFast.resultado as Record<string, unknown>[])
+          : [];
+        if (resultadoArr.length === 0) break;
+
+        itensFast.push(...resultadoArr);
+        const totalPaginas = Number(respFast.totalPaginas || 1);
+        if (pagFast >= totalPaginas) break;
+        pagFast++;
+      }
+
+      if (itensFast.length > 0) {
         const itensMapeados: Record<string, unknown>[] = [];
-        for (const it of dadosDA.resultado as Record<string, unknown>[]) {
-          const numItem = Number(it.numeroItemPncp || it.numeroItem || 0);
-          const descDet = String(it.descricaodetalhada || "").trim();
-          const descRes = String(it.descricaoResumida || "").trim();
-          const unMed = String(it.unidadeMedida || "").trim();
+        for (const it of itensFast) {
+          const numItem = Number(it.numeroItemPncp ?? it.numeroItem ?? 0);
+          const descDet = String(it.descricaodetalhada ?? "").trim();
+          const descRes = String(it.descricaoResumida ?? "").trim();
+          const unMed = String(it.unidadeMedida ?? "").trim();
           const valEst =
             it.valorUnitarioEstimado !== null &&
             it.valorUnitarioEstimado !== undefined
               ? Number(it.valorUnitarioEstimado)
               : null;
-          const valRes =
-            it.valorUnitarioResultado !== null &&
-            it.valorUnitarioResultado !== undefined
-              ? Number(it.valorUnitarioResultado)
-              : null;
-          const fornecedor = String(it.nomeFornecedor || "").trim();
+          const valRes = Number(it.valorUnitarioResultado);
+          const temValRes = !Number.isNaN(valRes) && valRes > 0;
+          const sitNomeOriginal = String(it.situacaoCompraItemNome || "Homologado").trim();
+          const sitItem = sitNomeOriginal.toLowerCase();
+          const itemFracassado =
+            sitItem.includes("deserto") ||
+            sitItem.includes("fracassado") ||
+            sitItem.includes("cancelado");
+
+          const fornecedor = String(it.nomeFornecedor ?? "").trim();
+          const niFornecedor = String(
+            it.niFornecedor ?? it.codFornecedor ?? it.codigoFornecedor ?? ""
+          ).trim();
+          const qtdHomologada = it.quantidadeResultado ?? it.quantidade;
+          const percDesconto = Number(it.percentualDesconto ?? 0);
+
+          const resObj = temValRes
+            ? {
+                numeroItem: numItem,
+                valorUnitarioHomologado: valRes,
+                quantidadeHomologada: qtdHomologada,
+                nomeRazaoSocialFornecedor: fornecedor,
+                niFornecedor,
+                percentualDesconto: Number.isFinite(percDesconto) ? percDesconto : 0,
+                situacaoCompraItemResultadoId: 1,
+                situacaoCompraItemResultadoNome: "Informado",
+                dataResultado: it.dataResultado,
+              }
+            : null;
 
           const itemFormatado: Record<string, unknown> = {
             numeroItem: numItem,
             descricao: descDet || descRes,
+            descricaoDetalhada: descDet,
             informacaoComplementar: descRes,
             unidadeMedida: unMed,
             quantidade:
               it.quantidade !== null && it.quantidade !== undefined
                 ? Number(it.quantidade)
                 : null,
+            materialOuServico: it.materialOuServico,
             valorUnitarioEstimado: Number.isFinite(valEst) ? valEst : null,
-            temResultado: Boolean(valRes && valRes > 0),
-            situacaoCompraItemNome: "Homologado",
+            // Se tem valor no Dados Abertos, é true; se não tem mas não está fracassado, deixa true
+            // para que a Etapa 4 consulte os resultados homologados em vez de descartar prematuramente
+            temResultado: temValRes ? true : !itemFracassado,
+            situacaoCompraItemNome: itemFracassado ? sitNomeOriginal : "Homologado",
+            _resultadoHomologado: resObj ? [resObj] : null,
           };
 
-          if (valRes && valRes > 0) {
-            const resObj = {
-              numeroItem: numItem,
-              valorUnitarioHomologado: valRes,
-              nomeRazaoSocialFornecedor: fornecedor,
-              situacaoCompraItemResultadoNome: "Homologado",
-            };
-            itemFormatado._resultadoHomologado = resObj;
+          if (resObj && numItem > 0) {
             GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(
               `${chaveCompra}|${numItem}`,
               [resObj]
@@ -730,90 +775,36 @@ export class PNCPClient {
         return itensMapeados;
       }
     } catch {
-      // Ignora erro em Dados Abertos e recorre ao PNCP oficial
+      // Segue para fallback na API oficial do PNCP
     }
 
-    // 2. Fallback resiliente: endpoint oficial do PNCP (/api/pncp/v1)
+    // 2. Fallback: API oficial do PNCP (/api/pncp/v1/.../itens) sem corte prematuro
     const todosItens: Record<string, unknown>[] = [];
     if (!isCircuitBreakerApiV1Open()) {
-      const urlItens = `${PNCP_API_V1_BASE}/orgaos/${cnpj}/compras/${ano}/${seqCompra}/itens`;
+      const urlItens = `${PNCP_API_V1_BASE}/orgaos/${cnpjLimpo}/compras/${anoLimpo}/${seqLimpo}/itens`;
       let pag = 1;
+      const maxPaginasItens = 30; // Suporta até 3.000 itens (30 páginas x 100)
 
-      while (true) {
+      while (pag <= maxPaginasItens) {
         const dadosPag = await this.getJson(
           urlItens,
           { pagina: pag, tamanhoPagina: ITEMS_PAGE_SIZE },
-          true,
+          this.usarCache,
           true
         );
         if (!Array.isArray(dadosPag) || dadosPag.length === 0) {
           break;
         }
         todosItens.push(...(dadosPag as Record<string, unknown>[]));
-        if (dadosPag.length < ITEMS_PAGE_SIZE || pag >= 4) {
+        // A API do PNCP retorna páginas de 50 ou 100 itens; só parar se vier menos de 50
+        if (dadosPag.length < 50) {
           break;
         }
         pag++;
       }
     }
 
-    // 3. Fallback inteligente quando a API de itens não retorna registros (503, indisponibilidade ou ausência no PNCP)
-    if (todosItens.length === 0) {
-      try {
-        const detCompra = await this.obterDetalheCompra(cnpj, ano, seqCompra);
-        if (detCompra && detCompra.objetoCompra) {
-          const valHom = Number(detCompra.valorTotalHomologado);
-          const valEst = Number(detCompra.valorTotalEstimado);
-          const valFinal =
-            Number.isFinite(valHom) && valHom > 0
-              ? valHom
-              : Number.isFinite(valEst) && valEst > 0
-              ? valEst
-              : null;
-
-          const itemSintetico: Record<string, unknown> = {
-            numeroItem: 1,
-            descricao: String(detCompra.objetoCompra || "").trim(),
-            informacaoComplementar: [
-              detCompra.processo ? `Processo: ${detCompra.processo}` : "",
-              detCompra.modalidadeNome ? `Modalidade: ${detCompra.modalidadeNome}` : "",
-              detCompra.linkSistemaOrigem ? `Sistema Origem: ${detCompra.linkSistemaOrigem}` : "",
-            ]
-              .filter(Boolean)
-              .join(" | "),
-            unidadeMedida: "Posto / Mês",
-            quantidade: 1,
-            valorUnitarioEstimado:
-              Number.isFinite(valEst) && valEst > 0 ? valEst : valFinal,
-            temResultado: Boolean(valFinal && valFinal > 0),
-            situacaoCompraItemNome: "Homologado",
-            _ehItemSinteticoAta: true,
-          };
-
-          if (valFinal && valFinal > 0) {
-            const fornecedorNome = detCompra.processo
-              ? `Detentoras da ARP (Processo ${detCompra.processo})`
-              : "Detentoras da ARP (consulte documento oficial)";
-            const resObj = {
-              numeroItem: 1,
-              valorUnitarioHomologado: valFinal,
-              nomeRazaoSocialFornecedor: fornecedorNome,
-              situacaoCompraItemResultadoNome: "Homologado",
-            };
-            itemSintetico._resultadoHomologado = resObj;
-            GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(
-              `${chaveCompra}|1`,
-              [resObj]
-            );
-          }
-
-          todosItens.push(itemSintetico);
-        }
-      } catch {
-        // Ignora falha de detalhe
-      }
-    }
-
+    // Só salvar no cache se encontrou itens (evita cachear [] se o circuito abriu no meio)
     if (this.usarCache && todosItens.length > 0) {
       setInCache(`itens_compra_${chaveCompra}`, todosItens);
     }
@@ -827,18 +818,77 @@ export class PNCPClient {
     seqCompra: string,
     numeroItem: string
   ): Promise<Record<string, unknown>[]> {
-    const chave = `${cnpj}|${ano}|${seqCompra}|${numeroItem}`;
+    const cnpjLimpo = String(cnpj || "").replace(/\D/g, "").trim();
+    const anoLimpo = String(ano || "").replace(/\D/g, "").trim();
+    const seqLimpo = String(seqCompra || "").replace(/\D/g, "").replace(/^0+/, "") || "0";
+    const chaveCompra = `${cnpjLimpo}|${anoLimpo}|${seqLimpo}`;
+    const chave = `${chaveCompra}|${numeroItem}`;
+
     const cachedResultado = GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.get(chave);
     if (cachedResultado && cachedResultado.length > 0) {
       return cachedResultado;
+    }
+
+    // 1. Tenta buscar resultados em lote da compra no endpoint 3.1 do Dados Abertos (uma única vez por compra)
+    if (!GLOBAL_RESULTADOS_DA_COMPRAS_CONSULTADAS.has(chaveCompra)) {
+      GLOBAL_RESULTADOS_DA_COMPRAS_CONSULTADAS.add(chaveCompra);
+      try {
+        const codigoCompra = `${cnpjLimpo}-1-${seqLimpo.padStart(6, "0")}/${anoLimpo}`;
+        const urlResDA = `${DADOS_ABERTOS_BASE}/modulo-contratacoes/3.1_consultarResultadoItensContratacoes_PNCP_14133_Id`;
+        const respResDA = (await this.getJson(
+          urlResDA,
+          { tipo: "numeroControlePNCPCompra", codigo: codigoCompra },
+          this.usarCache,
+          true
+        )) as Record<string, unknown> | null;
+
+        if (
+          respResDA &&
+          typeof respResDA === "object" &&
+          Array.isArray(respResDA.resultado) &&
+          respResDA.resultado.length > 0
+        ) {
+          const porItem = new Map<string, Record<string, unknown>[]>();
+          for (const r of respResDA.resultado as Record<string, unknown>[]) {
+            const nItem = String(r.numeroItemPncp ?? r.numeroItem ?? "").trim();
+            if (!nItem) continue;
+            const mapped: Record<string, unknown> = {
+              ...r,
+              numeroItem: Number(nItem),
+              valorUnitarioHomologado: r.valorUnitarioHomologado,
+              quantidadeHomologada: r.quantidadeHomologada,
+              nomeRazaoSocialFornecedor: r.nomeRazaoSocialFornecedor ?? "",
+              niFornecedor: r.niFornecedor ?? "",
+              percentualDesconto: r.percentualDesconto ?? 0,
+              situacaoCompraItemResultadoId: r.situacaoCompraItemResultadoId ?? 1,
+              situacaoCompraItemResultadoNome:
+                r.situacaoCompraItemResultadoNome ?? "Informado",
+              dataCancelamento: r.dataCancelamentoPncp ?? r.dataCancelamento ?? null,
+              dataResultado: r.dataResultadoPncp ?? r.dataResultado ?? null,
+            };
+            const arr = porItem.get(nItem) || [];
+            arr.push(mapped);
+            porItem.set(nItem, arr);
+          }
+          for (const [nItem, arr] of porItem.entries()) {
+            GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(`${chaveCompra}|${nItem}`, arr);
+          }
+          const fromDA = GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.get(chave);
+          if (fromDA && fromDA.length > 0) {
+            return fromDA;
+          }
+        }
+      } catch {
+        // Prossegue para a API oficial do PNCP
+      }
     }
 
     if (isCircuitBreakerApiV1Open()) {
       return [];
     }
 
-    const url = `${PNCP_API_V1_BASE}/orgaos/${cnpj}/compras/${ano}/${seqCompra}/itens/${numeroItem}/resultados`;
-    const dados = await this.getJson(url, undefined, true, true);
+    const url = `${PNCP_API_V1_BASE}/orgaos/${cnpjLimpo}/compras/${anoLimpo}/${seqLimpo}/itens/${numeroItem}/resultados`;
+    const dados = await this.getJson(url, undefined, this.usarCache, true);
     if (Array.isArray(dados)) {
       if (dados.length > 0) {
         GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(chave, dados as Record<string, unknown>[]);

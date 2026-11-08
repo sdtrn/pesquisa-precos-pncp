@@ -7,12 +7,15 @@ export const PNCP_CONSULTA_V1_BASE = "https://pncp.gov.br/api/consulta/v1";
 export const PNCP_APP_ATAS_BASE = "https://pncp.gov.br/app/atas";
 export const DADOS_ABERTOS_BASE = "https://dadosabertos.compras.gov.br";
 
-// Parâmetros de rede ultrarrápidos e seguros (Fluid Compute Node.js)
-export const REQUEST_TIMEOUT_MS = 3000;
-export const MAX_RETRIES = 1;
-export const MAX_PARALLEL_WORKERS = 25;
+// Parâmetros de rede e paginação calibrados (resiliência WAF Serpro / Fluid Compute Node.js)
 export const SEARCH_PAGE_SIZE = 100;
-export const ITEMS_PAGE_SIZE = 500;
+export const ITEMS_PAGE_SIZE = 100;
+export const REQUEST_TIMEOUT_MS = 10000;
+export const MAX_RETRIES = 2;
+export const RETRY_BACKOFF_MS = 600;
+export const MAX_PARALLEL_WORKERS = 10;
+export const MAX_ATAS_DETAIL = 300;
+export const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 // Opções de escopo dos órgãos (3 filtros principais conforme definição do usuário)
 export const ESCOPO_TODOS = "Todos os órgãos do Brasil";

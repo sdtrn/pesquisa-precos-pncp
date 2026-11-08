@@ -312,7 +312,13 @@ export function gerarTermosBusca(descricao: string): string[] {
 
   // Expansão automática com os grupos de sinônimos mais procurados em compras públicas
   const termosExpandidosSinonimos: string[] = [];
+  const ehGerenciamentoFrota = /\b(gerenciamento|gestao)\b.*\b(frota|abastecimento)\b|\bfrota\b.*\b(gerenciamento|gestao)\b/i.test(
+    textoNorm
+  );
   for (const grupo of GRUPOS_SINONIMOS_AUTOMATICOS) {
+    if (grupo.id === "combustivel" && (ehGerenciamentoFrota || ehVeiculoContexto)) {
+      continue;
+    }
     if (grupo.gatilho.test(textoNorm)) {
       for (const t of grupo.termosBuscaExpandidos) {
         if (!termosExpandidosSinonimos.includes(t)) {
