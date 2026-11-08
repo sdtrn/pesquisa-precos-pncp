@@ -91,6 +91,32 @@ describe("Task 7: Telas Modernas de Login e Cadastro (Inspeção de UI e Acessib
       assert.match(content, /href=["']\/cadastro["']/, "deve ter link para /cadastro");
       assert.match(content, /Solicitar acesso ao sistema/i, "deve ter CTA para solicitação de acesso");
     });
+
+    test("deve higienizar o parâmetro redirect para prevenir ataques de Open Redirect", () => {
+      const content = fs.readFileSync(loginPath, "utf-8");
+      assert.match(
+        content,
+        /rawRedirect\.startsWith\(["']\/["']\)\s*&&\s*!rawRedirect\.startsWith\(["']\/\/["']\)/,
+        "deve validar que redirectUrl inicia com '/' e não inicia com '//'"
+      );
+      assert.match(
+        content,
+        /!rawRedirect\.startsWith\(["']\/\\\\?["']\)/,
+        "deve validar que redirectUrl não inicia com '/\\'"
+      );
+
+      // Simulação do predicado de segurança
+      const isSafeRedirect = (raw: string) =>
+        raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\");
+
+      assert.equal(isSafeRedirect("/"), true);
+      assert.equal(isSafeRedirect("/historico"), true);
+      assert.equal(isSafeRedirect("/admin?tab=usuarios"), true);
+      assert.equal(isSafeRedirect("https://evil.com"), false);
+      assert.equal(isSafeRedirect("//evil.com"), false);
+      assert.equal(isSafeRedirect("/\\evil.com"), false);
+      assert.equal(isSafeRedirect("javascript:alert(1)"), false);
+    });
   });
 
   describe("3. /cadastro (Página de Solicitação de Acesso Pré-Aprovado)", () => {

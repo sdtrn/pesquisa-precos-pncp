@@ -19,7 +19,13 @@ import {
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get("redirect") || "/";
+  const rawRedirect = searchParams.get("redirect") || "/";
+  const redirectUrl =
+    rawRedirect.startsWith("/") &&
+    !rawRedirect.startsWith("//") &&
+    !rawRedirect.startsWith("/\\")
+      ? rawRedirect
+      : "/";
   const msgUrl = searchParams.get("msg");
   const tipoUrl = searchParams.get("tipo");
 
