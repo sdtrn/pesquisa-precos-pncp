@@ -61,6 +61,12 @@ function getDefaultDateRange(): { inicio: string; fim: string } {
 
 export default function HomePage() {
   const [darkMode, setDarkMode] = useState(false);
+  const [usuarioLogado, setUsuarioLogado] = useState<{
+    id: number;
+    nome: string;
+    email: string;
+    perfil: "admin" | "consulta";
+  } | null>(null);
 
   // Scope & Parameters State
   const [escopo, setEscopo] = useState<string>(ESCOPO_TODOS);
@@ -106,8 +112,23 @@ export default function HomePage() {
 
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Initialize dates & load history on mount
+  // Initialize dates, load history & verify user session on mount
   useEffect(() => {
+    fetch("/api/auth/me")
+      .then(async (res) => {
+        if (res.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.usuario) {
+            setUsuarioLogado(data.usuario);
+          }
+        }
+      })
+      .catch(() => {});
+
     const { inicio, fim } = getDefaultDateRange();
     setDataInicial(inicio);
     setDataFinal(fim);
@@ -116,6 +137,16 @@ export default function HomePage() {
       .then((list) => setHistorico(list))
       .catch(() => {});
   }, []);
+
+  // Logout seguro encerrando cookie httpOnly e redirecionando para /login
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      // continua para o redirecionamento
+    }
+    window.location.href = "/login";
+  };
 
   // Sync dark mode class on <html>
   useEffect(() => {
@@ -509,8 +540,14 @@ export default function HomePage() {
         darkMode={darkMode}
         onToggleDarkMode={() => setDarkMode(!darkMode)}
         historicoCount={historico.length}
-        onOpenHistory={() => setShowHistoryDrawer(true)}
+        onOpenHistory={() => {
+          if (usuarioLogado?.perfil === "admin") {
+            setShowHistoryDrawer(true);
+          }
+        }}
         onOpenMunicipiosModal={() => setShowMunicipiosModal(true)}
+        usuarioLogado={usuarioLogado}
+        onLogout={handleLogout}
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -627,17 +664,19 @@ export default function HomePage() {
         />
       )}
 
-      {/* Saved Search History Slide-over Drawer */}
-      <HistoryDrawer
-        isOpen={showHistoryDrawer}
-        onClose={() => setShowHistoryDrawer(false)}
-        historico={historico}
-        onRestoreEntry={handleRestoreHistoryEntry}
-        onDeleteEntry={handleDeleteHistoryEntry}
-        onClearAll={handleClearAllHistory}
-        onExportJson={handleExportHistoryJson}
-        onImportJson={handleImportHistoryJson}
-      />
+      {/* Saved Search History Slide-over Drawer (Apenas Administrador) */}
+      {usuarioLogado?.perfil === "admin" && (
+        <HistoryDrawer
+          isOpen={showHistoryDrawer}
+          onClose={() => setShowHistoryDrawer(false)}
+          historico={historico}
+          onRestoreEntry={handleRestoreHistoryEntry}
+          onDeleteEntry={handleDeleteHistoryEntry}
+          onClearAll={handleClearAllHistory}
+          onExportJson={handleExportHistoryJson}
+          onImportJson={handleImportHistoryJson}
+        />
+      )}
 
       {/* Institutional Footer & Legal Disclaimers */}
       <footer className="border-t border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm pt-8 pb-10 px-4 mt-16 transition-colors">

@@ -98,20 +98,23 @@ export async function POST(req: Request): Promise<Response> {
             (params.termosBusca || []).join(", "),
           termos_busca: (params.termosBusca || []).join(", "),
           escopo_orgaos: params.escopoOrgaos ?? null,
-          regiao_ou_uf: params.regiaoOuUf ?? null,
+          regiao_ou_uf: params.regiaoSelecionada ?? params.ufSelecionada ?? null,
           apenas_municipios_bilionarios:
             params.apenasMunicipiosBilionarios ?? null,
           status_ata: params.statusAta ?? null,
-          tipo_data: params.tipoData ?? null,
-          periodo_pesquisa: params.periodoPesquisa ?? null,
+          tipo_data: params.tipoDataPeriodo ?? null,
+          periodo_pesquisa:
+            params.dataInicial && params.dataFinal
+              ? `${params.dataInicial} até ${params.dataFinal}`
+              : null,
           criterio_classificacao: params.criterioClassificacao ?? null,
           modo_normalizacao: params.modoNormalizacao ?? null,
-          total_atas_varridas: resultado.total_atas_varridas ?? 0,
-          total_encontrados: resultado.total_encontrados ?? 0,
-          total_selecionados: resultado.total_selecionados ?? 0,
-          total_descartados: resultado.total_descartados ?? 0,
+          total_atas_varridas: resultado.total_atas_encontradas ?? 0,
+          total_encontrados: resultado.total_itens_avaliados ?? 0,
+          total_selecionados: (resultado.itens_candidatos || []).length,
+          total_descartados: (resultado.descartados || []).length,
           media_estimada: stats.media ?? null,
-          unidade_referencia: resultado.unidade_medida_padrao ?? null,
+          unidade_referencia: resultado.unidade_referencia_padrao ?? null,
           duracao_segundos: duracaoSegundos,
           ip_origem: meta.ip,
           user_agent: meta.userAgent,
@@ -141,12 +144,15 @@ export async function POST(req: Request): Promise<Response> {
             (params.termosBusca || []).join(", "),
           termos_busca: (params.termosBusca || []).join(", "),
           escopo_orgaos: params.escopoOrgaos ?? null,
-          regiao_ou_uf: params.regiaoOuUf ?? null,
+          regiao_ou_uf: params.regiaoSelecionada ?? params.ufSelecionada ?? null,
           apenas_municipios_bilionarios:
             params.apenasMunicipiosBilionarios ?? null,
           status_ata: params.statusAta ?? null,
-          tipo_data: params.tipoData ?? null,
-          periodo_pesquisa: params.periodoPesquisa ?? null,
+          tipo_data: params.tipoDataPeriodo ?? null,
+          periodo_pesquisa:
+            params.dataInicial && params.dataFinal
+              ? `${params.dataInicial} até ${params.dataFinal}`
+              : null,
           criterio_classificacao: params.criterioClassificacao ?? null,
           modo_normalizacao: params.modoNormalizacao ?? null,
           total_atas_varridas: 0,

@@ -20,6 +20,10 @@ register(
       const mock = pathResolve(process.cwd(), 'tests', 'mocks', 'mock-jspdf-autotable.ts');
       return nextResolve(pathToFileURL(mock).href, context);
     }
+    if (specifier === 'vitest') {
+      const mock = pathResolve(process.cwd(), 'tests', 'mocks', 'mock-vitest.ts');
+      return nextResolve(pathToFileURL(mock).href, context);
+    }
 
     if (specifier.startsWith('@/')) {
       const rel = specifier.slice(2);

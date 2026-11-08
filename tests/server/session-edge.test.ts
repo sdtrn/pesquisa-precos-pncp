@@ -51,8 +51,9 @@ describe("Task 2: Utilitário de Sessão Edge-Safe HMAC-SHA256", () => {
   test("deve rejeitar assinatura adulterada", async () => {
     const token = await assinarTokenSessao(payloadBase);
     const [payloadB64, sigB64] = token.split(".");
-    // Modifica o último caractere da assinatura
-    const adulterada = sigB64.slice(0, -1) + (sigB64.slice(-1) === "a" ? "b" : "a");
+    // Modifica o primeiro caractere da assinatura
+    const firstChar = sigB64[0] === "a" ? "b" : "a";
+    const adulterada = firstChar + sigB64.slice(1);
     const tokenAdulterado = `${payloadB64}.${adulterada}`;
 
     const verificado = await verificarTokenSessao(tokenAdulterado);
