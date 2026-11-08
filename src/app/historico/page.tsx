@@ -33,7 +33,7 @@ import {
   Info,
 } from "lucide-react";
 
-export const ADMIN_PRINCIPAL_EMAIL = "sergiodantastorres@gmail.com";
+const ADMIN_PRINCIPAL_EMAIL = "sergiodantastorres@gmail.com";
 
 interface RegistroAuditoriaPncpItem {
   id: number;
@@ -742,11 +742,11 @@ export default function HistoricoPage() {
                                     </div>
                                     <div className="mt-0.5">
                                       {c.usuario_perfil === "admin" ? (
-                                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300">
                                           Admin
                                         </span>
                                       ) : (
-                                        <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
                                           Consulta
                                         </span>
                                       )}
@@ -1019,7 +1019,7 @@ export default function HistoricoPage() {
                 <p className="text-xs font-mono text-slate-600 dark:text-slate-400">
                   {selectedConsulta.usuario_email || "N/A"}
                 </p>
-                <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#1B365D]/10 dark:bg-[#D4AF37]/20 text-[#1B365D] dark:text-[#F3E5AB] mt-1">
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#1B365D]/10 dark:bg-[#D4AF37]/20 text-[#1B365D] dark:text-[#F3E5AB] mt-1">
                   Perfil: {selectedConsulta.usuario_perfil ? selectedConsulta.usuario_perfil.toUpperCase() : "CONSULTA"}
                 </span>
               </div>

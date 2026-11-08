@@ -117,7 +117,7 @@ export function HeaderInstitucional({
               >
                 <History className="w-4 h-4 text-[#D4AF37]" />
                 <span>Pesquisas Salvas</span>
-                <span className="ml-1 px-1.5 py-0.2 rounded-full text-[11px] font-mono bg-[#B59410] text-white">
+                <span className="ml-1 px-1.5 py-0.5 rounded-full text-[11px] font-mono bg-[#B59410] text-white">
                   {historicoCount}
                 </span>
               </button>
@@ -160,7 +160,7 @@ export function HeaderInstitucional({
                   {usuarioLogado.nome || usuarioLogado.email}
                 </span>
                 <span
-                  className={`text-[10px] font-semibold px-1.5 py-0.2 rounded-full border ${
+                  className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full border ${
                     usuarioLogado.perfil === "admin"
                       ? "bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700"
                       : "bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800"

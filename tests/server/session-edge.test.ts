@@ -157,4 +157,29 @@ describe("Task 2: Utilitário de Sessão Edge-Safe HMAC-SHA256", () => {
     const encoded = "pncp_sessao=tok%2Eabc%2D123";
     assert.equal(extrairTokenDosCookies(encoded), "tok.abc-123");
   });
+
+  test("obterSegredoEfetivo deve emitir warning se em produção sem SESSION_SECRET", async () => {
+    const { obterSegredoEfetivo } = await import("@/lib/server/session-edge");
+    const oldNodeEnv = process.env.NODE_ENV;
+    const oldSecret = process.env.SESSION_SECRET;
+
+    const warnings: string[] = [];
+    const originalWarn = console.warn;
+    console.warn = (...args: unknown[]) => warnings.push(args.join(" "));
+
+    try {
+      delete process.env.SESSION_SECRET;
+      process.env.NODE_ENV = "production";
+
+      const s = obterSegredoEfetivo();
+      assert.ok(typeof s === "string" && s.length > 0);
+      assert.ok(warnings.some((w) => w.includes("[SECURITY WARNING]")));
+    } finally {
+      console.warn = originalWarn;
+      process.env.NODE_ENV = oldNodeEnv;
+      if (oldSecret) {
+        process.env.SESSION_SECRET = oldSecret;
+      }
+    }
+  });
 });

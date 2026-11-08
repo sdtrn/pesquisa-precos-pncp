@@ -25,7 +25,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-export const ADMIN_PRINCIPAL_EMAIL = "sergiodantastorres@gmail.com";
+const ADMIN_PRINCIPAL_EMAIL = "sergiodantastorres@gmail.com";
 
 interface UsuarioItem {
   id: number;

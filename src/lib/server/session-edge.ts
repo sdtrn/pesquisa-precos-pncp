@@ -28,6 +28,25 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 /**
+ * Obtém o segredo efetivo para assinatura e verificação HMAC.
+ * Emite aviso de segurança se em produção e nenhuma variável SESSION_SECRET estiver definida.
+ */
+export function obterSegredoEfetivo(secretOverride?: string): string {
+  if (secretOverride) {
+    return secretOverride;
+  }
+  if (process.env.SESSION_SECRET) {
+    return process.env.SESSION_SECRET;
+  }
+  if (process.env.NODE_ENV === "production") {
+    console.warn(
+      "[SECURITY WARNING] SESSION_SECRET não definida em produção; configure SESSION_SECRET nas variáveis de ambiente."
+    );
+  }
+  return FALLBACK_SECRET;
+}
+
+/**
  * Converte Uint8Array para string Base64URL (RFC 4648 §5, sem padding)
  */
 function bytesToBase64Url(bytes: Uint8Array): string {
@@ -81,7 +100,7 @@ export async function assinarTokenSessao(
   ttlSegundos?: number,
   secretOverride?: string
 ): Promise<string> {
-  const secret = secretOverride || process.env.SESSION_SECRET || FALLBACK_SECRET;
+  const secret = obterSegredoEfetivo(secretOverride);
   const ttl = ttlSegundos !== undefined ? ttlSegundos : DEFAULT_TTL_SECONDS;
   const exp = Math.floor(Date.now() / 1000) + ttl;
 
@@ -129,7 +148,7 @@ export async function verificarTokenSessao(
   }
 
   try {
-    const secret = secretOverride || process.env.SESSION_SECRET || FALLBACK_SECRET;
+    const secret = obterSegredoEfetivo(secretOverride);
     const key = await getHmacKey(secret);
 
     // Calcula assinatura esperada

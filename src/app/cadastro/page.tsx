@@ -160,7 +160,7 @@ export default function CadastroPage() {
               role="alert"
               aria-live="polite"
               tabIndex={-1}
-              className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200 flex items-start gap-2.5 text-xs sm:text-sm focus:outline-none"
+              className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-900 dark:text-rose-200 flex items-start gap-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-rose-500"
             >
               <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
               <div className="leading-relaxed">{erro}</div>
@@ -252,7 +252,7 @@ export default function CadastroPage() {
                   type="button"
                   onClick={() => setMostrarSenha(!mostrarSenha)}
                   aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-0 w-11 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
                 >
                   {mostrarSenha ? (
                     <EyeOff className="w-4 h-4" />
