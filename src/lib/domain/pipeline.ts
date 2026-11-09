@@ -357,14 +357,42 @@ export async function executarPipelinePesquisa(
       : null;
 
   if (params.escopoOrgaos === ESCOPO_POR_REGIAO && ufsDaRegiao && ufsDaRegiao.length > 0) {
-    // Busca direcionada por cada UF da região selecionada para não perder atas no limite global
-    const vistas = new Set<string>();
-    const confPorTermo = new Map<string, { vigentes: number; nao_vigentes: number; todos: number }>();
+    // 1.1 Consulta nacional rápida: se nenhum termo atingir o teto global (9.000 atas),
+    // 100% das atas da região já retornam nesta única passada sem multiplicar chamadas por UF
+    const resNacional = await client.buscarTodasAtasPorTermos({
+      termos: params.termosBusca,
+      statusUi: params.statusAta,
+      tipoData: params.tipoDataPeriodo,
+      dataInicial: dtIni,
+      dataFinal: dtFim,
+      progressoCb: (msg, frac) => progressoCb?.(msg, frac),
+      ufFiltro: null,
+    });
 
-    for (let i = 0; i < ufsDaRegiao.length; i += 3) {
-      const loteUfs = ufsDaRegiao.slice(i, i + 3);
-      const resultadosLote = await Promise.all(
-        loteUfs.map((ufRegiao) =>
+    const atingiuTetoGlobal = resNacional.conferenciasStatus.some(
+      (c) => c.vigentes >= 9000 || c.nao_vigentes >= 9000 || c.todos >= 9000
+    );
+
+    if (!atingiuTetoGlobal) {
+      atasBrutas = resNacional.atas;
+      conferenciasStatusApi = resNacional.conferenciasStatus;
+    } else {
+      // Fallback: busca direcionada por cada UF da região quando o volume nacional supera o teto da API
+      const vistas = new Set<string>();
+      for (const ata of resNacional.atas) {
+        const chave =
+          String(ata.numero_controle_pncp || "").trim() ||
+          String(ata.item_url || "").trim() ||
+          String(ata.id || "").trim();
+        if (chave && !vistas.has(chave)) {
+          vistas.add(chave);
+          atasBrutas.push(ata);
+        }
+      }
+
+      const confPorTermo = new Map<string, { vigentes: number; nao_vigentes: number; todos: number }>();
+      const resultadosRegiao = await Promise.all(
+        ufsDaRegiao.map((ufRegiao, idxUf) =>
           client.buscarTodasAtasPorTermos({
             termos: params.termosBusca,
             statusUi: params.statusAta,
@@ -374,14 +402,14 @@ export async function executarPipelinePesquisa(
             progressoCb: (msg, frac) =>
               progressoCb?.(
                 `[${ufRegiao}] ${msg}`,
-                0.02 + 0.18 * ((i + frac) / Math.max(1, ufsDaRegiao.length))
+                0.02 + 0.18 * ((idxUf + frac) / Math.max(1, ufsDaRegiao.length))
               ),
             ufFiltro: ufRegiao,
           })
         )
       );
 
-      for (const resUf of resultadosLote) {
+      for (const resUf of resultadosRegiao) {
         for (const ata of resUf.atas) {
           const chave =
             String(ata.numero_controle_pncp || "").trim() ||
@@ -400,19 +428,19 @@ export async function executarPipelinePesquisa(
           confPorTermo.set(c.termo, atual);
         }
       }
-    }
 
-    conferenciasStatusApi = Array.from(confPorTermo.entries()).map(([termo, tot]) => {
-      const soma = tot.vigentes + tot.nao_vigentes;
-      return {
-        termo,
-        vigentes: tot.vigentes,
-        nao_vigentes: tot.nao_vigentes,
-        soma_vigentes_mais_nao_vigentes: soma,
-        todos: tot.todos,
-        equacao_valida: tot.todos === soma,
-      };
-    });
+      conferenciasStatusApi = Array.from(confPorTermo.entries()).map(([termo, tot]) => {
+        const soma = tot.vigentes + tot.nao_vigentes;
+        return {
+          termo,
+          vigentes: tot.vigentes,
+          nao_vigentes: tot.nao_vigentes,
+          soma_vigentes_mais_nao_vigentes: soma,
+          todos: tot.todos,
+          equacao_valida: tot.todos === soma,
+        };
+      });
+    }
   } else {
     let ufFiltroApi: string | null = null;
     if (
@@ -457,6 +485,63 @@ export async function executarPipelinePesquisa(
   const atasAprovadasTriagem: AtaAprovadaTriagem[] = [];
   const comprasParaPrecarregar: Array<[string, string, string]> = [];
   const comprasVistasPre = new Set<string>();
+
+  // 2.0 Pré-carrega em lote paralelo os detalhes das atas que passaram no período + compatibilidade
+  // e que precisam de confirmação de município/esfera (eliminando await sequencial dentro do for)
+  const precisaValidarMunicipioBilionario =
+    apenasBilionarios || params.escopoOrgaos === ESCOPO_PE_RECIFE;
+  const atasParaPreDetalheStep2: Array<[string, string, string, string]> = [];
+  const chavesPreDetalheStep2 = new Set<string>();
+
+  if (precisaValidarMunicipioBilionario) {
+    for (const ataS of atasBrutas) {
+      const chavesUrl = PNCPClient.extrairChavesItemUrl(ataS);
+      if (!chavesUrl) continue;
+      const [c, a, sc, sa] = chavesUrl;
+      const orgaoNome = String(ataS.orgao_nome || "").trim();
+      const unidadeNome = String(ataS.unidade_nome || "").trim();
+      const ufS = String(ataS.uf || "").trim().toUpperCase();
+      const munS = String(ataS.municipio_nome || "").trim();
+      const codIbgeS = String(ataS.codigo_ibge || "").trim();
+      const esferaIdS = inferirEsferaRapida(
+        String(ataS.esfera_id || "").trim().toUpperCase(),
+        orgaoNome,
+        unidadeNome,
+        ufS
+      );
+      if (!(!esferaIdS || (esferaIdS === "M" && !munS && !codIbgeS))) {
+        continue;
+      }
+      const dtAssS = parseDataCalendarioRecife(ataS.data_assinatura as string | null);
+      const dtPubS = parseDataCalendarioRecife(ataS.data_publicacao_pncp as string | null);
+      const dtIniVigS = parseDataCalendarioRecife(ataS.data_inicio_vigencia as string | null);
+      const dtFimVigS = parseDataCalendarioRecife(ataS.data_fim_vigencia as string | null);
+      const { dentroDoPeriodo } = verificarPeriodoLocal(
+        params.tipoDataPeriodo,
+        dtIni,
+        dtFim,
+        dtAssS,
+        dtPubS,
+        dtIniVigS,
+        dtFimVigS
+      );
+      if (!dentroDoPeriodo) continue;
+      const compatAta = verificarCompatibilidadePreliminarAta(
+        String(ataS.description || ""),
+        String(ataS.title || ""),
+        params.requisitos
+      );
+      if (!compatAta.compativel) continue;
+
+      const chaveAta = `${c}|${a}|${sc}|${sa}`;
+      if (!chavesPreDetalheStep2.has(chaveAta)) {
+        chavesPreDetalheStep2.add(chaveAta);
+        atasParaPreDetalheStep2.push([c, a, sc, sa]);
+      }
+    }
+  }
+
+  const mapaDetAtaStep2 = await client.preCarregarDetalhesAtas(atasParaPreDetalheStep2);
 
   for (const ataS of atasBrutas) {
     const chavesUrl = PNCPClient.extrairChavesItemUrl(ataS);
@@ -595,16 +680,17 @@ export async function executarPipelinePesquisa(
       continue;
     }
 
-    // 2.3 Só busca detalhe da ata na rede se realmente necessário para validar município bilionário
+    // 2.3 Só usa detalhe da ata (já pré-carregado em paralelo no passo 2.0) se necessário para validar município bilionário
     let detAtaPre: Record<string, unknown> | null = null;
-    const precisaValidarMunicipioBilionario =
-      apenasBilionarios || params.escopoOrgaos === ESCOPO_PE_RECIFE;
     if (
       precisaValidarMunicipioBilionario &&
       (!esferaIdS || (esferaIdS === "M" && !munS && !codIbgeS)) &&
       chavesUrl
     ) {
-      detAtaPre = await client.obterDetalheAta(cnpj, anoC, seqCompra, seqAta);
+      const chaveAta = `${cnpj}|${anoC}|${seqCompra}|${seqAta}`;
+      detAtaPre =
+        mapaDetAtaStep2.get(chaveAta) ??
+        (await client.obterDetalheAta(cnpj, anoC, seqCompra, seqAta));
       if (detAtaPre) {
         const orgEnt = (detAtaPre.orgaoEntidade as Record<string, unknown>) || {};
         const unOrg = (detAtaPre.unidadeOrgao as Record<string, unknown>) || {};

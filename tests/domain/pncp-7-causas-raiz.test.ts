@@ -14,10 +14,10 @@ import { gerarTermosBusca } from "@/lib/domain/parser-requisitos";
 describe("Diagnóstico Técnico PNCP — Verificação das 7 Causas Raiz", () => {
   it("Passo 1: constants.ts deve ter os parâmetros calibrados de rede e paginação", () => {
     assert.equal(ITEMS_PAGE_SIZE, 100);
-    assert.equal(REQUEST_TIMEOUT_MS, 10000);
+    assert.equal(REQUEST_TIMEOUT_MS, 7000);
     assert.equal(MAX_RETRIES, 2);
-    assert.equal(RETRY_BACKOFF_MS, 600);
-    assert.equal(MAX_PARALLEL_WORKERS, 10);
+    assert.equal(RETRY_BACKOFF_MS, 350);
+    assert.equal(MAX_PARALLEL_WORKERS, 20);
   });
 
   it("Passo 2 (Causa Raiz 1 e 7): getJson não deve envenenar o cache em HTTP 503 ou timeout, mas deve fazê-lo em 404 e 204", async () => {

@@ -2,6 +2,7 @@ import crypto from "crypto";
 import {
   CACHE_TTL_MS,
   DADOS_ABERTOS_BASE,
+  DADOS_ABERTOS_TIMEOUT_MS,
   DATA_ASSINATURA,
   DATA_PUBLICACAO,
   DATA_VIGENCIA,
@@ -28,7 +29,7 @@ const MAX_CACHE_ENTRIES = 6000;
 
 // Cache em memória de resultados homologados (preços e fornecedores)
 const GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE = new Map<string, Record<string, unknown>[]>();
-const GLOBAL_RESULTADOS_DA_COMPRAS_CONSULTADAS = new Set<string>();
+const GLOBAL_RESULTADOS_DA_INFLIGHT = new Map<string, Promise<void>>();
 
 // Circuit Breaker para evitar travamento da pipeline quando a API v1 do PNCP estiver em 503
 let circuitBreakerApiV1Failures = 0;
@@ -123,6 +124,7 @@ export class PNCPClient {
     }
 
     const isApiV1 = url.includes(PNCP_API_V1_BASE);
+    const isDadosAbertos = url.includes(DADOS_ABERTOS_BASE);
     // Nunca cachear retorno nulo quando o Circuit Breaker estiver aberto
     if (isApiV1 && isCircuitBreakerApiV1Open()) {
       return null;
@@ -138,10 +140,13 @@ export class PNCPClient {
     }
     const fullUrl = urlObj.toString();
 
+    const timeoutEfetivo = isDadosAbertos ? DADOS_ABERTOS_TIMEOUT_MS : REQUEST_TIMEOUT_MS;
+    const maxRetriesEfetivo = isDadosAbertos ? 0 : MAX_RETRIES;
+
     let ultimoErro: unknown = null;
-    for (let tentativa = 1; tentativa <= MAX_RETRIES + 1; tentativa++) {
+    for (let tentativa = 1; tentativa <= maxRetriesEfetivo + 1; tentativa++) {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutEfetivo);
 
       try {
         const resp = await fetch(fullUrl, {
@@ -191,7 +196,7 @@ export class PNCPClient {
         }
 
         if ([408, 429, 500, 502, 503, 504].includes(resp.status)) {
-          if (tentativa <= MAX_RETRIES) {
+          if (tentativa <= maxRetriesEfetivo) {
             const waitMs = RETRY_BACKOFF_MS * Math.pow(2, tentativa - 1);
             await sleep(waitMs);
             continue;
@@ -211,7 +216,7 @@ export class PNCPClient {
         ultimoErro = err;
 
         // CRÍTICO: Fazer retry ANTES de verificar ignorar404!
-        if (tentativa <= MAX_RETRIES) {
+        if (tentativa <= maxRetriesEfetivo) {
           const waitMs = RETRY_BACKOFF_MS * Math.pow(2, tentativa - 1);
           await sleep(waitMs);
           continue;
@@ -457,36 +462,37 @@ export class PNCPClient {
 
     const queriesNormalizadasJaPaginadas = new Set<string>();
 
+    options.progressoCb?.(
+      `Consultando PNCP para ${termosLimpos.length} termo(s) em paralelo...`,
+      0.04
+    );
+
+    // 1. Busca a Página 1 de todos os termos em paralelo
+    const primeirasPaginas = await runWithConcurrency(
+      termosLimpos,
+      MAX_PARALLEL_WORKERS,
+      async (termo) =>
+        this.buscarPaginaAtas({
+          termo,
+          statusUi: options.statusUi,
+          tipoData: options.tipoData,
+          dataInicial: options.dataInicial,
+          dataFinal: options.dataFinal,
+          pagina: 1,
+          tamPagina: SEARCH_PAGE_SIZE,
+          ufFiltro: options.ufFiltro,
+        })
+    );
+
+    const tarefasPaginasRestantes: Array<{
+      termo: string;
+      pag: number;
+    }> = [];
+
     for (let idxT = 0; idxT < termosLimpos.length; idxT++) {
       const termo = termosLimpos[idxT];
+      const primeira = primeirasPaginas[idxT];
       const queryNorm = PNCPClient.normalizarTermoParaApiSearch(termo);
-
-      options.progressoCb?.(
-        `Consultando PNCP para o termo '${termo}' (${idxT + 1}/${termosLimpos.length})...`,
-        0.02 + 0.18 * (idxT / Math.max(1, termosLimpos.length))
-      );
-
-      const primeira = await this.buscarPaginaAtas({
-        termo,
-        statusUi: options.statusUi,
-        tipoData: options.tipoData,
-        dataInicial: options.dataInicial,
-        dataFinal: options.dataFinal,
-        pagina: 1,
-        tamPagina: SEARCH_PAGE_SIZE,
-        ufFiltro: options.ufFiltro,
-      });
-
-      const conf = await this.conferirEquacaoStatusApi({
-        termo,
-        tipoData: options.tipoData,
-        dataInicial: options.dataInicial,
-        dataFinal: options.dataFinal,
-        ufFiltro: options.ufFiltro,
-        statusConhecido: { statusUi: options.statusUi, total: primeira.total },
-      });
-
-      conferenciasStatus.push(conf);
       const total = Math.min(primeira.total, 9990);
       acumular(primeira.items, termo);
 
@@ -496,54 +502,71 @@ export class PNCPClient {
       queriesNormalizadasJaPaginadas.add(queryNorm);
 
       const totalPaginas = Math.ceil(total / SEARCH_PAGE_SIZE);
-      if (totalPaginas > 1) {
-        const paginasRestantes = Array.from(
-          { length: totalPaginas - 1 },
-          (_, i) => i + 2
-        );
-        let concluidas = 1;
-
-        await runWithConcurrency(
-          paginasRestantes,
-          MAX_PARALLEL_WORKERS,
-          async (pag) => {
-            try {
-              const resP = await this.buscarPaginaAtas({
-                termo,
-                statusUi: options.statusUi,
-                tipoData: options.tipoData,
-                dataInicial: options.dataInicial,
-                dataFinal: options.dataFinal,
-                pagina: pag,
-                tamPagina: SEARCH_PAGE_SIZE,
-                ufFiltro: options.ufFiltro,
-              });
-              if (resP.items.length > 0) {
-                acumular(resP.items, termo);
-              }
-            } catch {
-              // Ignora falha individual de página secundária mantendo resiliência
-            } finally {
-              concluidas++;
-              if (
-                options.progressoCb &&
-                (concluidas % 3 === 0 || concluidas === totalPaginas)
-              ) {
-                const frac =
-                  0.02 +
-                  0.18 *
-                    ((idxT + concluidas / totalPaginas) /
-                      Math.max(1, termosLimpos.length));
-                options.progressoCb(
-                  `Termo '${termo}': baixando páginas de atas (${concluidas}/${totalPaginas})...`,
-                  Math.min(0.2, frac)
-                );
-              }
-            }
-          }
-        );
+      for (let pag = 2; pag <= totalPaginas; pag++) {
+        tarefasPaginasRestantes.push({ termo, pag });
       }
     }
+
+    // 2. Executa em paralelo a conferência de status (não-bloqueante) e a paginação das páginas 2..N
+    let concluidasPag = 0;
+    const totalPaginasExtras = tarefasPaginasRestantes.length;
+
+    const [confsResolvidas] = await Promise.all([
+      runWithConcurrency(
+        termosLimpos,
+        MAX_PARALLEL_WORKERS,
+        async (termo, idxT) =>
+          this.conferirEquacaoStatusApi({
+            termo,
+            tipoData: options.tipoData,
+            dataInicial: options.dataInicial,
+            dataFinal: options.dataFinal,
+            ufFiltro: options.ufFiltro,
+            statusConhecido: {
+              statusUi: options.statusUi,
+              total: primeirasPaginas[idxT].total,
+            },
+          })
+      ),
+      runWithConcurrency(
+        tarefasPaginasRestantes,
+        MAX_PARALLEL_WORKERS,
+        async ({ termo, pag }) => {
+          try {
+            const resP = await this.buscarPaginaAtas({
+              termo,
+              statusUi: options.statusUi,
+              tipoData: options.tipoData,
+              dataInicial: options.dataInicial,
+              dataFinal: options.dataFinal,
+              pagina: pag,
+              tamPagina: SEARCH_PAGE_SIZE,
+              ufFiltro: options.ufFiltro,
+            });
+            if (resP.items.length > 0) {
+              acumular(resP.items, termo);
+            }
+          } catch {
+            // Ignora falha individual de página secundária mantendo resiliência
+          } finally {
+            concluidasPag++;
+            if (
+              options.progressoCb &&
+              totalPaginasExtras > 0 &&
+              (concluidasPag % 4 === 0 || concluidasPag === totalPaginasExtras)
+            ) {
+              const frac = 0.05 + 0.15 * (concluidasPag / totalPaginasExtras);
+              options.progressoCb(
+                `Baixando páginas de atas (${concluidasPag}/${totalPaginasExtras})...`,
+                Math.min(0.2, frac)
+              );
+            }
+          }
+        }
+      ),
+    ]);
+
+    conferenciasStatus.push(...confsResolvidas);
 
     return {
       atas: Array.from(atasPorChave.values()),
@@ -778,12 +801,13 @@ export class PNCPClient {
       // Segue para fallback na API oficial do PNCP
     }
 
-    // 2. Fallback: API oficial do PNCP (/api/pncp/v1/.../itens) sem corte prematuro
+    // 2. Fallback: API oficial do PNCP (/api/pncp/v1/.../itens) sem corte prematuro e sem requisição fantasma
     const todosItens: Record<string, unknown>[] = [];
     if (!isCircuitBreakerApiV1Open()) {
       const urlItens = `${PNCP_API_V1_BASE}/orgaos/${cnpjLimpo}/compras/${anoLimpo}/${seqLimpo}/itens`;
       let pag = 1;
       const maxPaginasItens = 30; // Suporta até 3.000 itens (30 páginas x 100)
+      let tamPaginaServidor: number | null = null;
 
       while (pag <= maxPaginasItens) {
         const dadosPag = await this.getJson(
@@ -796,8 +820,19 @@ export class PNCPClient {
           break;
         }
         todosItens.push(...(dadosPag as Record<string, unknown>[]));
-        // A API do PNCP retorna páginas de 50 ou 100 itens; só parar se vier menos de 50
-        if (dadosPag.length < 50) {
+
+        if (pag === 1) {
+          // A API do PNCP pagina em blocos de 50 ou de ITEMS_PAGE_SIZE (100).
+          // Se na página 1 vier menos de 50, ou entre 51 e 99 (ex: 65 itens), já é a última página!
+          if (
+            dadosPag.length < 50 ||
+            (dadosPag.length > 50 && dadosPag.length < ITEMS_PAGE_SIZE)
+          ) {
+            break;
+          }
+          tamPaginaServidor =
+            dadosPag.length >= ITEMS_PAGE_SIZE ? ITEMS_PAGE_SIZE : 50;
+        } else if (dadosPag.length < (tamPaginaServidor ?? 50)) {
           break;
         }
         pag++;
@@ -829,58 +864,63 @@ export class PNCPClient {
       return cachedResultado;
     }
 
-    // 1. Tenta buscar resultados em lote da compra no endpoint 3.1 do Dados Abertos (uma única vez por compra)
-    if (!GLOBAL_RESULTADOS_DA_COMPRAS_CONSULTADAS.has(chaveCompra)) {
-      GLOBAL_RESULTADOS_DA_COMPRAS_CONSULTADAS.add(chaveCompra);
-      try {
-        const codigoCompra = `${cnpjLimpo}-1-${seqLimpo.padStart(6, "0")}/${anoLimpo}`;
-        const urlResDA = `${DADOS_ABERTOS_BASE}/modulo-contratacoes/3.1_consultarResultadoItensContratacoes_PNCP_14133_Id`;
-        const respResDA = (await this.getJson(
-          urlResDA,
-          { tipo: "numeroControlePNCPCompra", codigo: codigoCompra },
-          this.usarCache,
-          true
-        )) as Record<string, unknown> | null;
+    // 1. Tenta buscar resultados em lote da compra no endpoint 3.1 do Dados Abertos (com deduplicação In-Flight)
+    let inflightDA = GLOBAL_RESULTADOS_DA_INFLIGHT.get(chaveCompra);
+    if (!inflightDA) {
+      inflightDA = (async () => {
+        try {
+          const codigoCompra = `${cnpjLimpo}-1-${seqLimpo.padStart(6, "0")}/${anoLimpo}`;
+          const urlResDA = `${DADOS_ABERTOS_BASE}/modulo-contratacoes/3.1_consultarResultadoItensContratacoes_PNCP_14133_Id`;
+          const respResDA = (await this.getJson(
+            urlResDA,
+            { tipo: "numeroControlePNCPCompra", codigo: codigoCompra },
+            this.usarCache,
+            true
+          )) as Record<string, unknown> | null;
 
-        if (
-          respResDA &&
-          typeof respResDA === "object" &&
-          Array.isArray(respResDA.resultado) &&
-          respResDA.resultado.length > 0
-        ) {
-          const porItem = new Map<string, Record<string, unknown>[]>();
-          for (const r of respResDA.resultado as Record<string, unknown>[]) {
-            const nItem = String(r.numeroItemPncp ?? r.numeroItem ?? "").trim();
-            if (!nItem) continue;
-            const mapped: Record<string, unknown> = {
-              ...r,
-              numeroItem: Number(nItem),
-              valorUnitarioHomologado: r.valorUnitarioHomologado,
-              quantidadeHomologada: r.quantidadeHomologada,
-              nomeRazaoSocialFornecedor: r.nomeRazaoSocialFornecedor ?? "",
-              niFornecedor: r.niFornecedor ?? "",
-              percentualDesconto: r.percentualDesconto ?? 0,
-              situacaoCompraItemResultadoId: r.situacaoCompraItemResultadoId ?? 1,
-              situacaoCompraItemResultadoNome:
-                r.situacaoCompraItemResultadoNome ?? "Informado",
-              dataCancelamento: r.dataCancelamentoPncp ?? r.dataCancelamento ?? null,
-              dataResultado: r.dataResultadoPncp ?? r.dataResultado ?? null,
-            };
-            const arr = porItem.get(nItem) || [];
-            arr.push(mapped);
-            porItem.set(nItem, arr);
+          if (
+            respResDA &&
+            typeof respResDA === "object" &&
+            Array.isArray(respResDA.resultado) &&
+            respResDA.resultado.length > 0
+          ) {
+            const porItem = new Map<string, Record<string, unknown>[]>();
+            for (const r of respResDA.resultado as Record<string, unknown>[]) {
+              const nItem = String(r.numeroItemPncp ?? r.numeroItem ?? "").trim();
+              if (!nItem) continue;
+              const mapped: Record<string, unknown> = {
+                ...r,
+                numeroItem: Number(nItem),
+                valorUnitarioHomologado: r.valorUnitarioHomologado,
+                quantidadeHomologada: r.quantidadeHomologada,
+                nomeRazaoSocialFornecedor: r.nomeRazaoSocialFornecedor ?? "",
+                niFornecedor: r.niFornecedor ?? "",
+                percentualDesconto: r.percentualDesconto ?? 0,
+                situacaoCompraItemResultadoId: r.situacaoCompraItemResultadoId ?? 1,
+                situacaoCompraItemResultadoNome:
+                  r.situacaoCompraItemResultadoNome ?? "Informado",
+                dataCancelamento: r.dataCancelamentoPncp ?? r.dataCancelamento ?? null,
+                dataResultado: r.dataResultadoPncp ?? r.dataResultado ?? null,
+              };
+              const arr = porItem.get(nItem) || [];
+              arr.push(mapped);
+              porItem.set(nItem, arr);
+            }
+            for (const [nItem, arr] of porItem.entries()) {
+              GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(`${chaveCompra}|${nItem}`, arr);
+            }
           }
-          for (const [nItem, arr] of porItem.entries()) {
-            GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.set(`${chaveCompra}|${nItem}`, arr);
-          }
-          const fromDA = GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.get(chave);
-          if (fromDA && fromDA.length > 0) {
-            return fromDA;
-          }
+        } catch {
+          // Prossegue para a API oficial do PNCP
         }
-      } catch {
-        // Prossegue para a API oficial do PNCP
-      }
+      })();
+      GLOBAL_RESULTADOS_DA_INFLIGHT.set(chaveCompra, inflightDA);
+    }
+
+    await inflightDA;
+    const fromDA = GLOBAL_RESULTADOS_HOMOLOGADOS_CACHE.get(chave);
+    if (fromDA && fromDA.length > 0) {
+      return fromDA;
     }
 
     if (isCircuitBreakerApiV1Open()) {
@@ -997,6 +1037,28 @@ export class PNCPClient {
         }
       }
     );
+  }
+
+  async preCarregarDetalhesAtas(
+    atasUnicas: Array<[string, string, string, string]>
+  ): Promise<Map<string, Record<string, unknown> | null>> {
+    const mapa = new Map<string, Record<string, unknown> | null>();
+    if (atasUnicas.length === 0) return mapa;
+
+    await runWithConcurrency(
+      atasUnicas,
+      MAX_PARALLEL_WORKERS,
+      async ([c, a, sc, sa]) => {
+        const chave = `${c}|${a}|${sc}|${sa}`;
+        try {
+          const det = await this.obterDetalheAta(c, a, sc, sa);
+          mapa.set(chave, det);
+        } catch {
+          mapa.set(chave, null);
+        }
+      }
+    );
+    return mapa;
   }
 
   async preCarregarItensCompras(

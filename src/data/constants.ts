@@ -10,10 +10,11 @@ export const DADOS_ABERTOS_BASE = "https://dadosabertos.compras.gov.br";
 // Parâmetros de rede e paginação calibrados (resiliência WAF Serpro / Fluid Compute Node.js)
 export const SEARCH_PAGE_SIZE = 100;
 export const ITEMS_PAGE_SIZE = 100;
-export const REQUEST_TIMEOUT_MS = 10000;
+export const REQUEST_TIMEOUT_MS = 7000;
+export const DADOS_ABERTOS_TIMEOUT_MS = 2800;
 export const MAX_RETRIES = 2;
-export const RETRY_BACKOFF_MS = 600;
-export const MAX_PARALLEL_WORKERS = 10;
+export const RETRY_BACKOFF_MS = 350;
+export const MAX_PARALLEL_WORKERS = 20;
 export const MAX_ATAS_DETAIL = 300;
 export const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
