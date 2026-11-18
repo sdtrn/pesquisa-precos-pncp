@@ -211,7 +211,7 @@ export function SearchParametersForm({
             <span>Critério de Julgamento / Classificação da Melhor ARP</span>
             <HelpTooltip
               title="Critério de Julgamento da ARP (Lei 14.133/2021)"
-              summary="Define a métrica de vantajosidade e classificação das Atas no Top 20:"
+              summary="Define a métrica de vantajosidade e classificação das Atas no Top 40:"
               options={[
                 {
                   label: "Menor Preço Unitário (R$) - Padrão",

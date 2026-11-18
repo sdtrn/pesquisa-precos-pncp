@@ -14,7 +14,7 @@ Plataforma web moderna para **Pesquisa de Preços em Atas de Registro de Preços
    - **R2 (Identificação Estrita de Município):** Validação pelo código IBGE de 7 dígitos (`codigoIbge`) e/ou par exato `Nome Normalizado + UF` (sem correspondência parcial por substring).
    - **R4 (Integridade de Status e Vigência):** Descarte de atas canceladas e rebaixamento automático para revisão manual (`Classe B`) em caso de divergência entre o status retornado pela API e a vigência aferida no calendário de Recife (`America/Recife`).
    - **R5 (Valor Homologado e Unidade):** Extração exclusiva do valor unitário homologado `> 0` no endpoint `/resultados` e verificação estrita de compatibilidade de unidade de medida (sem conversões arbitrárias).
-   - **R6 (Deduplicação e Classificação por Item Homologado no Top 20):** Na seleção dos **20 menores preços unitários** (ou maiores taxas de desconto), classifica e ranqueia diretamente os itens homologados no certame, admitindo múltiplos itens/lotes distintos de uma mesma ARP (com fornecedores ou preços variados ou iguais) com identificação inequívoca de Item/Lote e Fornecedor, deduplicando apenas registros idênticos por (CNPJ, ARP, Nº do Item).
+   - **R6 (Deduplicação e Classificação por Item Homologado no Top 40):** Na seleção dos **40 menores preços unitários** (ou maiores taxas de desconto), classifica e ranqueia diretamente os itens homologados no certame, admitindo múltiplos itens/lotes distintos de uma mesma ARP (com fornecedores ou preços variados ou iguais) com identificação inequívoca de Item/Lote e Fornecedor, deduplicando apenas registros idênticos por (CNPJ, ARP, Nº do Item).
    - **R7 (Esfera Obrigatória):** Descarte auditável de registros sem esfera administrativa identificada (`"esfera não identificada"`).
 
 2. **4 Escopos Institucionais de Órgãos:**
@@ -30,7 +30,7 @@ Plataforma web moderna para **Pesquisa de Preços em Atas de Registro de Preços
 
 4. **Gráficos Interativos e Saneamento Estatístico:**
    - **Gráfico de Dispersão de Preços Unitários** com destaque para os itens selecionados e linhas de referência para **Média** e **Mediana**.
-   - **Assistente de Saneamento Estatístico (Outliers IQR / Mediana)** na janela modal dos 20 menores preços.
+   - **Assistente de Saneamento Estatístico (Outliers IQR / Mediana)** na janela modal dos 40 menores preços.
    - Gráficos de distribuição por **UF** e detalhamento dos **Motivos de Descarte (R1–R7)**.
 
 5. **Exportação Tripla Auditável:**

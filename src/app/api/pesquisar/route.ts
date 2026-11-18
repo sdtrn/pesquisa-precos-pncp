@@ -1,4 +1,4 @@
-import { executarPipelinePesquisa, selecionarTop20Menores } from "@/lib/domain/pipeline";
+import { executarPipelinePesquisa, selecionarTop40Menores } from "@/lib/domain/pipeline";
 import { calcularEstatisticasPrecos } from "@/lib/domain/statistics";
 import { TOP_N_ITENS_JANELA } from "@/data/constants";
 import type { ParametrosPipeline } from "@/lib/domain/types";
@@ -90,14 +90,14 @@ export async function POST(req: Request): Promise<Response> {
           resultado.criterio_classificacao ||
           params.criterioClassificacao ||
           "menor_preco";
-        const top20 = selecionarTop20Menores(
+        const top40 = selecionarTop40Menores(
           resultado.itens_candidatos || [],
           false,
           TOP_N_ITENS_JANELA,
           crit
         );
         const stats = calcularEstatisticasPrecos(
-          top20.map((i) => i.valor_unitario),
+          top40.map((i) => i.valor_unitario),
           crit
         );
 

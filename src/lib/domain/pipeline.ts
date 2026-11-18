@@ -27,7 +27,7 @@ import {
   calcularPrecoNormalizado,
   detectarModoNormalizacaoSugerido,
 } from "@/lib/domain/normalizador-precos";
-import { selecionarTop20Menores } from "@/lib/domain/selection";
+import { selecionarTop40Menores } from "@/lib/domain/selection";
 import type { ArquivoArp, ConferenciaStatusApi } from "@/lib/domain/types";
 import { PNCPClient } from "@/lib/domain/pncp-client";
 import {
@@ -1621,22 +1621,22 @@ export async function executarPipelinePesquisa(
     }
   }
 
-  // Enriquecer os top 20 candidatos A e A+B com os links diretos de PDF das ARPs (ARP inicial + Termos Aditivos)
+  // Enriquecer os top 40 candidatos A e A+B com os links diretos de PDF das ARPs (ARP inicial + Termos Aditivos)
   try {
-    const top20AB = selecionarTop20Menores(
+    const top40AB = selecionarTop40Menores(
       itensCandidatosAprovados,
       true,
       TOP_N_ITENS_JANELA,
       params.criterioClassificacao
     );
-    const top20A = selecionarTop20Menores(
+    const top40A = selecionarTop40Menores(
       itensCandidatosAprovados,
       false,
       TOP_N_ITENS_JANELA,
       params.criterioClassificacao
     );
     const unicosParaPdf = new Map<string, ItemCandidato>();
-    for (const it of [...top20A, ...top20AB]) {
+    for (const it of [...top40A, ...top40AB]) {
       const chaveAtaArq = `${it.cnpj_orgao}|${it.ano_compra}|${it.seq_compra}|${it.seq_ata}`;
       if (!unicosParaPdf.has(chaveAtaArq)) {
         unicosParaPdf.set(chaveAtaArq, it);
@@ -1715,4 +1715,7 @@ export async function executarPipelinePesquisa(
   };
 }
 
-export { selecionarTop20Menores } from "@/lib/domain/selection";
+export {
+  selecionarTop40Menores,
+  selecionarTop20Menores,
+} from "@/lib/domain/selection";

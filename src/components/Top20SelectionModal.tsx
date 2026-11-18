@@ -85,7 +85,7 @@ export function Top20SelectionModal({
     });
   };
 
-  // Compute outlier flags across the Top 20 candidates
+  // Compute outlier flags across the Top 40 candidates
   const outlierKeys = useMemo(() => {
     return identificarOutliersIqr(candidatosTop20, criterioClassificacao);
   }, [candidatosTop20, criterioClassificacao]);
@@ -189,8 +189,8 @@ export function Top20SelectionModal({
             <div className="flex items-center gap-2">
               <h2 className="font-heading text-base sm:text-lg font-bold">
                 {criterioClassificacao === "maior_desconto"
-                  ? "Seleção Auditável das 20 Maiores Taxas de Desconto (Regra R6)"
-                  : "Seleção Auditável dos 20 Menores Preços Unitários (Regra R6)"}
+                  ? "Seleção Auditável das 40 Maiores Taxas de Desconto (Regra R6)"
+                  : "Seleção Auditável dos 40 Menores Preços Unitários (Regra R6)"}
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#B59410] text-white">
                 Classificação por Item Homologado
@@ -233,7 +233,11 @@ export function Top20SelectionModal({
               </label>
               <HelpTooltip
                 title="Filtro: Incluir Itens de Aderência B"
-                summary="Define se os itens classificados como 'B' entram na lista dos 20 menores preços:"
+                summary={
+                  criterioClassificacao === "maior_desconto"
+                    ? "Define se os itens classificados como 'B' entram na lista das 40 maiores taxas de desconto:"
+                    : "Define se os itens classificados como 'B' entram na lista dos 40 menores preços:"
+                }
                 options={[
                   {
                     label: "Desmarcado (Apenas Classe A — Padrão)",

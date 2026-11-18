@@ -2,13 +2,13 @@ import { TOP_N_ITENS_JANELA } from "@/data/constants";
 import type { CriterioClassificacao, ItemCandidato, NivelAderencia } from "@/lib/domain/types";
 
 /**
- * Retorna os `limite` (padrão: 20) melhores itens (menor preço normalizado ou maior desconto),
+ * Retorna os `limite` (padrão: 40) melhores itens (menor preço normalizado ou maior desconto),
  * permitindo múltiplos itens homologados de uma mesma ARP com diferentes lotes/itens/fornecedores.
  * Deduplica apenas itens idênticos pelo conjunto (CNPJ, ARP, Número do Item/Lote).
  * Quando o critério é 'menor_preco', ordena de forma crescente pelo menor valor unitário normalizado.
  * Quando o critério é 'maior_desconto', ordena de forma decrescente pela maior taxa.
  */
-export function selecionarTop20Menores(
+export function selecionarTop40Menores(
   itensCandidatos: ItemCandidato[],
   incluirRevisaoB = false,
   limite = TOP_N_ITENS_JANELA,
@@ -41,3 +41,6 @@ export function selecionarTop20Menores(
 
   return unicos.slice(0, limite);
 }
+
+/** Alias mantido para retrocompatibilidade com testes e importações existentes. */
+export const selecionarTop20Menores = selecionarTop40Menores;
