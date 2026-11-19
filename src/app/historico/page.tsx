@@ -799,7 +799,7 @@ export default function HistoricoPage() {
                                   {formatarMoeda(c.media_estimada)}
                                 </div>
                                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                                  Encontrados: {c.total_encontrados} • Top 40: {c.total_selecionados} • Descartados: {c.total_descartados}
+                                  Encontrados: {c.total_encontrados} • Válidos: {c.total_selecionados} • Descartados: {c.total_descartados}
                                 </div>
                               </td>
 
@@ -1127,7 +1127,7 @@ export default function HistoricoPage() {
 
                 <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900">
                   <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400">
-                    Top 40 Válidos
+                    Itens Válidos
                   </span>
                   <p className="text-lg font-bold font-heading text-emerald-700 dark:text-emerald-300 mt-0.5">
                     {selectedConsulta.total_selecionados}
@@ -1149,7 +1149,7 @@ export default function HistoricoPage() {
             <div className="p-4 rounded-xl bg-gradient-to-r from-[#1B365D] to-[#0F2442] text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg border border-[#D4AF37]/40">
               <div>
                 <span className="text-xs uppercase tracking-wider text-[#F3E5AB] font-semibold">
-                  Média Estimada Homologada (Top 40)
+                  Média Estimada Homologada (Todos os Válidos)
                 </span>
                 <p className="text-2xl font-bold font-heading mt-0.5 text-[#D4AF37]">
                   {formatarMoeda(selectedConsulta.media_estimada)}

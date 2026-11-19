@@ -85,7 +85,7 @@ export function Top20SelectionModal({
     });
   };
 
-  // Compute outlier flags across the Top 40 candidates
+  // Compute outlier flags across all candidates
   const outlierKeys = useMemo(() => {
     return identificarOutliersIqr(candidatosTop20, criterioClassificacao);
   }, [candidatosTop20, criterioClassificacao]);
@@ -189,8 +189,8 @@ export function Top20SelectionModal({
             <div className="flex items-center gap-2">
               <h2 className="font-heading text-base sm:text-lg font-bold">
                 {criterioClassificacao === "maior_desconto"
-                  ? "Seleção Auditável das 40 Maiores Taxas de Desconto (Regra R6)"
-                  : "Seleção Auditável dos 40 Menores Preços Unitários (Regra R6)"}
+                  ? "Seleção Auditável de Todas as Taxas de Desconto Encontradas (Regra R6)"
+                  : "Seleção Auditável de Todos os Preços Unitários Encontrados (Regra R6)"}
               </h2>
               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#B59410] text-white">
                 Classificação por Item Homologado
@@ -235,8 +235,8 @@ export function Top20SelectionModal({
                 title="Filtro: Incluir Itens de Aderência B"
                 summary={
                   criterioClassificacao === "maior_desconto"
-                    ? "Define se os itens classificados como 'B' entram na lista das 40 maiores taxas de desconto:"
-                    : "Define se os itens classificados como 'B' entram na lista dos 40 menores preços:"
+                    ? "Define se os itens classificados como 'B' entram na lista de todas as taxas de desconto encontradas:"
+                    : "Define se os itens classificados como 'B' entram na lista de todos os preços encontrados:"
                 }
                 options={[
                   {

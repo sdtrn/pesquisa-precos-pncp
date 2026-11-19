@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import type { RegistroHistoricoPesquisa } from "@/lib/domain/types";
 import { formatValorOuTaxa } from "@/lib/domain/statistics";
-import { selecionarTop40Menores } from "@/lib/domain/pipeline";
+import { selecionarTodosItensOrdenados } from "@/lib/domain/pipeline";
 import { TOP_N_ITENS_JANELA } from "@/data/constants";
 import { gerarPlanilhaXlsx } from "@/lib/export/exporter-xlsx";
 import { gerarRelatorioPdfA4 } from "@/lib/export/exporter-pdf";
@@ -82,17 +82,17 @@ export function HistoryDrawer({
       entry.criterioClassificacao ||
       entry.resultado.criterio_classificacao ||
       "menor_preco";
-    const top40 = selecionarTop40Menores(
+    const todosOrdenados = selecionarTodosItensOrdenados(
       entry.resultado.itens_candidatos,
       entry.incluirRevisaoB,
       TOP_N_ITENS_JANELA,
       critHist
     );
     const idxSet = new Set(entry.indicesSelecionados);
-    const selecionados = top40.filter((_, i) => idxSet.has(i));
+    const selecionados = todosOrdenados.filter((_, i) => idxSet.has(i));
     const buf = await gerarPlanilhaXlsx(
       selecionados,
-      top40,
+      todosOrdenados,
       entry.indicesSelecionados,
       entry.resultado.descartados,
       entry.criterioClassificacao,
@@ -109,14 +109,14 @@ export function HistoryDrawer({
       entry.criterioClassificacao ||
       entry.resultado.criterio_classificacao ||
       "menor_preco";
-    const top40 = selecionarTop40Menores(
+    const todosOrdenados = selecionarTodosItensOrdenados(
       entry.resultado.itens_candidatos,
       entry.incluirRevisaoB,
       TOP_N_ITENS_JANELA,
       critHist
     );
     const idxSet = new Set(entry.indicesSelecionados);
-    const selecionados = top40.filter((_, i) => idxSet.has(i));
+    const selecionados = todosOrdenados.filter((_, i) => idxSet.has(i));
     const bytes = await gerarRelatorioPdfA4(
       entry.resultado,
       selecionados,

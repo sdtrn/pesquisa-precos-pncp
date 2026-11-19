@@ -31,7 +31,7 @@ import type {
   ResultadoPesquisa,
   RegistroHistoricoPesquisa,
 } from "@/lib/domain/types";
-import { selecionarTop40Menores } from "@/lib/domain/selection";
+import { selecionarTodosItensOrdenados } from "@/lib/domain/selection";
 import {
   gerarTermosBusca,
   extrairRequisitosMinimos,
@@ -209,10 +209,10 @@ export default function HomePage() {
     setDataFinal(fim);
   };
 
-  // Recompute Top 40 when `incluirClasseB` or `criterioClassificacao` toggles
+  // Recompute all sorted candidates when `incluirClasseB` or `criterioClassificacao` toggles
   const candidatosTop20Ativos = useMemo(() => {
     if (!resultado) return [];
-    return selecionarTop40Menores(
+    return selecionarTodosItensOrdenados(
       resultado.itens_candidatos,
       incluirClasseB,
       TOP_N_ITENS_JANELA,
@@ -228,13 +228,13 @@ export default function HomePage() {
   const handleToggleIncluirClasseB = (val: boolean) => {
     setIncluirClasseB(val);
     if (resultado) {
-      const novosTop40 = selecionarTop40Menores(
+      const novosItens = selecionarTodosItensOrdenados(
         resultado.itens_candidatos,
         val,
         TOP_N_ITENS_JANELA,
         criterioClassificacao
       );
-      setSelectedKeys(new Set(novosTop40.map((i) => chaveItemUnica(i))));
+      setSelectedKeys(new Set(novosItens.map((i) => chaveItemUnica(i))));
     }
   };
 
@@ -360,26 +360,26 @@ export default function HomePage() {
             if (finalResult.modo_normalizacao_escolhido) {
               setModoNormalizacao(finalResult.modo_normalizacao_escolhido);
             }
-            const initialTop40 = selecionarTop40Menores(
+            const initialItens = selecionarTodosItensOrdenados(
               finalResult.itens_candidatos,
               incluirClasseB,
               TOP_N_ITENS_JANELA,
               critFinal
             );
-            const initialKeys = initialTop40.map((i) => chaveItemUnica(i));
+            const initialKeys = initialItens.map((i) => chaveItemUnica(i));
             setSelectedKeys(new Set(initialKeys));
 
-            if (initialTop40.length > 0) {
+            if (initialItens.length > 0) {
               setShowTop20Modal(true);
             }
 
             // Auto-save to history if toggle is enabled
             if (salvarNoHistorico) {
-              const allIndices = initialTop40.map((_, idx) => idx);
+              const allIndices = initialItens.map((_, idx) => idx);
               const reg = criarRegistroHistorico(
                 finalResult,
                 descricaoObjeto,
-                initialTop40,
+                initialItens,
                 allIndices,
                 incluirClasseB
               );
@@ -477,14 +477,14 @@ export default function HomePage() {
     setIncluirClasseB(entry.incluirRevisaoB);
     setResultado(entry.resultado);
 
-    const top40 = selecionarTop40Menores(
+    const todosOrdenados = selecionarTodosItensOrdenados(
       entry.resultado.itens_candidatos,
       entry.incluirRevisaoB,
       TOP_N_ITENS_JANELA,
       critHist
     );
     const idxSet = new Set(entry.indicesSelecionados);
-    const keys = top40
+    const keys = todosOrdenados
       .filter((_, idx) => idxSet.has(idx))
       .map((i) => chaveItemUnica(i));
     setSelectedKeys(new Set(keys));
@@ -649,7 +649,7 @@ export default function HomePage() {
         )}
       </main>
 
-      {/* Top 40 Selection Modal */}
+      {/* All Prices Selection Modal */}
       {resultado && (
         <Top20SelectionModal
           isOpen={showTop20Modal}

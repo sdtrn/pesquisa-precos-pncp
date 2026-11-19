@@ -167,8 +167,8 @@ export function ConsolidatedReportPanel({
               <ListChecks className="w-4 h-4" />
               <span>
                 {ehDesconto
-                  ? "Selecionar entre as 40 maiores taxas de desconto"
-                  : "Selecionar entre os 40 menores preços"}
+                  ? "Selecionar entre todas as taxas de desconto"
+                  : "Selecionar entre todos os preços encontrados"}
               </span>
             </button>
 
@@ -308,8 +308,8 @@ export function ConsolidatedReportPanel({
               className="font-bold text-[#1B365D] dark:text-[#D4AF37] underline"
             >
               {ehDesconto
-                ? "Selecionar entre as 40 maiores taxas de desconto"
-                : "Selecionar entre os 40 menores preços"}
+                ? "Selecionar entre todas as taxas de desconto"
+                : "Selecionar entre todos os preços encontrados"}
             </button>{" "}
             para compor sua cesta de preços.
           </div>

@@ -1,4 +1,4 @@
-export const TOP_N_ITENS_JANELA = 40;
+export const TOP_N_ITENS_JANELA = Number.POSITIVE_INFINITY;
 
 // Endpoints PNCP (exclusivamente Atas de Registro de Preços e itens/resultados)
 export const PNCP_SEARCH_URL = "https://pncp.gov.br/api/search/";

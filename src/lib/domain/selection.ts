@@ -2,13 +2,15 @@ import { TOP_N_ITENS_JANELA } from "@/data/constants";
 import type { CriterioClassificacao, ItemCandidato, NivelAderencia } from "@/lib/domain/types";
 
 /**
- * Retorna os `limite` (padrão: 40) melhores itens (menor preço normalizado ou maior desconto),
- * permitindo múltiplos itens homologados de uma mesma ARP com diferentes lotes/itens/fornecedores.
+ * Retorna os itens classificados e ordenados (por padrão sem limite de quantidade,
+ * retornando todos os preços unitários ou taxas de desconto encontrados; aceita `limite`
+ * finito opcional para recortes específicos), permitindo múltiplos itens homologados
+ * de uma mesma ARP com diferentes lotes/itens/fornecedores.
  * Deduplica apenas itens idênticos pelo conjunto (CNPJ, ARP, Número do Item/Lote).
  * Quando o critério é 'menor_preco', ordena de forma crescente pelo menor valor unitário normalizado.
  * Quando o critério é 'maior_desconto', ordena de forma decrescente pela maior taxa.
  */
-export function selecionarTop40Menores(
+export function selecionarTodosItensOrdenados(
   itensCandidatos: ItemCandidato[],
   incluirRevisaoB = false,
   limite = TOP_N_ITENS_JANELA,
@@ -39,8 +41,11 @@ export function selecionarTop40Menores(
     }
   }
 
-  return unicos.slice(0, limite);
+  return typeof limite === "number" && Number.isFinite(limite)
+    ? unicos.slice(0, limite)
+    : unicos;
 }
 
-/** Alias mantido para retrocompatibilidade com testes e importações existentes. */
-export const selecionarTop20Menores = selecionarTop40Menores;
+/** Aliases mantidos para retrocompatibilidade com testes e importações existentes. */
+export const selecionarTop40Menores = selecionarTodosItensOrdenados;
+export const selecionarTop20Menores = selecionarTodosItensOrdenados;
